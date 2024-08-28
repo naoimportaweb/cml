@@ -14,7 +14,7 @@ sys.path.append( ROOT );
 sys.path.append("/opt/cml/app/");
 
 from view.ui.customvlayout import CustomVLayout;
-from class.server import Server;
+from classlib.server import Server;
 
 class DialogConnect(QDialog):
     def __init__(self):
@@ -104,10 +104,15 @@ class DialogConnect(QDialog):
         self.layout_principal.enable("login");
         self.layout_principal.disable("register");       
     def btn_click_register_entrar(self):
+        server = Server();
         envelop = {"username" : self.txt_register_username.text(),
         "password" : self.txt_register_password.text(),
         "mail" : self.txt_register_mail.text()};
-        s = Server("http://localhost");
+        server.status = True;
+        self.close();
     def btn_click_login_entrar(self):
+        server = Server();
         envelop = {"username" : self.txt_login_username.text(),
         "password" : self.txt_login_password.text()};
+        server.status = True;
+        self.close();

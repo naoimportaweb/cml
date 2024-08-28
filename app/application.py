@@ -20,6 +20,7 @@ import PySide6.QtExampleIcons  # noqa: F401
 
 from view.mdimap import MdiMap;
 from view.dialogconnect import DialogConnect
+from classlib.server import Server;
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -329,15 +330,14 @@ if __name__ == '__main__':
     QIcon.setThemeSearchPaths(icon_paths + [":/qt-project.org/icons"])
     QIcon.setFallbackThemeName("example_icons")
 
-
-    dlg = DialogConnect()
-    if dlg.exec():
-        print("Success!")
+    dlg = DialogConnect();
+    dlg.exec(); 
+    server = Server();
+    if server.status:
+        main_win = MainWindow()
+        for f in options.files:
+            main_win.load(f)
+        main_win.show()
+        sys.exit(app.exec())
     else:
-        print("Cancel!")
-
-    main_win = MainWindow()
-    for f in options.files:
-        main_win.load(f)
-    main_win.show()
-    sys.exit(app.exec())
+        sys.exit(0);
