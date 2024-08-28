@@ -1,3 +1,4 @@
+import os, sys, inspect;
 
 from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings,
                             QSaveFile, QTextStream, Qt, Slot)
@@ -5,99 +6,108 @@ from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow,
                                QMdiArea, QMessageBox, QTextEdit, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
 
+import os, sys, inspect;
+CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
+ROOT = os.path.dirname( CURRENTDIR );
+
+sys.path.append( ROOT );
+sys.path.append("/opt/cml/app/");
+
+from view.ui.customvlayout import CustomVLayout;
+from class.server import Server;
+
 class DialogConnect(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Connect")
+        self.layout_principal = CustomVLayout();
+        self.setLayout( self.layout_principal );
+        self.ui_server  ();
         self.ui_register();
-        self.conectado = False;
+        self.ui_login   ();
+        self.layout_principal.disable("register");
+        
+    def ui_server(self):
+        layout_server = QGridLayout()
+        layout_server.setContentsMargins(20, 20, 20, 20)
+        layout_server.setSpacing(10)
+        self.setWindowTitle("Login/Register")
+        server_url = QLabel("Server URL:")
+        server_url.setProperty("class", "normal")
+        layout_server.addWidget(server_url, 1, 0)
+        self.txt_server = QLineEdit()
+        self.txt_server.setMinimumWidth(500);
+        layout_server.addWidget(self.txt_server, 1, 1, 1, 2)
+        self.layout_principal.addLayout( "server", layout_server );
 
     def ui_login(self):
-        self.layout_login = QGridLayout()
-        self.layout_login.setContentsMargins(20, 20, 20, 20)
-        self.layout_login.setSpacing(10)
-        self.setWindowTitle("CodersLegacy")
-        self.setLayout(self.layout_login)
-
-        # Username Label and Input
-        user = QLabel("Username:")
-        user.setProperty("class", "normal")
-        self.layout_login.addWidget(user, 1, 0)
-        self.input1 = QLineEdit()
-        self.layout_login.addWidget(self.input1, 1, 1, 1, 2)
-
-        # Password Label and Input
-        pwd = QLabel("Password")
-        pwd.setProperty("class", "normal")
-        self.layout_login.addWidget(pwd, 2, 0)
-        self.input2 = QLineEdit()
-        self.input2.setEchoMode(QLineEdit.EchoMode.Password)
-        self.layout_login.addWidget(self.input2, 2, 1, 1, 2)
-
-        # Register and Login Buttons
-        button1 = QPushButton("Register")
-        self.layout_login.addWidget(button1, 4, 1)
-
-        button2 = QPushButton("Login")
-        button2.clicked.connect(self.login)
-        self.layout_login.addWidget(button2, 4, 2)
+        layout_login = QGridLayout()
+        layout_login.setContentsMargins(20, 20, 20, 20)
+        layout_login.setSpacing(10)
+        user_login = QLabel("Username:")
+        user_login.setProperty("class", "normal")
+        layout_login.addWidget(user_login, 1, 0)
+        self.txt_login_username = QLineEdit()
+        layout_login.addWidget(self.txt_login_username, 1, 1, 1, 2)
+        pwd_login = QLabel("Password")
+        pwd_login.setProperty("class", "normal")
+        layout_login.addWidget(pwd_login, 2, 0)
+        self.txt_login_password = QLineEdit()
+        self.txt_login_password.setEchoMode(QLineEdit.EchoMode.Password)
+        layout_login.addWidget(self.txt_login_password, 2, 1, 1, 2)
+        btn_login_entrar = QPushButton("Login")
+        btn_login_entrar.clicked.connect(self.btn_click_login_entrar)
+        layout_login.addWidget(btn_login_entrar, 4, 2)
+        btn_register_navegar = QPushButton("Register")
+        btn_register_navegar.clicked.connect(self.btn_click_register_navegar)
+        layout_login.addWidget(btn_register_navegar, 4, 1)
+        self.layout_principal.addLayout( "login", layout_login );
 
     def ui_register(self):
-        self.layout_register = QGridLayout()
-        self.layout_register.setContentsMargins(20, 20, 20, 20)
-        self.layout_register.setSpacing(10)
-        self.setWindowTitle("CodersLegacy")
-        self.setLayout(self.layout_register)
+        layout_register = QGridLayout()
+        layout_register.setContentsMargins(20, 20, 20, 20)
+        layout_register.setSpacing(10)
+        user_register = QLabel("Username:")
+        user_register.setProperty("class", "normal")
+        layout_register.addWidget(user_register, 1, 0)
+        self.txt_register_username = QLineEdit()
+        layout_register.addWidget(self.txt_register_username, 1, 1, 1, 2)
+        pwd_register = QLabel("Password")
+        pwd_register.setProperty("class", "normal")
+        layout_register.addWidget(pwd_register, 2, 0)
+        self.txt_register_password = QLineEdit()
+        self.txt_register_password.setEchoMode(QLineEdit.EchoMode.Password)
+        layout_register.addWidget(self.txt_register_password, 2, 1, 1, 2)
+        pwd_register_2 = QLabel("Password")
+        pwd_register_2.setProperty("class", "normal")
+        layout_register.addWidget(pwd_register_2, 3, 0)
+        self.txt_register_password_2 = QLineEdit()
+        self.txt_register_password_2.setEchoMode(QLineEdit.EchoMode.Password)
+        layout_register.addWidget(self.txt_register_password_2, 3, 1, 1, 2)
+        mail_register = QLabel("E-mail")
+        mail_register.setProperty("class", "normal")
+        layout_register.addWidget(mail_register, 4, 0)
+        self.txt_register_mail = QLineEdit()
+        layout_register.addWidget(self.txt_register_mail, 4, 1, 1, 2)
+        btn_login_navegar = QPushButton("Login")
+        btn_login_navegar.clicked.connect(self.btn_click_login_navegar)
+        layout_register.addWidget(btn_login_navegar, 5, 2)
+        btn_register_entrar = QPushButton("Register")
+        btn_register_entrar.clicked.connect(self.btn_click_register_entrar)
+        layout_register.addWidget(btn_register_entrar, 5, 1)
+        self.layout_principal.addLayout( "register", layout_register );
 
-        # Username Label and Input
-        user = QLabel("Username:")
-        user.setProperty("class", "normal")
-        self.layout_register.addWidget(user, 1, 0)
-        self.input1 = QLineEdit()
-        self.layout_register.addWidget(self.input1, 1, 1, 1, 2)
-
-        # Password Label and Input
-        pwd = QLabel("Password")
-        pwd.setProperty("class", "normal")
-        self.layout_register.addWidget(pwd, 2, 0)
-        self.input2 = QLineEdit()
-        self.input2.setEchoMode(QLineEdit.EchoMode.Password)
-        self.layout_register.addWidget(self.input2, 2, 1, 1, 2)
-
-        # Password Label and Input
-        pwd1 = QLabel("Password")
-        pwd1.setProperty("class", "normal")
-        self.layout_register.addWidget(pwd1, 3, 0)
-        self.input3 = QLineEdit()
-        self.input3.setEchoMode(QLineEdit.EchoMode.Password)
-        self.layout_register.addWidget(self.input3, 3, 1, 1, 2)
-
-        # Password Label and Input
-        mail = QLabel("E-mail")
-        mail.setProperty("class", "normal")
-        self.layout_register.addWidget(mail, 4, 0)
-        self.input4 = QLineEdit()
-        self.input4.setEchoMode(QLineEdit.EchoMode.Password)
-        self.layout_register.addWidget(self.input4, 4, 1, 1, 2)
-
-        # Register and Login Buttons
-        button1 = QPushButton("Register")
-        self.layout_register.addWidget(button1, 6, 1)
-
-        #self.layout_register.addStretch();
-
-    def login(self):
-        print();
-
-
-
-
-        #QBtn = QDialogButtonBox.Ok | QDialogButtonBox.Cancel
-        #self.buttonBox = QDialogButtonBox(QBtn)
-        #self.buttonBox.accepted.connect(self.accept)
-        #self.buttonBox.rejected.connect(self.reject)
-        #self.layout = QVBoxLayout()
-        #message = QLabel("")
-        #self.layout.addWidget(message)
-        #self.layout.addWidget(self.buttonBox)
-        #self.setLayout(self.layout)
+    def btn_click_register_navegar(self):
+        self.layout_principal.disable("login");
+        self.layout_principal.enable("register");
+    def btn_click_login_navegar(self):
+        self.layout_principal.enable("login");
+        self.layout_principal.disable("register");       
+    def btn_click_register_entrar(self):
+        envelop = {"username" : self.txt_register_username.text(),
+        "password" : self.txt_register_password.text(),
+        "mail" : self.txt_register_mail.text()};
+        s = Server("http://localhost");
+    def btn_click_login_entrar(self):
+        envelop = {"username" : self.txt_login_username.text(),
+        "password" : self.txt_login_password.text()};
