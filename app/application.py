@@ -102,20 +102,20 @@ class MainWindow(QMainWindow):
     @Slot()
     def update_menus(self):
         has_mdi_child = (self.active_mdi_child() is not None)
-        self._save_act.setEnabled(has_mdi_child)
-        self._save_as_act.setEnabled(has_mdi_child)
-        self._paste_act.setEnabled(has_mdi_child)
-        self._close_act.setEnabled(has_mdi_child)
-        self._close_all_act.setEnabled(has_mdi_child)
-        self._tile_act.setEnabled(has_mdi_child)
-        self._cascade_act.setEnabled(has_mdi_child)
-        self._next_act.setEnabled(has_mdi_child)
-        self._previous_act.setEnabled(has_mdi_child)
-        self._separator_act.setVisible(has_mdi_child)
-        has_selection = (self.active_mdi_child() is not None
-                         and self.active_mdi_child().textCursor().hasSelection())
-        self._cut_act.setEnabled(has_selection)
-        self._copy_act.setEnabled(has_selection)
+        #self._save_act.setEnabled(has_mdi_child)
+        #self._save_as_act.setEnabled(has_mdi_child)
+        #self._paste_act.setEnabled(has_mdi_child)
+        #self._close_act.setEnabled(has_mdi_child)
+        #self._close_all_act.setEnabled(has_mdi_child)
+        #self._tile_act.setEnabled(has_mdi_child)
+        #self._cascade_act.setEnabled(has_mdi_child)
+        #self._next_act.setEnabled(has_mdi_child)
+        #self._previous_act.setEnabled(has_mdi_child)
+        #self._separator_act.setVisible(has_mdi_child)
+        #has_selection = (self.active_mdi_child() is not None
+        #                 and self.active_mdi_child().textCursor().hasSelection())
+        #self._cut_act.setEnabled(has_selection)
+        #self._copy_act.setEnabled(has_selection)
 
     @Slot()
     def update_window_menu(self):
@@ -150,8 +150,8 @@ class MainWindow(QMainWindow):
     def create_mdi_map(self):
         child = MdiMap()
         self._mdi_area.addSubWindow(child)
-        child.copyAvailable.connect(self._cut_act.setEnabled)
-        child.copyAvailable.connect(self._copy_act.setEnabled)
+        #child.copyAvailable.connect(self._cut_act.setEnabled)
+        #child.copyAvailable.connect(self._copy_act.setEnabled)
 
         return child
 
@@ -261,10 +261,10 @@ class MainWindow(QMainWindow):
         self._help_menu.addAction(self._about_act)
         self._help_menu.addAction(self._about_qt_act)
 
-        self._file_menu.setEnabled(False);
-        self._window_menu.setEnabled(False);
-        self._edit_menu.setEnabled(False);
-        self._help_menu.setEnabled(False);
+        #self._file_menu.setEnabled(False);
+        #self._window_menu.setEnabled(False);
+        #self._edit_menu.setEnabled(False);
+        #self._help_menu.setEnabled(False);
 
     def create_tool_bars(self):
         self._file_tool_bar = self.addToolBar("File")
@@ -275,8 +275,8 @@ class MainWindow(QMainWindow):
         self._edit_tool_bar.addAction(self._cut_act)
         self._edit_tool_bar.addAction(self._copy_act)
         self._edit_tool_bar.addAction(self._paste_act)
-        self._file_tool_bar.setEnabled(False);
-        self._edit_tool_bar.setEnabled(False);
+        #self._file_tool_bar.setEnabled(False);
+        #self._edit_tool_bar.setEnabled(False);
 
     def create_status_bar(self):
         self.statusBar().showMessage("Ready")
