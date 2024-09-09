@@ -136,7 +136,7 @@ class MapAreaWidget(QWidget):
 
     def redraw(self):
         self.painter.begin(self.pixmap);
-        self.painter.fillRect(0, 0, 15000, 10000, QBrush(Qt.white));
+        self.pixmap.fill(Qt.white);
         for elemento in self.elements:
             if elemento.etype == "person" or elemento.etype == "organization":
                 elemento.draw( self.painter );
@@ -163,11 +163,14 @@ class MapAreaWidget(QWidget):
         if self.selected_element != None:
             self.selected_element.x = current_pos.x();
             self.selected_element.y = current_pos.y();
-            self.redraw();
+            if (current_pos.x() % 10) == 0: # Questao de desempenho.....
+                self.redraw();
 
     def mouseReleaseEvent(self, event: QMouseEvent):
         self.previous_pos = None
         QWidget.mouseReleaseEvent(self, event);
+        if self.selected_element != None:
+            self.redraw();
         self.selected_element = None;
 
     def save(self, filename: str):

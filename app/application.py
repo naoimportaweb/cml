@@ -50,7 +50,7 @@ class MainWindow(QMainWindow):
     def new_map(self):
         child = self.create_mdi_map()
         child.new_map()
-        child.show()
+        child.showMaximized();
 
     @Slot()
     def open(self):
@@ -149,7 +149,8 @@ class MainWindow(QMainWindow):
 
     def create_mdi_map(self):
         child = MdiMap()
-        self._mdi_area.addSubWindow(child)
+        self._mdi_area.addSubWindow(child);
+        #self._mdi_area.showFullScreen();
         #child.copyAvailable.connect(self._cut_act.setEnabled)
         #child.copyAvailable.connect(self._copy_act.setEnabled)
 
