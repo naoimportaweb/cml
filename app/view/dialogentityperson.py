@@ -3,7 +3,7 @@ import os, sys, inspect;
 from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings,
                             QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence
-from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QTabWidget, QComboBox,
+from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QTabWidget, QComboBox, QTableWidgetItem, QHeaderView,
                                QMdiArea, QMessageBox, QTextEdit, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
 
 import os, sys, inspect;
@@ -12,6 +12,7 @@ ROOT = os.path.dirname( CURRENTDIR );
 sys.path.append( ROOT );
 
 from view.ui.customvlayout import CustomVLayout;
+from view.dialogreference import DialogReference;
 
 class DialogEntityPerson(QDialog):
     def __init__(self, person):
@@ -22,6 +23,7 @@ class DialogEntityPerson(QDialog):
         self.page_rel = CustomVLayout.widget_tab( self.tab, "Person");
         self.page_pho = CustomVLayout.widget_tab( self.tab, "Photo");
         self.page_dox = CustomVLayout.widget_tab( self.tab, "Doxxing");
+        self.page_ref = CustomVLayout.widget_tab( self.tab, "References");
         # ------------------------------------------
         self.lbl_text = QLabel("Text");
         self.txt_text = QLineEdit();
@@ -46,11 +48,39 @@ class DialogEntityPerson(QDialog):
         font.setFamily("Courier");
         self.txt_doxxing.setLineWrapMode(QTextEdit.WidgetWidth);  
         self.page_dox.addWidget( self.txt_doxxing );
-
+        #-------------------------------------------
+        btn_reference_add = QPushButton("Add");
+        btn_reference_del = QPushButton("Remove");
+        btn_reference_add.clicked.connect(self.btn_reference_add_click);
+        btn_reference_del.clicked.connect(self.btn_reference_del_click);
+        CustomVLayout.widget_linha(self, self.page_ref, [btn_reference_add, btn_reference_del] );
+        self.table_reference = CustomVLayout.widget_tabela(self, ["Title"], tamanhos=[QHeaderView.Stretch], double_click=self.table_reference_click);
+        self.page_ref.addWidget(self.table_reference);
+        self.table_reference_load();
         layout = QVBoxLayout();
         layout.addWidget( self.tab           );
         self.setLayout(   layout             );
 
+    def table_reference_load(self):
+        self.table_reference.setRowCount( len( self.person.references ) );
+        for i in range(len( self.person.references )):
+            self.table_reference.setItem( i, 0, QTableWidgetItem( self.person.references[i].title ) );
+    
+    def table_reference_click(self):
+        element = self.person.references[ self.table_reference.index() ];
+        form = DialogReference(self, self.person, reference=element);
+        form.exec();
+        self.table_reference_load();
+
+    def btn_reference_del_click(self):
+        index = self.table_reference.index();
+        self.person.references.pop( index );
+        self.table_reference_load();
+    
+    def btn_reference_add_click(self):
+        form = DialogReference(self, self.person, reference=None);
+        form.exec();
+        self.table_reference_load()
 
     def txt_text_changed(self):
         self.person.text = self.txt_text.text();

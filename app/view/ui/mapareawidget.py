@@ -6,6 +6,15 @@ from PySide6.QtCore import Qt, Slot, QStandardPaths,QRectF
 from PySide6.QtGui import (QMouseEvent,QPaintEvent,QPen,QAction,QPainter,QColor,QBrush,QPixmap,QIcon,QKeySequence,);
 import sys
 import uuid
+
+class Reference():
+    def __init__(self, title, link1, link2, link3):
+        self.id = uuid.uuid4().hex + "_" + uuid.uuid4().hex + "_" + uuid.uuid4().hex;
+        self.title = title;
+        self.link1 = link1;
+        self.link2 = link2;
+        self.link3 = link3;
+
 class Rectangle():
     def __init__(self, map, x, y, w, h, text=None):
         self.id = uuid.uuid4().hex + "_" + uuid.uuid4().hex + "_" + uuid.uuid4().hex;
@@ -16,6 +25,13 @@ class Rectangle():
         self.map = map;
         self.text = text;
         self.full_description = "";
+        self.references = [];
+
+    def addReference(self, title, link1, link2 = "", link3 = ""):
+        if link1 == "":
+            return None;
+        self.references.append( Reference( title, link1, link2, link3 ) );
+        return self.references[-1];
     
     def draw(self, painter):
         penRectangle = QPen(Qt.black)

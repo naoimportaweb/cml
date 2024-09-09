@@ -12,6 +12,7 @@ ROOT = os.path.dirname( CURRENTDIR );
 sys.path.append( ROOT );
 
 from view.ui.customvlayout import CustomVLayout;
+from view.dialogreference import DialogReference;
 
 class DialogEntityLink(QDialog):
     def __init__(self, link):
@@ -19,9 +20,10 @@ class DialogEntityLink(QDialog):
         self.setWindowTitle("Relationship")
         self.link = link;
         self.tab = QTabWidget();  
-        self.page_rel = CustomVLayout.widget_tab( self.tab, "Relationship");
+        self.page_rel      = CustomVLayout.widget_tab( self.tab, "Relationship");
         self.page_ent_from = CustomVLayout.widget_tab( self.tab, "Entity From");
-        self.page_ent_to = CustomVLayout.widget_tab( self.tab, "Entity To");
+        self.page_ent_to   = CustomVLayout.widget_tab( self.tab, "Entity To");
+        self.page_ref      = CustomVLayout.widget_tab( self.tab, "References");
         # ------------------------------------------
         self.lbl_text = QLabel("Text");
         self.txt_text = QLineEdit();
@@ -70,13 +72,45 @@ class DialogEntityLink(QDialog):
         self.page_ent_to.addWidget( CustomVLayout.layout_to_widget( layout_to ) );
         self.table_to = CustomVLayout.widget_tabela(self, ["Type", "Text"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch]);
         self.page_ent_to.addWidget(self.table_to);
+
+        #-------------------------------------------
+        btn_reference_add = QPushButton("Add");
+        btn_reference_del = QPushButton("Remove");
+        btn_reference_add.clicked.connect(self.btn_reference_add_click);
+        btn_reference_del.clicked.connect(self.btn_reference_del_click);
+        CustomVLayout.widget_linha(self, self.page_ref, [btn_reference_add, btn_reference_del] );
+        self.table_reference = CustomVLayout.widget_tabela(self, ["Title"], tamanhos=[QHeaderView.Stretch], double_click=self.table_reference_click);
+        self.page_ref.addWidget(self.table_reference);
         
         self.table_from_load();
         self.table_to_load();
+        self.table_reference_load();
+
         layout = QVBoxLayout();
         layout.addWidget( self.tab           );
         self.setLayout(   layout             );
+
+    def table_reference_load(self):
+        self.table_reference.setRowCount( len( self.link.references ) );
+        for i in range(len( self.link.references )):
+            self.table_reference.setItem( i, 0, QTableWidgetItem( self.link.references[i].title ) );
     
+    def table_reference_click(self):
+        element = self.link.references[ self.table_reference.index() ];
+        form = DialogReference(self, self.link, reference=element);
+        form.exec();
+        self.table_reference_load();
+
+    def btn_reference_del_click(self):
+        index = self.table_reference.index();
+        self.link.references.pop( index );
+        self.table_reference_load();
+    
+    def btn_reference_add_click(self):
+        form = DialogReference(self, self.link, reference=None);
+        form.exec();
+        self.table_reference_load();
+
     def table_from_load(self):
         self.table_from.setRowCount( len( self.link.from_entity ) );
         for i in range(len( self.link.from_entity )):
@@ -106,3 +140,4 @@ class DialogEntityLink(QDialog):
     
     def txt_descricao_changed(self):
         self.link.full_description = self.txt_descricao.toPlainText();
+

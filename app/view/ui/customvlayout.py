@@ -24,6 +24,8 @@ class Table(QTableWidget):
         self.total_linhas += 1;
     def get(self):
         return self.lista[self.currentRow()];
+    def index(self):
+        return self.currentRow();
 
 class CustomVLayout(QVBoxLayout):
     def __init__(self):
