@@ -22,7 +22,7 @@ $part = explode("/", $_SERVER["REQUEST_URI"]);
 
 $post_data = json_decode(file_get_contents('php://input'), true); 
 //(class, version, method, parameters) // OR //(public_key)
-error_log(file_get_contents('php://input'), 0);
+//error_log(file_get_contents('php://input'), 0);
 
 
 $token_request = md5(uniqid(rand(), true));
@@ -48,14 +48,14 @@ try{
         $method = $post_data["method"];
         $return_metehod = (new $class)->$method( $ip, $user, $post_data  );        
     }
-    error_log( json_encode($return_metehod), 0);
+    //error_log( json_encode($return_metehod), 0);
     $agora = (new \DateTime());
     $post_data["status"] = true;
     $post_data["return"] = $return_metehod;
     if (array_key_exists('token',$post_data)){
         $post_data["return"] = Session::encrypt( $post_data["token"], $post_data["return"] );
     }
-    error_log(json_encode($post_data), 0);
+    //error_log(json_encode($post_data), 0);
     echo json_encode($post_data);
 } catch (Exception $e) {
     echo json_encode(array("status" => false, "return" => null, "error" => $e->getMessage() ));

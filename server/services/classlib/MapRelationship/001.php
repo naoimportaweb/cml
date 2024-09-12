@@ -19,10 +19,10 @@ class MapRelationship
         $this->name = $datatable["name"];
     }
 
-    public function create( ) {
+    public function create( $ip, $user, $post_data ) {
         $mysql = Mysql("");
-        $sql = "INSERT INTO diagram_relationship (id, name) values(?, ?)";
-        $valores = [$this->id, $this->name];
+        $sql = "INSERT INTO diagram_relationship (id, person_id, name) values(?, ?, ?)";
+        $valores = [$this->id, $user->id  ,$this->name];
         return $mysql->ExecuteNoQuery($sql, $valores);
     }    
 
