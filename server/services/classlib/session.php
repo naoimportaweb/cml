@@ -15,8 +15,11 @@ class Session
         return null;
     }
 
-    public static function create( $token, $user, $password ) {
-        return "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678";
+    public static function create( $token, $username ) {
+        $mysql = Mysql("");
+        $person = $mysql->DataTable("select * from person where username = ? ")[0];
+        return "";
+        #return {"" "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678";
     }
 
     public static function decrypt( $token, $data) {
