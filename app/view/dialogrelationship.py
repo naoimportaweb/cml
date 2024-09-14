@@ -41,11 +41,12 @@ class DialogRelationship(QDialog):
         self.txt_name.editingFinished.connect(self.txt_name_finish);
         layout_server.addWidget(self.txt_name, 1, 1);
         lbl_key = QLabel("Map name:")
-        lbl_key.setProperty("class", "normal")
+        lbl_key.setProperty("class", "normal");
         layout_server.addWidget(lbl_key, 2, 0)
         self.txt_key = QLineEdit()
         self.txt_key.setMinimumWidth(500);
-        self.txt_key.editingFinished.connect(self.txt_key_finish);
+        self.txt_key.textEdited.connect(      self.txt_key_press );
+        #self.txt_key.editingFinished.connect( self.txt_key_finish);
         layout_server.addWidget(self.txt_key, 2, 1);
 
         self.lbl_message = QLabel();
@@ -79,18 +80,26 @@ class DialogRelationship(QDialog):
             self.layout_principal.enable("buttons");
             self.lbl_message.setStyleSheet("QLabel { color : green; }");
             self.lbl_message.setText("");
+            return True;
         else:
             self.layout_principal.disable("buttons");
             self.lbl_message.setStyleSheet("QLabel { color : red; }");
+            return False;
+    
+    def txt_key_press(self):
+        if len(self.txt_name.text()) > 0 and len(self.txt_key.text()) > 0:
+            self.lbl_message.setText("");
+            self.layout_principal.enable("buttons");
+        else:
+            self.layout_principal.disable("buttons");
     
     def __validar__(self):
         if len(self.txt_name.text()) == 0 or len(self.txt_key.text()) == 0:
-            print("Enter a name and keywords.");
             self.lbl_message.setText("Enter a name and keywords.");
             return False;
-        r = MapRelationship();
-        if r.exists(self.txt_name.text()):
-            print("This diraggram already exists..");
-            self.lbl_message.setText( "This diraggram already exists.." );
-            return False;
-        return True;
+        if self.validar():
+            r = MapRelationship();
+            if r.exists(self.txt_name.text()):
+                self.lbl_message.setText( "This diraggram already exists.." );
+                return False;
+            return True;
