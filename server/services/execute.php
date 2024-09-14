@@ -2,11 +2,14 @@
 require_once dirname(__DIR__) . "/api/json.php";
 require_once dirname(__DIR__) . "/api/mysql.php";
 require_once __DIR__ . "/classlib/session.php";
+require_once __DIR__ . "/classlib/User/001.php";
 
 function millisecsBetween($dateOne, $dateTwo, $abs = true) {
     $func = $abs ? 'abs' : 'intval';
     return $func(strtotime($dateOne) - strtotime($dateTwo)) * 1000;
 }
+
+
 
 $ip = null;
 if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
@@ -43,6 +46,11 @@ try{
     } else if( $post_data["class"] == "Session" && $post_data["method"] == "create" ) {
         $return_metehod = Session::create($post_data["token"], $post_data["parameters"]["user"], $post_data["parameters"]["password"]);
     } else{
+        // -------------------- FORCAR O CARREGAMENTO AQUI ENQUATNO NAO FAÇO SISTEMA DE LOGIN
+        $user = new User();
+        $user->load("1");
+        //-------------------------------------------------------------------------
+
         require_once __DIR__ . "/classlib/". $post_data["class"] . "/" . $post_data["version"] . ".php";
         $class = $post_data["class"];
         $method = $post_data["method"];

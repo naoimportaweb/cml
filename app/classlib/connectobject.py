@@ -1,12 +1,13 @@
-import sys, os, requests, json;
+import sys, os, requests, json, uuid;
 
 class ConnectObject:
     def __init__(self):
+        self.id = uuid.uuid4().hex + "_" + uuid.uuid4().hex + "_" + uuid.uuid4().hex;
         self.ip = "127.0.0.1";
         self.port = 80;
     
     def __execute__(self, class_name, method_name, parameters):
-        envelop = { "class" : class_name, "method" :  method_name, "token" : "", "parameters" : parameters}
+        envelop = { "version" : "001", "class" : class_name, "method" :  method_name, "token" : "", "parameters" : parameters}
         url = "http://"+ self.ip +":80/cml/services/execute.php";
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'};
         r = requests.post(url, data=json.dumps(envelop), headers=headers);

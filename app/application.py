@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow,
 import PySide6.QtExampleIcons  # noqa: F401
 
 from view.mdimap import MdiMap;
+from view.dialogrelationship import DialogRelationship
 from view.dialogconnect import DialogConnect
 from classlib.server import Server;
 
@@ -148,6 +149,8 @@ class MainWindow(QMainWindow):
             action.triggered.connect(slot_func)
 
     def create_mdi_map(self):
+        f = DialogRelationship();
+        f.exec();
         child = MdiMap()
         self._mdi_area.addSubWindow(child);
         #self._mdi_area.showFullScreen();
@@ -336,8 +339,8 @@ if __name__ == '__main__':
     server = Server();
     if server.status:
         main_win = MainWindow()
-        for f in options.files:
-            main_win.load(f)
+        #for f in options.files:
+        #    main_win.load(f)
         main_win.show()
         sys.exit(app.exec())
     else:

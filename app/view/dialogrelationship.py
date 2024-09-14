@@ -15,14 +15,18 @@ sys.path.append("/opt/cml/app/");
 
 from view.ui.customvlayout import CustomVLayout;
 from classlib.server import Server;
+from classlib.maprelationship import MapRelationship;
 
 class DialogRelationship(QDialog):
     def __init__(self):
-        super().__init__()
+        super().__init__();
+        self.map = None;
         self.setWindowTitle("Connect")
         self.layout_principal = CustomVLayout();
         self.setLayout( self.layout_principal );
         self.ui_search_relationship();
+        self.ui_buttons();
+        self.layout_principal.disable("buttons");
         
     def ui_search_relationship(self):
         layout_server = QGridLayout()
@@ -34,25 +38,59 @@ class DialogRelationship(QDialog):
         layout_server.addWidget(lbl_name, 1, 0)
         self.txt_name = QLineEdit()
         self.txt_name.setMinimumWidth(500);
-        layout_server.addWidget(self.txt_name, 1, 1, 1, 2)
+        self.txt_name.editingFinished.connect(self.txt_name_finish);
+        layout_server.addWidget(self.txt_name, 1, 1);
+        lbl_key = QLabel("Map name:")
+        lbl_key.setProperty("class", "normal")
+        layout_server.addWidget(lbl_key, 2, 0)
+        self.txt_key = QLineEdit()
+        self.txt_key.setMinimumWidth(500);
+        self.txt_key.editingFinished.connect(self.txt_key_finish);
+        layout_server.addWidget(self.txt_key, 2, 1);
+
+        self.lbl_message = QLabel();
+        
+        layout_server.addWidget( self.lbl_message , 3, 1);
         self.layout_principal.addLayout( "search", layout_server );
 
-#    def btn_click_register_navegar(self):
-#        self.layout_principal.disable("login");
-#        self.layout_principal.enable("register");
-#    def btn_click_login_navegar(self):
-#        self.layout_principal.enable("login");
-#        self.layout_principal.disable("register");       
-#    def btn_click_register_entrar(self):
-#        server = Server();
-#        envelop = {"username" : self.txt_register_username.text(),
-#        "password" : self.txt_register_password.text(),
-#        "mail" : self.txt_register_mail.text()};
-#        server.status = True;
-#        self.close();
-#    def btn_click_login_entrar(self):
-#        server = Server();
-#        envelop = {"username" : self.txt_login_username.text(),
-#        "password" : self.txt_login_password.text()};
-#        server.status = True;
-#        self.close();
+    def ui_buttons(self):
+        layout = QGridLayout()
+        btn_entrar = QPushButton("Create new Diagram")
+        btn_entrar.clicked.connect(self.btn_entrar_click)
+        layout.addWidget(btn_entrar, 4, 2)
+        self.layout_principal.addLayout( "buttons", layout );
+
+    def btn_entrar_click(self):
+        r = MapRelationship();
+        r.name = self.txt_name.text();
+        r.keyword = self.txt_key.text();
+        if r.create():
+            self.map = r;
+            self.close();
+    def txt_name_finish(self):
+        print("procurar por....", self.txt_name.text());
+        self.validar();
+    def txt_key_finish(self):
+        print("procurar por....", self.txt_key.text());
+        self.validar();
+    
+    def validar(self):
+        if self.__validar__():
+            self.layout_principal.enable("buttons");
+            self.lbl_message.setStyleSheet("QLabel { color : green; }");
+            self.lbl_message.setText("");
+        else:
+            self.layout_principal.disable("buttons");
+            self.lbl_message.setStyleSheet("QLabel { color : red; }");
+    
+    def __validar__(self):
+        if len(self.txt_name.text()) == 0 or len(self.txt_key.text()) == 0:
+            print("Enter a name and keywords.");
+            self.lbl_message.setText("Enter a name and keywords.");
+            return False;
+        r = MapRelationship();
+        if r.exists(self.txt_name.text()):
+            print("This diraggram already exists..");
+            self.lbl_message.setText( "This diraggram already exists.." );
+            return False;
+        return True;

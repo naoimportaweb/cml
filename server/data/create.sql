@@ -11,6 +11,7 @@ create table person(
 create table diagram_relationship (
     id VARCHAR(128) PRIMARY KEY,
     person_id VARCHAR(128),
+    keyword VARCHAR(255),
     name VARCHAR(255) NOT NULL
 );
 

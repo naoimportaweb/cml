@@ -1,6 +1,11 @@
 <?php
 
 //use PDO;
+//DROP USER root@localhost;
+//CREATE USER root@localhost IDENTIFIED BY '123456';
+//GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost';
+//FLUSH PRIVILEGES;
+
 require_once __DIR__ . '/json.php';
 
 class Mysql
