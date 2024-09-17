@@ -19,8 +19,9 @@ from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow,
 import PySide6.QtExampleIcons  # noqa: F401
 
 from view.mdimap import MdiMap;
-from view.dialogrelationship import DialogRelationship
-from view.dialogconnect import DialogConnect
+from view.dialogrelationship import DialogRelationship;
+from view.dialogrelationshipload import DialogRelationshipLoad;
+from view.dialogconnect import DialogConnect;
 from classlib.server import Server;
 
 class MainWindow(QMainWindow):
@@ -55,13 +56,12 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def open(self):
-        file_name, _ = QFileDialog.getOpenFileName(self)
-        if file_name:
-            existing = self.find_mdi_child(file_name)
-            if existing:
-                self._mdi_area.setActiveSubWindow(existing)
-            else:
-                self.load(file_name)
+        f = DialogRelationshipLoad();
+        f.exec();
+        child = MdiMap(f.map)
+        self._mdi_area.addSubWindow(child);
+        child.new_map()
+        child.showMaximized();
 
     def load(self, file_name):
         child = self.create_mdi_map()
@@ -73,8 +73,9 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def save(self):
-        if self.active_mdi_child() and self.active_mdi_child().save():
-            self.statusBar().showMessage("File saved", 2000)
+        self.active_mdi_child() and self.active_mdi_child().save();
+        #if self.active_mdi_child() and self.active_mdi_child().save():
+        #    self.statusBar().showMessage("File saved", 2000)
 
     @Slot()
     def save_as(self):
@@ -151,7 +152,7 @@ class MainWindow(QMainWindow):
     def create_mdi_map(self):
         f = DialogRelationship();
         f.exec();
-        child = MdiMap()
+        child = MdiMap(f.map)
         self._mdi_area.addSubWindow(child);
         #self._mdi_area.showFullScreen();
         #child.copyAvailable.connect(self._cut_act.setEnabled)
@@ -166,7 +167,7 @@ class MainWindow(QMainWindow):
 
         icon = QIcon.fromTheme(QIcon.ThemeIcon.DocumentOpen)
         self._open_act = QAction(icon, "&Open...", self,
-                                 shortcut=QKeySequence.Open, statusTip="Open an existing file",
+                                 shortcut=QKeySequence.Open, statusTip="Open an existing map",
                                  triggered=self.open)
 
         icon = QIcon.fromTheme(QIcon.ThemeIcon.DocumentSave)

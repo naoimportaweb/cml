@@ -14,19 +14,30 @@ class Reference():
         self.link1 = link1;
         self.link2 = link2;
         self.link3 = link3;
+    
+    def toJson(self):
+        return {"id" : self.id, "title" : self.title, "link1" : self.link1, "link2" : self.link2, "link3" : self.link3};
 
 class Rectangle():
-    def __init__(self, map, x, y, w, h, text=None):
+    def __init__(self, x, y, w, h, text=None, id_=None):
         self.id = uuid.uuid4().hex + "_" + uuid.uuid4().hex + "_" + uuid.uuid4().hex;
+        if id_ != None:
+            self.id = id_;
         self.x = x;
         self.y = y;
         self.w = w;
         self.h = h;
-        self.map = map;
+        #self.map = map;
         self.text = text;
         self.full_description = "";
         self.references = [];
-
+    
+    def toJson(self):
+        objeto = { "id" : self.id, "x" : self.x, "y" : self.y, "w" : self.w, "h" : self.h, "text" : self.text, "full_description" : self.full_description, "etype" : self.etype, "references" : []  };
+        for reference in self.references:
+            objeto["references"].append( reference.toJson() );
+        return objeto;
+            
     def addReference(self, title, link1, link2 = "", link3 = ""):
         if link1 == "":
             return None;
@@ -46,23 +57,32 @@ class Rectangle():
             painter.drawText(QRectF(self.x , self.y, self.w, self.h), Qt.AlignCenter | Qt.AlignTop, self.text)
 
 class Person(Rectangle):
-    def __init__(self, map, x, y, w, h, text=None):
-        super().__init__(map, x, y, w, h, text);
+    def __init__(self,  x, y, w, h, text=None):
+        super().__init__( x, y, w, h, text);
         self.etype = "person";
         self.doxxing = "";
 
 class Organization(Rectangle):
-    def __init__(self, map, x, y, w, h, text=None):
-        super().__init__(map, x, y, w, h, text);
+    def __init__(self, x, y, w, h, text=None):
+        super().__init__( x, y, w, h, text);
         self.etype = "organization";
 
 class Link(Rectangle):
-    def __init__(self, map, x, y, w, h, text=None):
-        super().__init__(map, x, y, w, h, text);
+    def __init__(self,  x, y, w, h, text=None):
+        super().__init__( x, y, w, h, text);
         self.etype = "link";
         self.to_entity = [];
         self.from_entity = [];
 
+    def toJson(self):
+        objeto = super().toJson();
+        objeto["to"] = [];
+        objeto["from"] = [];
+        for to in self.to_entity:
+            objeto["to"].append( {"id" : to.id} );
+        for from_ in self.from_entity:
+            objeto["from"].append( {"id" : from_.id} );
+        return objeto;
     def hasTo(self, element):
         return element in self.to_entity;
     
@@ -93,10 +113,11 @@ class Link(Rectangle):
         painter.drawText(QRectF(self.x , self.y, self.w, self.h), Qt.AlignCenter | Qt.AlignTop, self.text);
 
 class MapAreaWidget(QWidget):
-    def __init__(self, parent=None, form=None, max_width=15000 , max_height=10000):
+    def __init__(self, parent=None, mapa=None, form=None, max_width=15000 , max_height=10000):
         super().__init__(parent)
         self.setFixedSize(max_width, max_height);
         self.form = form;
+        self.mapa = mapa; # class.map
         self.pixmap = QPixmap(self.size());
         self.pixmap.fill(Qt.white);
         self.previous_pos = None;
@@ -105,24 +126,23 @@ class MapAreaWidget(QWidget):
         self.pen.setWidth(10);
         self.pen.setCapStyle(Qt.RoundCap);
         self.pen.setJoinStyle(Qt.RoundJoin);
-        self.elements = [];
         self.selected_element = None;
 
     def getElement(self, x, y):
-        for element in reversed(self.elements):
+        for element in reversed(self.mapa.elements):
             if element.x < x and element.x + element.w > x and element.y < y and element.y + element.h > y:
                 return element;
         return None;
 
     def addEntity(self, ptype, x, y):
         if ptype == "person":
-            self.elements.append(  Person( self, x, y, 100, 20 , text="Person")  );
+            self.mapa.elements.append(  Person(  x, y, 100, 20 , text="Person")  );
         elif ptype == "organization":
-            self.elements.append(  Organization( self, x, y, 100, 20 , text="Organization")  );
+            self.mapa.elements.append(  Organization(  x, y, 100, 20 , text="Organization")  );
         elif ptype == "link":
-            self.elements.append(  Link( self, x, y, 100, 20 , text="Relationship")  );
+            self.mapa.elements.append(  Link(  x, y, 100, 20 , text="Relationship")  );
         else:
-            self.elements.append(  Rectangle( self, x, y, 100, 20 , text="?????")  );
+            self.mapa.elements.append(  Rectangle(  x, y, 100, 20 , text="?????")  );
 
     def paintEvent(self, event: QPaintEvent):
         with QPainter(self) as painter:
@@ -137,10 +157,10 @@ class MapAreaWidget(QWidget):
     def redraw(self):
         self.painter.begin(self.pixmap);
         self.pixmap.fill(Qt.white);
-        for elemento in self.elements:
+        for elemento in self.mapa.elements:
             if elemento.etype == "person" or elemento.etype == "organization":
                 elemento.draw( self.painter );
-        for elemento in self.elements:
+        for elemento in self.mapa.elements:
             if elemento.etype == "link":
                 elemento.draw( self.painter );
         self.painter.end();
@@ -174,7 +194,7 @@ class MapAreaWidget(QWidget):
         self.selected_element = None;
 
     def save(self, filename: str):
-        self.pixmap.save(filename)
+        self.mapa.save();
 
     def load(self, filename: str):
         self.pixmap.load(filename)

@@ -97,9 +97,8 @@ class DialogRelationship(QDialog):
         if len(self.txt_name.text()) == 0 or len(self.txt_key.text()) == 0:
             self.lbl_message.setText("Enter a name and keywords.");
             return False;
-        if self.validar():
-            r = MapRelationship();
-            if r.exists(self.txt_name.text()):
-                self.lbl_message.setText( "This diraggram already exists.." );
-                return False;
-            return True;
+        r = MapRelationship();
+        if r.exists(self.txt_name.text()):
+            self.lbl_message.setText( "This diraggram already exists.." );
+            return False;
+        return True;

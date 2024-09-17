@@ -9,10 +9,10 @@ class MapRelationship
     private $keyword = "";
     private $person_id = "";
 
-    public function load( $id ) {
+    public function load( $ip, $user, $post_data ) {
         $mysql = new Mysql("");
-        $this->load_data( $mysql->DataTable("SELECT * from diagram_relationship where id = ?", [ $id ])[0] );
-        return ( $this->id != null);
+        $buffer =  $mysql->DataTable("SELECT * from diagram_relationship where id = ?", [ $post_data["parameters"]["id"] ])[0];
+        return $buffer;
     }
 
     public function load_data( $datatable ) {
@@ -36,8 +36,15 @@ class MapRelationship
     public function exists( $ip, $user, $post_data ) {
         $mysql = new Mysql("");
         $sql = "SELECT * FROM diagram_relationship WHERE id <> ? and name = ?";
-        $valores = [$post_data["parameters"]["id"], $post_data["parameters"]["id"]];
+        $valores = [$post_data["parameters"]["id"], $post_data["parameters"]["name"]];
         return count($mysql->DataTable($sql, $valores) ) > 0;
+    } 
+
+    public function search( $ip, $user, $post_data ) {
+        $mysql = new Mysql("");
+        $sql = "SELECT dr.*, pe.username FROM diagram_relationship as dr inner join person as pe on pe.id = dr.person_id WHERE dr.name = ?";
+        $valores = [ $post_data["parameters"]["name"]];
+        return $mysql->DataTable($sql, $valores);
     } 
 
 }

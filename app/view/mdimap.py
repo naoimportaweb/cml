@@ -14,9 +14,10 @@ from view.dialogentityperson import DialogEntityPerson;
 from view.dialogchoice import DialogChoiceEntity;
 
 class MdiMap(QWidget):
-    def __init__(self):
+    def __init__(self, mapa):
         super().__init__();
-        self.painter_widget = MapAreaWidget(parent=None, form=self);
+        self.painter_widget = MapAreaWidget(parent=None, mapa=mapa, form=self);
+        self.mapa = mapa;
         layout = QHBoxLayout()
         layout.addWidget( self.painter_widget );
         self.setLayout(layout)
@@ -43,7 +44,7 @@ class MdiMap(QWidget):
         return;
 
     def save(self):
-        return;
+        self.mapa.save();
 
     def save_as(self):
         return;
