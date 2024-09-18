@@ -117,6 +117,7 @@ class MapAreaWidget(QWidget):
         super().__init__(parent)
         self.setFixedSize(max_width, max_height);
         self.form = form;
+        
         self.mapa = mapa; # class.map
         self.pixmap = QPixmap(self.size());
         self.pixmap.fill(Qt.white);

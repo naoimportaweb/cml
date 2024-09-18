@@ -54,3 +54,5 @@ insert into person (id, username, name, password, salt) values ('1', 'admin', 'a
 drop table diagram_relationship_link;
 drop table diagram_relationship_element_reference;
 drop table diagram_relationship_element;
+drop table entity;
+drop table diagram_relationship;

@@ -191,21 +191,46 @@ class Mysql
         return [$tabela];
     }
 
-    public function ExecuteNoQuery($sql, $values){
+    public function ExecuteNoQuery($sqls, $valuess){
         try{
-            error_log($sql, 0);
-            $query = $this->Connection()->prepare($sql);
-            $query->execute($values);
-            return $query->rowCount(); 
+            $row_count = 0;
+            if( ! is_array($sqls)){
+                $sqls = [$sqls];
+                $valuess = [$valuess];
+            }
+            $this->Connection()->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            if( count( $sqls ) > 1 ){
+                $this->Connection()->beginTransaction();
+            }
+
+            for($i = 0; $i < count($sqls); $i++) {
+                $sql = $sqls[$i];
+                $values = $valuess[$i];
+                $query = $this->Connection()->prepare($sql);
+                $query->execute($values);
+                $row_count = $row_count + $query->rowCount();
+            }
+
+            if( count( $sqls ) > 1 ){
+                $this->Connection()->commit();
+            }
+
+            return $row_count; 
             
         }catch(Exception $e){
+            $this->Connection()->rollback();
             throw $e;
         } finally {
             if($this->action == false) {
                 $this->con = null;
             }
         }
+        return 0;
     }
+
+
+
+
 
     public function BeginTransaction(){
         $this->Connection()->beginTransaction();

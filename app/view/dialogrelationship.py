@@ -68,11 +68,10 @@ class DialogRelationship(QDialog):
         if r.create():
             self.map = r;
             self.close();
+    
     def txt_name_finish(self):
-        print("procurar por....", self.txt_name.text());
         self.validar();
     def txt_key_finish(self):
-        print("procurar por....", self.txt_key.text());
         self.validar();
     
     def validar(self):
