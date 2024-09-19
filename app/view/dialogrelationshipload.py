@@ -16,6 +16,7 @@ sys.path.append("/opt/cml/app/");
 from view.ui.customvlayout import CustomVLayout;
 from classlib.server import Server;
 from classlib.maprelationship import MapRelationship;
+from classlib.entitys import Person, Organization, Link, Rectangle
 
 class DialogRelationshipLoad(QDialog):
     def __init__(self):

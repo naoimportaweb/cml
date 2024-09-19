@@ -5,6 +5,7 @@ sys.path.append(CURRENTDIR);
 sys.path.append( os.path.dirname( CURRENTDIR ));
 
 from classlib.connectobject import ConnectObject;
+from classlib.entitys import Person, Organization, Link, Rectangle
 
 class MapRelationship(ConnectObject):
     def __init__(self, id_=None):
@@ -35,17 +36,34 @@ class MapRelationship(ConnectObject):
         self.person_id = data["person_id"];
         if data.get("elements") != None:
             for element in data['elements']:
+                print(element);
+                if element["etype"] == "link":
+                    continue;
+                x = element["x"]; y = element["y"]; w = element["w"]; h = element["h"];
                 if element['etype'] == "person":
-                    self.mapa.elements.append(  Person( self, x, y, 100, 20 , text="Person")  );
+                    self.elements.append(  Person(        x, y, w, h, text=element["text_label"], id_=element["id"] )  );
                 elif element['etype'] == "organization":
-                    self.mapa.elements.append(  Organization( self, x, y, 100, 20 , text="Organization")  );
-                elif element['etype'] == "link":
-                    self.mapa.elements.append(  Link( self, x, y, 100, 20 , text="Relationship")  );
-                else:
-                    self.mapa.elements.append(  Rectangle( self, x, y, 100, 20 , text="?????")  );
+                    self.elements.append(  Organization(  x, y, w, h, text=element["text_label"], id_=element["id"] )  );
+
+            for element in data['elements']:
+                print(element);
+                if element["etype"] != "link":
+                    continue;
+                x = element["x"]; y = element["y"]; w = element["w"]; h = element["h"];
+                objeto = Link(x, y, w, h, text=element["text_label"], id_=element["id"] );
+                for to_ in element["to"]:
+                    objeto.addTo( self.findById( self.elements, to_["id"] ) );
+                for from_ in element["from"]:
+                    objeto.addFrom( self.findById( self.elements, from_["id"] ) );
+                self.elements.append(  objeto  );
 
         return True;
-    
+    def findById(self, lista, id_):
+        for buffer in lista:
+            if buffer.id == id_:
+                return buffer;
+        return None;
+
     def load(self, id):
         js = self.__execute__("MapRelationship", "load", {"id" : id });
         return self.load_data(js["return"]);

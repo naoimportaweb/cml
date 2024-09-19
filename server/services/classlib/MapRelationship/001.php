@@ -11,8 +11,22 @@ class MapRelationship
 
     public function load( $ip, $user, $post_data ) {
         $mysql = new Mysql("");
-        $buffer =  $mysql->DataTable("SELECT * from diagram_relationship where id = ?", [ $post_data["parameters"]["id"] ])[0];
-        return $buffer;
+        $buffer_diagram =  $mysql->DataTable("SELECT * from diagram_relationship where id = ?", [ $post_data["parameters"]["id"] ])[0];
+        $buffer_diagram["elements"] = array();
+
+        $buffer_elements =  $mysql->DataTable("SELECT dre.id as id, ent.id as entity_id, ent.text_label as text_label, ent.description as full_description, ent.etype, dre.x, dre.y, dre.w, dre.h  FROM entity as ent inner join diagram_relationship_element as dre on ent.id = dre.entity_id where dre.diagram_relationship_id = ? order by dre.creation_time asc", [$post_data["parameters"]["id"]]);
+
+        for($i = 0; $i < count($buffer_elements); $i++ ) {
+            
+            $buffer_elements[$i]["references"] = $mysql->DataTable("SELECT drer.id, drer.title, drer.link1, drer.link2, drer.link3 FROM diagram_relationship_element_reference AS drer where drer.entity_id = ?", [$buffer_elements[$i]["id"]]);
+
+            if( $buffer_elements[$i]["etype"] == "link" ){
+                $buffer_elements[$i]["from"] = $mysql->DataTable("SELECT drl.diagram_relationship_element_id as id FROM diagram_relationship_link AS drl where drl.diagram_relationship_element_id_reference = ? and ltype = 1", [   $buffer_elements[$i]["id"]  ]);
+                $buffer_elements[$i]["to"] = $mysql->DataTable("SELECT drl.diagram_relationship_element_id as id FROM diagram_relationship_link AS drl where drl.diagram_relationship_element_id_reference = ? and ltype = 2", [   $buffer_elements[$i]["id"]  ]);
+            }
+        }
+        $buffer_diagram["elements"] = $buffer_elements;
+        return $buffer_diagram;
     }
 
     public function load_data( $datatable ) {
@@ -48,7 +62,6 @@ class MapRelationship
     }
 
     public function save($ip, $user, $post_data ){
-        error_log("salvar",);
         $mysql = new Mysql("");
         $sqls = array();
         $valuess = array();
@@ -58,9 +71,9 @@ class MapRelationship
         for($i = 0; $i < count($post_data["parameters"]["elements"]); $i++) {
             $element = $post_data["parameters"]["elements"][$i];
             error_log($element["id"], 0);
-            if( $element["etype"] == "link"){
-                continue;
-            }
+            //if( $element["etype"] == "link"){
+            //    continue;
+            //}
             // entidade
             array_push($sqls, "INSERT INTO entity (id, text_label, description, etype) VALUES(?, ?, ?, ?) ON DUPLICATE KEY UPDATE text_label = ?, description =?, etype =?");
             array_push( $valuess,[ $element["entity_id"], $element["text"], $element["full_description"], $element["etype"], $element["text"], $element["full_description"], $element["etype"] ]);
@@ -81,16 +94,14 @@ class MapRelationship
                 continue;
             }
             for($j = 0; $j < count($element["to"]); $j++) {
-                error_log( $element["to"][$j]["id"] );
-                array_push($sqls, "INSERT INTO diagram_relationship_link (id, diagram_relationship_element_id, ltype) values(?, ?, ?)  ON DUPLICATE KEY UPDATE diagram_relationship_element_id= ?");
-                array_push( $valuess,  [ $element["to"][$j]["id"] . substr($element["id"], 0, 20), $element["to"][$j]["id"],2, $element["to"][$j]["id"] ]);
+                array_push($sqls, "INSERT INTO diagram_relationship_link (id, diagram_relationship_element_id, ltype, diagram_relationship_element_id_reference) values(?, ?, ?, ?)  ON DUPLICATE KEY UPDATE diagram_relationship_element_id= ?");
+                array_push( $valuess,  [ $element["to"][$j]["id"], $element["to"][$j]["element_id"] ,2, $element["id"], $element["to"][$j]["element_id"] ]);
             }
             for($j = 0; $j < count($element["from"]); $j++) {
-                array_push($sqls, "INSERT INTO diagram_relationship_link (id, diagram_relationship_element_id, ltype) values(?, ?, ?)  ON DUPLICATE KEY UPDATE diagram_relationship_element_id= ?");
-                array_push( $valuess, [ $element["from"][$j]["id"] . substr($element["id"], 0, 20), $element["to"][$j]["id"],1, $element["to"][$j]["id"] ]);
+                array_push($sqls, "INSERT INTO diagram_relationship_link (id, diagram_relationship_element_id, ltype, diagram_relationship_element_id_reference) values(?, ?, ?, ?)  ON DUPLICATE KEY UPDATE diagram_relationship_element_id= ?");
+                array_push( $valuess, [ $element["from"][$j]["id"], $element["from"][$j]["element_id"], 1, $element["id"], $element["from"][$j]["element_id"] ]);
             }
         }
-        error_log( json_encode($sqls), 0 );
         return ( $mysql->ExecuteNoQuery($sqls, $valuess) > 0 );
     }
 
