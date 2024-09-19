@@ -48,23 +48,52 @@ class MapRelationship
     }
 
     public function save($ip, $user, $post_data ){
+        error_log("salvar",);
         $mysql = new Mysql("");
-        $sqls = [ "INSERT INTO diagram_relationship (id, name, keyword, person_id) VALUES( ?,?,?,? ) ON DUPLICATE KEY UPDATE name = ?, keyword = ?" ];
-        $valuess = [ [$post_data["parameters"]["id"], $post_data["parameters"]["name"], $post_data["parameters"]["keyword"], $user->id, $post_data["parameters"]["name"], $post_data["parameters"]["keyword"]] ];
+        $sqls = array();
+        $valuess = array();
+        array_push($sqls,  "INSERT INTO diagram_relationship (id, name, keyword, person_id) VALUES( ?,?,?,? ) ON DUPLICATE KEY UPDATE name = ?, keyword = ?" );
+        array_push( $valuess, [ $post_data["parameters"]["id"], $post_data["parameters"]["name"], $post_data["parameters"]["keyword"], $user->id, $post_data["parameters"]["name"], $post_data["parameters"]["keyword"] ] );
 
         for($i = 0; $i < count($post_data["parameters"]["elements"]); $i++) {
             $element = $post_data["parameters"]["elements"][$i];
+            error_log($element["id"], 0);
+            if( $element["etype"] == "link"){
+                continue;
+            }
             // entidade
-            $sqls.push("INSERT INTO entity (id, text_label, description, etype) VALUES(?, ?, ?, ?) ON DUPLICATE KEY UPDATE text_label = ?, description =?, etype =?");
+            array_push($sqls, "INSERT INTO entity (id, text_label, description, etype) VALUES(?, ?, ?, ?) ON DUPLICATE KEY UPDATE text_label = ?, description =?, etype =?");
+            array_push( $valuess,[ $element["entity_id"], $element["text"], $element["full_description"], $element["etype"], $element["text"], $element["full_description"], $element["etype"] ]);
             // relacionamento
-
+            array_push($sqls,  "INSERT INTO diagram_relationship_element (id, diagram_relationship_id, entity_id, x, y, w, h) VALUES(?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE x=?, y=?, w=?, h=?" );
+            array_push( $valuess, [ $element["id"], $post_data["parameters"]["id"], $element["entity_id"], $element["x"], $element["y"], $element["w"], $element["h"], $element["x"], $element["y"], $element["w"], $element["h"]  ] );
             // referencia
+            for($j = 0; $j < count($element["references"]); $j){
+                $reference = $element["references"][$j];
+                array_push($sqls, "INSERT INTO diagram_relationship_element_reference (id, entity_id, title, link1, link2, link3 ) VALUES(?, ?, ?, ?, ?, ? )  ON DUPLICATE KEY UPDATE  title=?, link1=?, link2=?, link3=?");
+                array_push( $valuess, [ $reference["id"], $reference["entity_id"], $reference["title"], $reference["link1"], $reference["link2"], $reference["link3"], $reference["title"], $reference["link1"], $reference["link2"], $reference["link3"] ] );
+            }
         }
+
+        for($i = 0; $i < count($post_data["parameters"]["elements"]); $i++) {
+            $element = $post_data["parameters"]["elements"][$i];
+            if( $element["etype"] != "link"){
+                continue;
+            }
+            for($j = 0; $j < count($element["to"]); $j++) {
+                error_log( $element["to"][$j]["id"] );
+                array_push($sqls, "INSERT INTO diagram_relationship_link (id, diagram_relationship_element_id, ltype) values(?, ?, ?)  ON DUPLICATE KEY UPDATE diagram_relationship_element_id= ?");
+                array_push( $valuess,  [ $element["to"][$j]["id"] . substr($element["id"], 0, 20), $element["to"][$j]["id"],2, $element["to"][$j]["id"] ]);
+            }
+            for($j = 0; $j < count($element["from"]); $j++) {
+                array_push($sqls, "INSERT INTO diagram_relationship_link (id, diagram_relationship_element_id, ltype) values(?, ?, ?)  ON DUPLICATE KEY UPDATE diagram_relationship_element_id= ?");
+                array_push( $valuess, [ $element["from"][$j]["id"] . substr($element["id"], 0, 20), $element["to"][$j]["id"],1, $element["to"][$j]["id"] ]);
+            }
+        }
+        error_log( json_encode($sqls), 0 );
         return ( $mysql->ExecuteNoQuery($sqls, $valuess) > 0 );
     }
 
 }
 
 ?>
-
-{'id': 'c9d497fa3f7e4d689e6a6e35d6495920_c786d2d693104f90a488a76e8fb43ca1_a80236f39daa48e3a9b62053783978db', 'name': 'educacao', 'keyword': 'ato', 'elements': [{'id': 'ea8a633840ce4abfa63745237f475c0b_1220c3a7e3ee4f9a8bfc6113bb3748ed_a3d617fce92e4c98adaed358115c04f7', 'x': 1031, 'y': 176, 'w': 54, 'h': 18, 'text': 'Person', 'full_description': '', 'etype': 'person', 'references': []}]}

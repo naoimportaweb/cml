@@ -19,10 +19,13 @@ class Reference():
         return {"id" : self.id, "title" : self.title, "link1" : self.link1, "link2" : self.link2, "link3" : self.link3};
 
 class Rectangle():
-    def __init__(self, x, y, w, h, text=None, id_=None):
-        self.id = uuid.uuid4().hex + "_" + uuid.uuid4().hex + "_" + uuid.uuid4().hex;
+    def __init__(self, x, y, w, h, text=None, id_=None, entity_id_=None):
+        self.id =         uuid.uuid4().hex + "_" + uuid.uuid4().hex + "_" + uuid.uuid4().hex;
+        self.entity_id =  uuid.uuid4().hex + "_" + uuid.uuid4().hex + "_" + uuid.uuid4().hex;
         if id_ != None:
             self.id = id_;
+        if entity_id_ != None:
+            self.entity_id = entity_id_;
         self.x = x;
         self.y = y;
         self.w = w;
@@ -33,7 +36,7 @@ class Rectangle():
         self.references = [];
     
     def toJson(self):
-        objeto = { "id" : self.id, "x" : self.x, "y" : self.y, "w" : self.w, "h" : self.h, "text" : self.text, "full_description" : self.full_description, "etype" : self.etype, "references" : []  };
+        objeto = { "id" : self.id, "entity_id": self.entity_id , "x" : self.x, "y" : self.y, "w" : self.w, "h" : self.h, "text" : self.text, "full_description" : self.full_description, "etype" : self.etype, "references" : []  };
         for reference in self.references:
             objeto["references"].append( reference.toJson() );
         return objeto;

@@ -31,9 +31,8 @@ create table diagram_relationship_element(
 
 create table diagram_relationship_element_reference( 
     id VARCHAR(128) PRIMARY KEY,
-    diagram_relationship_element_id VARCHAR(128) NOT NULL,
-    title VARCHAR(255),
-    link1 TEXT, link2 TEXT, link3 TEXT
+    entity_id VARCHAR(128) NOT NULL,
+    title VARCHAR(255), link1 TEXT, link2 TEXT, link3 TEXT
 );
 
 create table diagram_relationship_link(
@@ -45,7 +44,7 @@ create table diagram_relationship_link(
 ALTER TABLE diagram_relationship ADD FOREIGN KEY (person_id) REFERENCES person(id);
 ALTER TABLE diagram_relationship_element ADD FOREIGN KEY (entity_id) REFERENCES entity(id);
 ALTER TABLE diagram_relationship_element ADD FOREIGN KEY (diagram_relationship_id) REFERENCES diagram_relationship(id);
-ALTER TABLE diagram_relationship_element_reference ADD FOREIGN KEY (diagram_relationship_element_id) REFERENCES diagram_relationship_element(id);
+ALTER TABLE diagram_relationship_element_reference ADD FOREIGN KEY (entity_id) REFERENCES entity(id);
 ALTER TABLE diagram_relationship_link ADD FOREIGN KEY (diagram_relationship_element_id) REFERENCES diagram_relationship_element(id);
 
 insert into person (id, username, name, password, salt) values ('1', 'admin', 'admin', '', '');
@@ -56,3 +55,4 @@ drop table diagram_relationship_element_reference;
 drop table diagram_relationship_element;
 drop table entity;
 drop table diagram_relationship;
+

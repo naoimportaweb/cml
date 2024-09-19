@@ -214,11 +214,13 @@ class Mysql
             if( count( $sqls ) > 1 ){
                 $this->Connection()->commit();
             }
-
+            error_log( $row_count, 0);
             return $row_count; 
             
         }catch(Exception $e){
             $this->Connection()->rollback();
+            error_log("Falha de sql", 0);
+            error_log($e, 0);
             throw $e;
         } finally {
             if($this->action == false) {

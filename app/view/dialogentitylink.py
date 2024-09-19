@@ -15,10 +15,11 @@ from view.ui.customvlayout import CustomVLayout;
 from view.dialogreference import DialogReference;
 
 class DialogEntityLink(QDialog):
-    def __init__(self, link):
+    def __init__(self, link, mapa):
         super().__init__()
         self.setWindowTitle("Relationship")
         self.link = link;
+        self.mapa = mapa;
         self.tab = QTabWidget();  
         self.page_rel      = CustomVLayout.widget_tab( self.tab, "Relationship");
         self.page_ent_from = CustomVLayout.widget_tab( self.tab, "Entity From");
@@ -43,7 +44,7 @@ class DialogEntityLink(QDialog):
         # -----------------------------------------
         layout_from = QVBoxLayout();
         self.cmb_combo_from = QComboBox()
-        for entity in self.link.map.elements:
+        for entity in self.mapa.elements:
             self.cmb_combo_from.addItem( entity.text + "("+ entity.etype +")" );
         
         btn_from_add = QPushButton("Add");
@@ -60,7 +61,7 @@ class DialogEntityLink(QDialog):
         # -----------------------------------------
         layout_to = QVBoxLayout();
         self.cmb_combo_to = QComboBox()
-        for entity in self.link.map.elements:
+        for entity in self.mapa.elements:
             self.cmb_combo_to.addItem( entity.text + "("+ entity.etype +")" );
         
         btn_to_add = QPushButton("Add");
@@ -124,13 +125,13 @@ class DialogEntityLink(QDialog):
             self.table_to.setItem( i, 1, QTableWidgetItem( self.link.to_entity[i].text ) );
 
     def btn_from_add_click(self):
-        elemento = self.link.map.elements[ self.cmb_combo_from.currentIndex() ];
+        elemento = self.mapa.elements[ self.cmb_combo_from.currentIndex() ];
         if elemento != self.link  and not self.link.hasFrom(elemento)  and not self.link.hasTo(elemento):
             self.link.addFrom( elemento );
             self.table_from_load();
     
     def btn_to_add_click(self):
-        elemento = self.link.map.elements[ self.cmb_combo_to.currentIndex() ];
+        elemento = self.mapa.elements[ self.cmb_combo_to.currentIndex() ];
         if elemento != self.link and not self.link.hasTo(elemento) and not self.link.hasFrom(elemento):
             self.link.addTo( elemento );
             self.table_to_load();

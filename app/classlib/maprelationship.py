@@ -23,11 +23,10 @@ class MapRelationship(ConnectObject):
         objeto = self.toJson();
         for element in self.elements:
             objeto["elements"].append( element.toJson() );
-        print(objeto);
-        #js = self.__execute__("MapRelationship", "save", objeto);
-        #if js["status"]:
-        #    return js["return"];
-        #return False;
+        js = self.__execute__("MapRelationship", "save", objeto);
+        if js["status"]:
+            return js["return"];
+        return False;
     
     def load_data(self, data):
         self.id = data["id"];
