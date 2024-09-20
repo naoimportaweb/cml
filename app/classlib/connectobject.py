@@ -9,8 +9,6 @@ class ConnectObject:
     def __execute__(self, class_name, method_name, parameters):
         envelop = { "version" : "001", "class" : class_name, "method" :  method_name, "token" : "", "parameters" : parameters}
         url = "http://"+ self.ip +":80/cml/services/execute.php";
-        print( "URL: ", url );
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'};
         r = requests.post(url, data=json.dumps(envelop), headers=headers);
-        print(r.text);
         return json.loads(r.text);

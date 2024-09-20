@@ -78,32 +78,39 @@ class MainWindow(QMainWindow):
         #    self.statusBar().showMessage("File saved", 2000)
 
     @Slot()
-    def save_as(self):
-        if self.active_mdi_child() and self.active_mdi_child().save_as():
-            self.statusBar().showMessage("File saved", 2000)
+    def map_propert(self):
+        print(self.active_mdi_child() and self.active_mdi_child());
 
-    @Slot()
-    def cut(self):
-        if self.active_mdi_child():
-            self.active_mdi_child().cut()
+    #@Slot()
+    #def save_as(self):
+    #    if self.active_mdi_child() and self.active_mdi_child().save_as():
+    #        self.statusBar().showMessage("File saved", 2000)
 
-    @Slot()
-    def copy(self):
-        if self.active_mdi_child():
-            self.active_mdi_child().copy()
+    #@Slot()
+    #def cut(self):
+    #    if self.active_mdi_child():
+    #        self.active_mdi_child().cut()
 
-    @Slot()
-    def paste(self):
-        if self.active_mdi_child():
-            self.active_mdi_child().paste()
+    #@Slot()
+    #def copy(self):
+    #    if self.active_mdi_child():
+    #        self.active_mdi_child().copy()
+
+    #@Slot()
+    #def paste(self):
+    #    if self.active_mdi_child():
+    #        self.active_mdi_child().paste()
 
     @Slot()
     def about(self):
-        QMessageBox.about(self, "About MDI", "")
+        QMessageBox.about(self, "About Relationship", "")
 
     @Slot()
     def update_menus(self):
         has_mdi_child = (self.active_mdi_child() is not None)
+        if self.active_mdi_child() is not None:
+            buffer_area = self.active_mdi_child() and self.active_mdi_child();
+            self.setWindowTitle( "Relationship MAP: " + buffer_area.mapa.name )
         #self._save_act.setEnabled(has_mdi_child)
         #self._save_as_act.setEnabled(has_mdi_child)
         #self._paste_act.setEnabled(has_mdi_child)
@@ -152,11 +159,12 @@ class MainWindow(QMainWindow):
     def create_mdi_map(self):
         f = DialogRelationship();
         f.exec();
-        child = MdiMap(f.map)
-        self._mdi_area.addSubWindow(child);
-        #self._mdi_area.showFullScreen();
-        #child.copyAvailable.connect(self._cut_act.setEnabled)
-        #child.copyAvailable.connect(self._copy_act.setEnabled)
+        if f.map != None:
+            child = MdiMap(f.map)
+            self._mdi_area.addSubWindow(child);
+            #self._mdi_area.showFullScreen();
+            #child.copyAvailable.connect(self._cut_act.setEnabled)
+            #child.copyAvailable.connect(self._copy_act.setEnabled)
 
         return child
 
@@ -175,34 +183,34 @@ class MainWindow(QMainWindow):
                                  shortcut=QKeySequence.Save,
                                  statusTip="Save the document to disk", triggered=self.save)
 
-        self._save_as_act = QAction("Save &As...", self,
-                                    shortcut=QKeySequence.SaveAs,
-                                    statusTip="Save the document under a new name",
-                                    triggered=self.save_as)
+        #self._save_as_act = QAction("Save &As...", self,
+        #                            shortcut=QKeySequence.SaveAs,
+        #                            statusTip="Save the document under a new name",
+        #                            triggered=self.save_as)
 
         icon = QIcon.fromTheme(QIcon.ThemeIcon.ApplicationExit)
         self._exit_act = QAction(icon, "E&xit", self, shortcut=QKeySequence.Quit,
                                  statusTip="Exit the application",
                                  triggered=QApplication.instance().closeAllWindows)
 
-        icon = QIcon.fromTheme(QIcon.ThemeIcon.EditCut)
-        self._cut_act = QAction(icon, "Cu&t", self,
+        icon = QIcon.fromTheme(QIcon.ThemeIcon.DocumentProperties)
+        self._map_edit_act = QAction(icon, "Property", self,
                                 shortcut=QKeySequence.Cut,
-                                statusTip="Cut the current selection's contents to the clipboard",
-                                triggered=self.cut)
+                                statusTip="Edit map property",
+                                triggered=self.map_propert)
 
-        icon = QIcon.fromTheme(QIcon.ThemeIcon.EditCopy)
-        self._copy_act = QAction(icon, "&Copy", self,
-                                 shortcut=QKeySequence.Copy,
-                                 statusTip="Copy the current selection's contents to the clipboard",
-                                 triggered=self.copy)
+        #icon = QIcon.fromTheme(QIcon.ThemeIcon.EditCopy)
+        #self._copy_act = QAction(icon, "&Copy", self,
+        #                         shortcut=QKeySequence.Copy,
+        #                         statusTip="Copy the current selection's contents to the clipboard",
+        #                         triggered=self.copy)
 
-        icon = QIcon.fromTheme(QIcon.ThemeIcon.EditPaste)
-        self._paste_act = QAction(icon, "&Paste", self,
-                                  shortcut=QKeySequence.Paste,
-                                  statusTip="Paste the clipboard's contents into the current "
-                                            "selection",
-                                  triggered=self.paste)
+        #icon = QIcon.fromTheme(QIcon.ThemeIcon.EditPaste)
+        #self._paste_act = QAction(icon, "&Paste", self,
+        #                          shortcut=QKeySequence.Paste,
+        #                          statusTip="Paste the clipboard's contents into the current "
+        #                                    "selection",
+        #                          triggered=self.paste)
 
         self._close_act = QAction("Cl&ose", self,
                                   statusTip="Close the active window",
@@ -245,16 +253,16 @@ class MainWindow(QMainWindow):
         self._file_menu.addAction(self._new_act)
         self._file_menu.addAction(self._open_act)
         self._file_menu.addAction(self._save_act)
-        self._file_menu.addAction(self._save_as_act)
+        #self._file_menu.addAction(self._save_as_act)
         self._file_menu.addSeparator()
         action = self._file_menu.addAction("Switch layout direction")
         action.triggered.connect(self.switch_layout_direction)
         self._file_menu.addAction(self._exit_act)
 
-        self._edit_menu = self.menuBar().addMenu("&Edit")
-        self._edit_menu.addAction(self._cut_act)
-        self._edit_menu.addAction(self._copy_act)
-        self._edit_menu.addAction(self._paste_act)
+        #self._edit_menu = self.menuBar().addMenu("&Edit")
+        #self._edit_menu.addAction(self._cut_act)
+        #self._edit_menu.addAction(self._copy_act)
+        #self._edit_menu.addAction(self._paste_act)
 
         self._window_menu = self.menuBar().addMenu("&Window")
         self.update_window_menu()
@@ -276,10 +284,10 @@ class MainWindow(QMainWindow):
         self._file_tool_bar.addAction(self._new_act)
         self._file_tool_bar.addAction(self._open_act)
         self._file_tool_bar.addAction(self._save_act)
-        self._edit_tool_bar = self.addToolBar("Edit")
-        self._edit_tool_bar.addAction(self._cut_act)
-        self._edit_tool_bar.addAction(self._copy_act)
-        self._edit_tool_bar.addAction(self._paste_act)
+        self._map_tool_bar = self.addToolBar("Map")
+        self._map_tool_bar.addAction(self._map_edit_act)
+        #self._edit_tool_bar.addAction(self._copy_act)
+        #self._edit_tool_bar.addAction(self._paste_act)
         #self._file_tool_bar.setEnabled(False);
         #self._edit_tool_bar.setEnabled(False);
 
@@ -287,13 +295,13 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage("Ready")
 
     def read_settings(self):
-        settings = QSettings('QtProject', 'MDI Example')
+        settings = QSettings('QtProject', 'MDI')
         geometry = settings.value('geometry', QByteArray())
         if geometry.size():
             self.restoreGeometry(geometry)
 
     def write_settings(self):
-        settings = QSettings('QtProject', 'MDI Example')
+        settings = QSettings('QtProject', 'MDI')
         settings.setValue('geometry', self.saveGeometry())
 
     def active_mdi_child(self):

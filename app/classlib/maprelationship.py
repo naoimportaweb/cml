@@ -75,7 +75,6 @@ class MapRelationship(ConnectObject):
 
     def exists(self, name):
         js = self.__execute__("MapRelationship", "exists", {"id" : self.id,  "name" : name });
-        print("existe:", js);
         if js["status"]:
             return js["return"];
         return False;

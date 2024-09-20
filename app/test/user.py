@@ -14,7 +14,6 @@ from classlib.connectobject import ConnectObject;
 from classlib.user import User;
 
 user = User("maria", "")
-print(user.session());
 
 
 
