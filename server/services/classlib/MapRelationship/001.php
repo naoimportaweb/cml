@@ -56,11 +56,18 @@ class MapRelationship
 
     public function search( $ip, $user, $post_data ) {
         $mysql = new Mysql("");
-        $sql = "SELECT dr.*, pe.username FROM diagram_relationship as dr inner join person as pe on pe.id = dr.person_id WHERE dr.name = ?";
+        $sql = "SELECT dr.*, pe.username FROM diagram_relationship as dr inner join person as pe on pe.id = dr.person_id WHERE dr.name LIKE ?";
         $valores = [ $post_data["parameters"]["name"]];
         return $mysql->DataTable($sql, $valores);
     }
 
+    public function search_entity( $ip, $user, $post_data ) {
+        $mysql = new Mysql("");
+        $sql = "SELECT * FROM entity  where etype <> 'link' and text_label LIKE ?";
+        $valores = [ $post_data["parameters"]["name"]];
+        return $mysql->DataTable($sql, $valores);
+    }
+    
     public function save($ip, $user, $post_data ){
         $mysql = new Mysql("");
         $sqls = array();

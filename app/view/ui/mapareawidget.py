@@ -44,6 +44,16 @@ class MapAreaWidget(QWidget):
         else:
             self.mapa.elements.append(  Rectangle(  x, y, 100, 20 , text="?????")  );
 
+    def addExistEntity(self, entity, x, y):
+        buffer = None;
+        if entity["etype"] == "person":
+            buffer = Person(  x, y, 100, 20 , text=entity["text_label"], entity_id_=entity["id"]);
+        elif entity["etype"] == "organization":
+            buffer = Organization(  x, y, 100, 20 , text=entity["text_label"], entity_id_=entity["id"])  ;
+        elif entity["etype"] == "link":
+            buffer =  Link(  x, y, 100, 20 , text=entity["text_label"], entity_id_=entity["id"])  ;
+        self.mapa.elements.append(  buffer  );
+    
     def paintEvent(self, event: QPaintEvent):
         with QPainter(self) as painter:
             painter.drawPixmap(0, 0, self.pixmap)

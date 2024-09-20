@@ -93,11 +93,15 @@ class DialogRelationship(QDialog):
             self.layout_principal.disable("buttons");
     
     def __validar__(self):
-        if len(self.txt_name.text()) == 0 or len(self.txt_key.text()) == 0:
-            self.lbl_message.setText("Enter a name and keywords.");
+        if len(self.txt_name.text()) == 0 :
+            self.lbl_message.setText("Enter a name.");
             return False;
         r = MapRelationship();
         if r.exists(self.txt_name.text()):
             self.lbl_message.setText( "This diraggram already exists.." );
+            return False;
+        
+        if len(self.txt_key.text()) == 0:
+            self.lbl_message.setText("Enter a keywords.");
             return False;
         return True;

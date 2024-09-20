@@ -13,12 +13,14 @@ ROOT = os.path.dirname( CURRENTDIR );
 sys.path.append( ROOT );
 
 from view.ui.customvlayout import CustomVLayout;
+from view.dialogentityload import DialogEntityLoad;
 
 class DialogChoiceEntity(QDialog):
     def __init__(self):
         super().__init__()
         self.option = 0;
         self.ptype = None;
+        self.search_entity = None;
         self.setWindowTitle("Choice")
         self.layout_principal = CustomVLayout();
         self.setLayout( self.layout_principal );
@@ -26,7 +28,6 @@ class DialogChoiceEntity(QDialog):
         self.painel_search();
         self.layout_principal.pad();
         self.layout_principal.disable("search");
-
 
     def painel_new(self):
         layout = QGridLayout()
@@ -74,9 +75,13 @@ class DialogChoiceEntity(QDialog):
         self.ptype = None;
         self.close();
     def btn_search_click(self):
-       self.layout_principal.enable("search");
-       self.layout_principal.disable("new");
+        f = DialogEntityLoad( self );
+        f.exec();
 
     def btn_new_click(self):
        self.layout_principal.enable("new");
        self.layout_principal.disable("search");
+
+    def entity_selected(self, element):
+        self.search_entity = element;
+        self.close();

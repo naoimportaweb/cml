@@ -38,6 +38,10 @@ class MdiMap(QWidget):
         form.exec();
         if form.ptype != None:
             map.addEntity( form.ptype, x, y );
+        else:
+            if form.search_entity != None:
+                map.addExistEntity(form.search_entity, x, y);
+
 
     def new_map(self):
         return;
