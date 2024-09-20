@@ -21,6 +21,8 @@ class MdiMap(QWidget):
         layout = QHBoxLayout()
         layout.addWidget( self.painter_widget );
         self.setLayout(layout)
+        self.painter_widget.redraw();
+        
 
     def entity_double_click(self, entity):
         if entity.etype == "person":

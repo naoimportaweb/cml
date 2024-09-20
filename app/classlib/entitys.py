@@ -38,7 +38,9 @@ class Rectangle():
     def toJson(self):
         objeto = { "id" : self.id, "entity_id": self.entity_id , "x" : self.x, "y" : self.y, "w" : self.w, "h" : self.h, "text" : self.text, "full_description" : self.full_description, "etype" : self.etype, "references" : []  };
         for reference in self.references:
-            objeto["references"].append( reference.toJson() );
+            buffer = reference.toJson();
+            buffer["entity_id"] = self.entity_id;
+            objeto["references"].append( buffer );
         return objeto;
             
     def addReference(self, title, link1, link2 = "", link3 = ""):
@@ -81,10 +83,10 @@ class Link(Rectangle):
         objeto = super().toJson();
         objeto["to"] = [];
         objeto["from"] = [];
-        for to in self.to_entity:
-            objeto["to"].append( {"id" : self.id, "element_id" : from_.id} );
+        for to_ in self.to_entity:
+            objeto["to"].append(    {"id" : self.id + "_2", "element_id" : to_.id} );
         for from_ in self.from_entity:
-            objeto["from"].append( {"id" : self.id, "element_id" : from_.id} );
+            objeto["from"].append(  {"id" : self.id + "_1", "element_id" : from_.id} );
         return objeto;
     def hasTo(self, element):
         return element in self.to_entity;

@@ -68,3 +68,8 @@ drop table diagram_relationship_element;
 drop table entity;
 drop table diagram_relationship;
 
+delete from diagram_relationship_link;
+delete from diagram_relationship_element_reference;
+delete from diagram_relationship_element;
+delete from entity;
+delete from diagram_relationship;
