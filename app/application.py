@@ -10,7 +10,8 @@ sys.path.append(CURRENTDIR);
 
 from argparse import ArgumentParser, RawTextHelpFormatter
 from functools import partial
-import sys
+
+
 from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings,
                             QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence

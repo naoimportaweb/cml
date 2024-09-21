@@ -15,6 +15,7 @@ sys.path.append("/opt/cml/app/");
 
 from view.ui.customvlayout import CustomVLayout;
 from classlib.server import Server;
+from classlib.user import User;
 
 class DialogConnect(QDialog):
     def __init__(self):
@@ -104,15 +105,22 @@ class DialogConnect(QDialog):
         self.layout_principal.enable("login");
         self.layout_principal.disable("register");       
     def btn_click_register_entrar(self):
-        server = Server();
-        envelop = {"username" : self.txt_register_username.text(),
-        "password" : self.txt_register_password.text(),
-        "mail" : self.txt_register_mail.text()};
+        #envelop = {"username" : self.txt_register_username.text(),
+        #"password" : self.txt_register_password.text(),
+        #"mail" : self.txt_register_mail.text()};
         server.status = True;
         self.close();
     def btn_click_login_entrar(self):
         server = Server();
-        envelop = {"username" : self.txt_login_username.text(),
-        "password" : self.txt_login_password.text()};
-        server.status = True;
-        self.close();
+        user = User("nao.importa.web");#forca
+        buffer_public_pem = user.publickey() ;
+        if buffer_public_pem != None:
+            server.public_key = buffer_public_pem;
+            print(server.public_key);
+            print(user.login( "123456" ));
+            print(user.user_id);
+        #server = Server();
+        #envelop = {"username" : self.txt_login_username.text(),
+        #"password" : self.txt_login_password.text()};
+        #server.status = True;
+        #self.close();

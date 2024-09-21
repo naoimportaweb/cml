@@ -9,8 +9,6 @@ function millisecsBetween($dateOne, $dateTwo, $abs = true) {
     return $func(strtotime($dateOne) - strtotime($dateTwo)) * 1000;
 }
 
-
-
 $ip = null;
 if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
     $ip = $_SERVER['HTTP_CLIENT_IP'];
@@ -30,21 +28,25 @@ error_log(file_get_contents('php://input'), 0);
 
 $token_request = md5(uniqid(rand(), true));
 try{
+    $session = new Session();
     $antes = (new \DateTime());
     //https://www.slingacademy.com/article/ways-to-create-an-object-in-php/
     //https://stackoverflow.com/questions/1005857/how-to-call-a-function-from-a-string-stored-in-a-variable
 
     // se tiver criptografado, entao temos que descriptografar
-    if (array_key_exists('token',$post_data)){
-        $post_data["parameters"] = Session::decrypt( $post_data["token"], $post_data["parameters"] );
-    }
+    //if (array_key_exists('token',$post_data)){
+    //    $post_data["parameters"] = Session::decrypt( $post_data["token"], $post_data["parameters"] );
+    //}
 
     $return_metehod = "";
     // chamar os métodos, alguns sao fixos pela logica, os outros são dinamicos pelo uso.
-    if( $post_data["class"] == "Session" && $post_data["method"] == "getkey" ) {
-        $return_metehod = Session::getkey( $post_data["parameters"]["public_key"] );
-    } else if( $post_data["class"] == "Session" && $post_data["method"] == "create" ) {
-        $return_metehod = Session::create($post_data["token"], $post_data["parameters"]["user"], $post_data["parameters"]["password"]);
+    if( $post_data["class"] == "Session" && $post_data["method"] == "publickey" ) {
+        $return_metehod = $session->publickey();
+    } else if( $post_data["class"] == "Session" && $post_data["method"] == "login" ) {
+        $post_data["parameters"] = json_decode( $session->decrypt( "", $post_data["parameters"] ), true ); // vai usar chave publica chave privada....
+        //error_log( "json: " . json_encode( $post_data["parameters"] ), 0);
+        $return_metehod = $session->login($post_data["parameters"]["username"], $post_data["parameters"]["password"]);
+        $return_metehod = $session->encrypt("", "001", json_encode( $return_metehod ));
     } else{
         // -------------------- FORCAR O CARREGAMENTO AQUI ENQUATNO NAO FAÇO SISTEMA DE LOGIN
         $user = new User();
@@ -60,8 +62,9 @@ try{
     $agora = (new \DateTime());
     $post_data["status"] = true;
     $post_data["return"] = $return_metehod;
-    if (array_key_exists('token',$post_data)){
-        $post_data["return"] = Session::encrypt( $post_data["token"], $post_data["return"] );
+    
+    if (array_key_exists('token',$post_data) and $post_data["token"] != ""){
+        $post_data["return"] = $session->encrypt( $post_data["token"], $post_data["return"] );
     }
     error_log(json_encode($post_data), 0);
     echo json_encode($post_data);

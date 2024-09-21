@@ -198,23 +198,28 @@ class Mysql
                 $sqls = [$sqls];
                 $valuess = [$valuess];
             }
-            $this->Connection()->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            //$this->Connection()->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             if( count( $sqls ) > 1 ){
                 $this->Connection()->beginTransaction();
             }
 
             for($i = 0; $i < count($sqls); $i++) {
                 $sql = $sqls[$i];
+                //error_log($sql, 0);
                 $values = $valuess[$i];
+                //for($j =0; $j < count($values); $j++){
+                //    error_log( $values[$j], 0 );
+                //}
                 $query = $this->Connection()->prepare($sql);
                 $query->execute($values);
                 $row_count = $row_count + $query->rowCount();
+                error_log( $row_count, 0);
             }
 
             if( count( $sqls ) > 1 ){
                 $this->Connection()->commit();
             }
-            error_log( $row_count, 0);
+            
             return $row_count; 
             
         }catch(Exception $e){
