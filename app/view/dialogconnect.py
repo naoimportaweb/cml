@@ -36,7 +36,8 @@ class DialogConnect(QDialog):
         server_url = QLabel("Server URL:")
         server_url.setProperty("class", "normal")
         layout_server.addWidget(server_url, 1, 0)
-        self.txt_server = QLineEdit()
+        self.txt_server = QLineEdit();
+        self.txt_server.setText("http://localhost");
         self.txt_server.setMinimumWidth(500);
         layout_server.addWidget(self.txt_server, 1, 1, 1, 2)
         self.layout_principal.addLayout( "server", layout_server );
@@ -49,11 +50,13 @@ class DialogConnect(QDialog):
         user_login.setProperty("class", "normal")
         layout_login.addWidget(user_login, 1, 0)
         self.txt_login_username = QLineEdit()
+        self.txt_login_username.setText("nao.importa.web");
         layout_login.addWidget(self.txt_login_username, 1, 1, 1, 2)
         pwd_login = QLabel("Password")
         pwd_login.setProperty("class", "normal")
         layout_login.addWidget(pwd_login, 2, 0)
-        self.txt_login_password = QLineEdit()
+        self.txt_login_password = QLineEdit();
+        self.txt_login_password.setText( "123456" );
         self.txt_login_password.setEchoMode(QLineEdit.EchoMode.Password)
         layout_login.addWidget(self.txt_login_password, 2, 1, 1, 2)
         btn_login_entrar = QPushButton("Login")
@@ -112,13 +115,16 @@ class DialogConnect(QDialog):
         self.close();
     def btn_click_login_entrar(self):
         server = Server();
-        user = User("nao.importa.web");#forca
+        server.ip = self.txt_server.text();
+        user = User(self.txt_login_username.text());#forca
         buffer_public_pem = user.publickey() ;
         if buffer_public_pem != None:
             server.public_key = buffer_public_pem;
-            print(server.public_key);
-            print(user.login( "123456" ));
-            print(user.user_id);
+            if user.login( self.txt_login_password.text() ):
+                print(user.user_id);
+                print(user.teste());
+                server.status = True;
+                self.close();
         #server = Server();
         #envelop = {"username" : self.txt_login_username.text(),
         #"password" : self.txt_login_password.text()};

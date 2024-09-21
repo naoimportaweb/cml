@@ -1,4 +1,4 @@
-
+# --------------- INSTALAÇAO -------------------------------------
 
 create table person(
     id VARCHAR(128) PRIMARY KEY,
@@ -69,6 +69,9 @@ ALTER TABLE diagram_relationship_element_reference ADD FOREIGN KEY (entity_id) R
 ALTER TABLE diagram_relationship_link ADD FOREIGN KEY (diagram_relationship_element_id) REFERENCES diagram_relationship_element(id);
 ALTER TABLE diagram_relationship_link ADD FOREIGN KEY (diagram_relationship_element_id_reference) REFERENCES diagram_relationship_element(id);
 
+
+# --------------------------- LIMPANDO -------------------------
+
 insert into person (id, username, name, password, salt) values ('1', 'nao.importa.web', 'nao.importa.web', '7c61be27eec3fa7cef2e0d44d3145ea37648b0842d5574c0163b92c0bed54924', '1111');
 
 drop table diagram_relationship_link;
@@ -84,3 +87,9 @@ delete from diagram_relationship_element_reference;
 delete from diagram_relationship_element;
 delete from entity;
 delete from diagram_relationship;
+
+
+# ------------- HOMOLOGAÇAO -------------------------------
+
+
+

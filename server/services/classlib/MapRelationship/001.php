@@ -9,6 +9,8 @@ class MapRelationship
     private $keyword = "";
     private $person_id = "";
 
+    
+    
     public function load( $ip, $user, $post_data ) {
         $mysql = new Mysql("");
         $buffer_diagram =  $mysql->DataTable("SELECT * from diagram_relationship where id = ?", [ $post_data["parameters"]["id"] ])[0];
@@ -56,14 +58,14 @@ class MapRelationship
 
     public function search( $ip, $user, $post_data ) {
         $mysql = new Mysql("");
-        $sql = "SELECT dr.*, pe.username FROM diagram_relationship as dr inner join person as pe on pe.id = dr.person_id WHERE dr.name LIKE ?";
+        $sql = "SELECT dr.*, pe.username FROM diagram_relationship as dr inner join person as pe on pe.id = dr.person_id WHERE LOWER(dr.name) LIKE LOWER( ? )";
         $valores = [ $post_data["parameters"]["name"]];
         return $mysql->DataTable($sql, $valores);
     }
 
     public function search_entity( $ip, $user, $post_data ) {
         $mysql = new Mysql("");
-        $sql = "SELECT * FROM entity  where etype <> 'link' and text_label LIKE ?";
+        $sql = "SELECT * FROM entity  where etype <> 'link' and LOWER(text_label) LIKE LOWER( ? )";
         $valores = [ $post_data["parameters"]["name"]];
         return $mysql->DataTable($sql, $valores);
     }
@@ -77,7 +79,6 @@ class MapRelationship
 
         for($i = 0; $i < count($post_data["parameters"]["elements"]); $i++) {
             $element = $post_data["parameters"]["elements"][$i];
-            error_log($element["id"], 0);
             //if( $element["etype"] == "link"){
             //    continue;
             //}

@@ -62,10 +62,10 @@ class Rectangle():
             objeto["time_slices"].append( buffer );
         return objeto;
             
-    def addReference(self, title, link1, link2 = "", link3 = ""):
+    def addReference(self, title, link1, link2 = "", link3 = "", id_=None):
         if link1 == "":
             return None;
-        self.references.append( Reference( title, link1, link2, link3 ) );
+        self.references.append( Reference( title, link1, link2, link3, id_=id_ ) );
         return self.references[-1];
 
     def addTimeSlice(self, text_label, date_start=None, date_end=None, id_=None):
@@ -134,10 +134,12 @@ class Link(Rectangle):
         frame_text = painter.boundingRect(0, 0, 150, 30, 0, self.text);
         self.w = frame_text.width() + 10;
         self.h = frame_text.height() + 2;
-        painter.setPen(QPen(Qt.blue, 1, Qt.DashDotLine, Qt.RoundCap));
+        painter.setPen(QPen(Qt.red, 1, Qt.DashDotLine, Qt.RoundCap));
         for element in self.to_entity:
             painter.drawLine( self.x + int( self.w / 2 ) , self.y  + int( self.h / 2 ) , element.x + int( element.w / 2), element.y + int( element.h / 2 ) );
+        painter.setPen(QPen(Qt.blue, 1, Qt.DashDotLine, Qt.RoundCap));
         for element in self.from_entity:
             painter.drawLine( self.x + int( self.w / 2 ) , self.y  + int( self.h / 2 ) , element.x + int( element.w / 2), element.y + int( element.h / 2 ) );
+        painter.setPen(QPen(Qt.blue, 1, Qt.DashDotLine, Qt.RoundCap));
         painter.fillRect(self.x, self.y, self.w, self.h, QBrush(Qt.white));
         painter.drawText(QRectF(self.x , self.y, self.w, self.h), Qt.AlignCenter | Qt.AlignTop, self.text);

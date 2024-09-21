@@ -44,9 +44,9 @@ class Json {
     }
     
     static public function InArray($json_array, $field_name, $field_value){
-        error_log(json_encode($json_array),0);
-        error_log($field_name);
-        error_log($field_value);
+        //error_log(json_encode($json_array),0);
+        //error_log($field_name);
+        //error_log($field_value);
         try{
             for($i = 0; $i < count($json_array); $i++){
                 //if($json_array[$i]->{$field_name} == $field_value){

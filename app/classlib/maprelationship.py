@@ -47,7 +47,7 @@ class MapRelationship(ConnectObject):
                 else:
                     continue;
                 for reference in element["references"]:
-                    buffer.addReference(reference["title"], reference["link1"], reference["link1"], reference["link1"]);
+                    buffer.addReference(reference["title"], reference["link1"], reference["link1"], reference["link1"], id_=reference["id"]);
                 self.elements.append(  buffer  );
             for element in data['elements']:
                 if element["etype"] != "link":
@@ -59,7 +59,7 @@ class MapRelationship(ConnectObject):
                 for from_ in element["from"]:
                     objeto.addFrom( self.findById( self.elements, from_["id"] ) );
                 for reference in element["references"]:
-                    objeto.addReference(reference["title"], reference["link1"], reference["link1"], reference["link1"]);
+                    objeto.addReference(reference["title"], reference["link1"], reference["link1"], reference["link1"], id_=reference["id"]);
                 self.elements.append(  objeto  );
 
         return True;

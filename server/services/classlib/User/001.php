@@ -8,6 +8,10 @@ class User
     public $name;
     public $username;
 
+    public function teste( $ip, $user, $post_data ) {
+        return array("username" => $post_data["parameters"]["username"]);
+    }
+
     public function load( $id ) {
         $mysql = new Mysql("");
         $this->load_data( $mysql->DataTable("SELECT * from person where id = ?", [ $id ])[0] );

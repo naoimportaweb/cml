@@ -74,9 +74,7 @@ class Mysql
                 if($field->type == "varchar"){
                     $field->type = "varchar(255)";
                 }
-                //error_log(json_encode($field), 0);
                 $sql = "ALTER TABLE ". $entity ." ADD ". $field->name ." " . $field->type;
-                error_log($sql, 0);
                 $query = $this->Connection()->prepare($sql);
                 $query->execute($values);
                 return $query->rowCount(); 
@@ -205,11 +203,7 @@ class Mysql
 
             for($i = 0; $i < count($sqls); $i++) {
                 $sql = $sqls[$i];
-                //error_log($sql, 0);
                 $values = $valuess[$i];
-                //for($j =0; $j < count($values); $j++){
-                //    error_log( $values[$j], 0 );
-                //}
                 $query = $this->Connection()->prepare($sql);
                 $query->execute($values);
                 $row_count = $row_count + $query->rowCount();

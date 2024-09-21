@@ -9,6 +9,8 @@ class Server(metaclass=SingletonMeta):
         self.ip = "127.0.0.1";
         self.port = 80;
         self.public_key = None;
+        self.simetric_key = None;
+        self.token = "";
     def connect(self, url, proxy=None):
         self.status = True;
 
