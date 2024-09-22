@@ -122,12 +122,5 @@ class DialogConnect(QDialog):
         if buffer_public_pem != None:
             server.public_key = buffer_public_pem;
             if user.login( self.txt_login_password.text() ):
-                print(user.user_id);
-                print(user.teste());
                 server.status = True;
                 self.close();
-        #server = Server();
-        #envelop = {"username" : self.txt_login_username.text(),
-        #"password" : self.txt_login_password.text()};
-        #server.status = True;
-        #self.close();

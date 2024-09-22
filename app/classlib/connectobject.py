@@ -57,16 +57,11 @@ class ConnectObject:
         #elif crypto_v == "002":
         #    envelop["parameters"] = "00000002" +  base64.b64encode(aes_encript(server.simetric_key ,json.dumps(parameters).encode("utf-8"))).decode();
         #    envelop["parameters"] = "00000002" + json.dumps(parameters);
-        envelop["session"] = server.token;
-        #    print("Session: ", server.token);
         #    print("Key: ", server.simetric_key);
-
+        envelop["session"] = server.token;
         url = self.ip +"/cml/services/execute.php";
-        #url = "https://cypherpunk.com.br:443/cml/services/execute.php";
-        print(url);
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'};
         r = requests.post(url, data=json.dumps(envelop), headers=headers);
-        print("Retorno", r.text.strip());
         retorno_json = json.loads(r.text.strip());
         if type(retorno_json["return"]) == type(""):
             retorno_body = retorno_json["return"][8:];
