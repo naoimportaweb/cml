@@ -37,7 +37,7 @@ class DialogConnect(QDialog):
         server_url.setProperty("class", "normal")
         layout_server.addWidget(server_url, 1, 0)
         self.txt_server = QLineEdit();
-        self.txt_server.setText("http://localhost");
+        self.txt_server.setText("https://cypherpunk.com.br");
         self.txt_server.setMinimumWidth(500);
         layout_server.addWidget(self.txt_server, 1, 1, 1, 2)
         self.layout_principal.addLayout( "server", layout_server );
@@ -115,6 +115,7 @@ class DialogConnect(QDialog):
         self.close();
     def btn_click_login_entrar(self):
         server = Server();
+        #server.ip = "http://localhost";# self.txt_server.text();
         server.ip = self.txt_server.text();
         user = User(self.txt_login_username.text());#forca
         buffer_public_pem = user.publickey() ;

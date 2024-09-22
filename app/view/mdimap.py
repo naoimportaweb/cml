@@ -11,6 +11,7 @@ from view.ui.mapareawidget import MapAreaWidget;
 from view.dialogentitylink import DialogEntityLink;
 from view.dialogentityorganization import DialogEntityOrganization;
 from view.dialogentityperson import DialogEntityPerson;
+from view.dialogentityother import DialogEntityOther;
 from view.dialogchoice import DialogChoiceEntity;
 
 class MdiMap(QWidget):
@@ -27,6 +28,8 @@ class MdiMap(QWidget):
     def entity_double_click(self, entity):
         if entity.etype == "person":
             form = DialogEntityPerson(entity);
+        elif entity.etype == "other":
+            form = DialogEntityOther(entity);
         elif entity.etype == "organization":
             form = DialogEntityOrganization(entity);
         elif entity.etype == "link":

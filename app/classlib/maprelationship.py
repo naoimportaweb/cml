@@ -5,7 +5,7 @@ sys.path.append(CURRENTDIR);
 sys.path.append( os.path.dirname( CURRENTDIR ));
 
 from classlib.connectobject import ConnectObject;
-from classlib.entitys import Person, Organization, Link, Rectangle
+from classlib.entitys import Person, Organization, Link, Rectangle, Other
 
 class MapRelationship(ConnectObject):
     def __init__(self, id_=None):
@@ -42,12 +42,16 @@ class MapRelationship(ConnectObject):
                 buffer = None;
                 if element['etype'] == "person":
                     buffer = Person(        x, y, w, h, text=element["text_label"], id_=element["id"], entity_id_=element["entity_id"] );
+                    buffer.doxxing = element["data_extra"];
+                elif element['etype'] == "other":
+                    buffer = Other(        x, y, w, h, text=element["text_label"], id_=element["id"], entity_id_=element["entity_id"] );
                 elif element['etype'] == "organization":
                     buffer = Organization(  x, y, w, h, text=element["text_label"], id_=element["id"], entity_id_=element["entity_id"] ) ;
                 else:
                     continue;
                 for reference in element["references"]:
-                    buffer.addReference(reference["title"], reference["link1"], reference["link1"], reference["link1"], id_=reference["id"]);
+                    buffer.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"]);
+                buffer.full_description = element["full_description"];
                 self.elements.append(  buffer  );
             for element in data['elements']:
                 if element["etype"] != "link":
@@ -59,7 +63,7 @@ class MapRelationship(ConnectObject):
                 for from_ in element["from"]:
                     objeto.addFrom( self.findById( self.elements, from_["id"] ) );
                 for reference in element["references"]:
-                    objeto.addReference(reference["title"], reference["link1"], reference["link1"], reference["link1"], id_=reference["id"]);
+                    objeto.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"]);
                 self.elements.append(  objeto  );
 
         return True;

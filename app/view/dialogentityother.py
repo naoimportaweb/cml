@@ -14,25 +14,24 @@ sys.path.append( ROOT );
 from view.ui.customvlayout import CustomVLayout;
 from view.dialogreference import DialogReference;
 
-class DialogEntityOrganization(QDialog):
-    def __init__(self, organizagion):
+class DialogEntityOther(QDialog):
+    def __init__(self, other):
         super().__init__()
-        self.setWindowTitle("Organization")
-        self.organizagion = organizagion;
+        self.setWindowTitle("Other")
+        self.other = other;
         self.tab = QTabWidget();  
-        self.page_rel = CustomVLayout.widget_tab( self.tab, "Organization");
+        self.page_rel = CustomVLayout.widget_tab( self.tab, "other");
         self.page_pho = CustomVLayout.widget_tab( self.tab, "Photo");
-        self.page_dat = CustomVLayout.widget_tab( self.tab, "Data");
         self.page_ref = CustomVLayout.widget_tab( self.tab, "References");
         # ------------------------------------------
         self.lbl_text = QLabel("Text");
         self.txt_text = QLineEdit();
-        self.txt_text.setText( self.organizagion.text ) ;
+        self.txt_text.setText( self.other.text ) ;
         self.txt_text.textChanged.connect(self.txt_text_changed)
         CustomVLayout.widget_linha(self, self.page_rel, [self.lbl_text, self.txt_text] );
         
         self.txt_descricao = QTextEdit();
-        self.txt_descricao.setPlainText( organizagion.full_description );
+        self.txt_descricao.setPlainText( other.full_description );
         self.txt_descricao.setLineWrapMode(QTextEdit.NoWrap);
         self.txt_descricao.textChanged.connect(self.txt_descricao_changed)
         font = self.txt_descricao.font();
@@ -54,28 +53,28 @@ class DialogEntityOrganization(QDialog):
         self.setLayout(   layout             );
 
     def table_reference_load(self):
-        self.table_reference.setRowCount( len( self.organizagion.references ) );
-        for i in range(len( self.organizagion.references )):
-            self.table_reference.setItem( i, 0, QTableWidgetItem( self.organizagion.references[i].title ) );
+        self.table_reference.setRowCount( len( self.other.references ) );
+        for i in range(len( self.other.references )):
+            self.table_reference.setItem( i, 0, QTableWidgetItem( self.other.references[i].title ) );
     
     def table_reference_click(self):
-        element = self.organizagion.references[ self.table_reference.index() ];
-        form = DialogReference(self, self.organizagion, reference=element);
+        element = self.other.references[ self.table_reference.index() ];
+        form = DialogReference(self, self.other, reference=element);
         form.exec();
         self.table_reference_load();
 
     def btn_reference_del_click(self):
         index = self.table_reference.index();
-        self.organizagion.references.pop( index );
+        self.other.references.pop( index );
         self.table_reference_load();
     
     def btn_reference_add_click(self):
-        form = DialogReference(self, self.organizagion, reference=None);
+        form = DialogReference(self, self.other, reference=None);
         form.exec();
         self.table_reference_load()
 
     def txt_text_changed(self):
-        self.organizagion.text = self.txt_text.text();
+        self.other.text = self.txt_text.text();
     
     def txt_descricao_changed(self):
-        self.organizagion.full_description = self.txt_descricao.toPlainText();
+        self.other.full_description = self.txt_descricao.toPlainText();

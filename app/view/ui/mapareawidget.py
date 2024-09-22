@@ -9,7 +9,7 @@ import os, sys, inspect, json, uuid;
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
 sys.path.append( os.path.dirname( os.path.dirname( CURRENTDIR ) ) );
 
-from classlib.entitys import Person, Organization, Link, Rectangle
+from classlib.entitys import Person, Organization, Link, Rectangle, Other
 
 class MapAreaWidget(QWidget):
     def __init__(self, parent=None, mapa=None, form=None, max_width=15000 , max_height=10000):
@@ -37,6 +37,8 @@ class MapAreaWidget(QWidget):
     def addEntity(self, ptype, x, y):
         if ptype == "person":
             self.mapa.elements.append(  Person(  x, y, 100, 20 , text="Person")  );
+        elif ptype == "other":
+            self.mapa.elements.append(  Other(  x, y, 100, 20 , text="Other")  );
         elif ptype == "organization":
             self.mapa.elements.append(  Organization(  x, y, 100, 20 , text="Organization")  );
         elif ptype == "link":
@@ -48,10 +50,17 @@ class MapAreaWidget(QWidget):
         buffer = None;
         if entity["etype"] == "person":
             buffer = Person(  x, y, 100, 20 , text=entity["text_label"], entity_id_=entity["id"]);
+            buffer.doxxing = entity["data_extra"];
+        elif entity["etype"] == "other":
+            buffer = Other(  x, y, 100, 20 , text=entity["text_label"], entity_id_=entity["id"]);
         elif entity["etype"] == "organization":
             buffer = Organization(  x, y, 100, 20 , text=entity["text_label"], entity_id_=entity["id"])  ;
-        elif entity["etype"] == "link":
-            buffer =  Link(  x, y, 100, 20 , text=entity["text_label"], entity_id_=entity["id"])  ;
+        #elif entity["etype"] == "link":
+        #    buffer =  Link(  x, y, 100, 20 , text=entity["text_label"], entity_id_=entity["id"])  ;
+        buffer.full_description = entity["description"];
+        for reference in entity["references"]:
+            buffer.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"]);
+
         self.mapa.elements.append(  buffer  );
     
     def paintEvent(self, event: QPaintEvent):
@@ -68,10 +77,10 @@ class MapAreaWidget(QWidget):
         self.painter.begin(self.pixmap);
         self.pixmap.fill(Qt.white);
         for elemento in self.mapa.elements:
-            if elemento.etype == "person" or elemento.etype == "organization":
+            if elemento.etype == "link":
                 elemento.draw( self.painter );
         for elemento in self.mapa.elements:
-            if elemento.etype == "link":
+            if elemento.etype == "person" or elemento.etype == "organization" or elemento.etype == "other":
                 elemento.draw( self.painter );
         self.painter.end();
         self.update();

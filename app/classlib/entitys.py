@@ -45,11 +45,12 @@ class Rectangle():
         #self.map = map;
         self.text = text;
         self.full_description = "";
+        self.data_extra = "";
         self.references = [];
         self.time_slices = [];
     
     def toJson(self):
-        objeto = { "id" : self.id, "entity_id": self.entity_id , "x" : self.x, "y" : self.y, "w" : self.w, "h" : self.h, "text" : self.text, "full_description" : self.full_description, "etype" : self.etype, "references" : [], "time_slices" : []  };
+        objeto = { "id" : self.id, "entity_id": self.entity_id , "x" : self.x, "y" : self.y, "w" : self.w, "h" : self.h, "text" : self.text, "full_description" : self.full_description, "etype" : self.etype, "references" : [], "time_slices" : [], "data_extra" : self.data_extra  };
         
         for reference in self.references:
             buffer = reference.toJson();
@@ -91,11 +92,44 @@ class Person(Rectangle):
         super().__init__( x, y, w, h, text=text, id_=id_, entity_id_=entity_id_ );
         self.etype = "person";
         self.doxxing = "";
+    
+    def toJson(self):
+        objeto = super().toJson();
+        objeto["data_extra"] = self.doxxing;
+        return objeto;  
+
+    def draw(self, painter):
+        penRectangle = QPen(Qt.black)
+        penRectangle.setWidth(1)
+        painter.setPen(penRectangle)
+        frame_text = painter.boundingRect(0, 0, 150, 30, 0, self.text);
+        self.w = frame_text.width() + 10;
+        self.h = frame_text.height() + 2;
+        painter.fillRect( self.x, self.y, self.w, self.h, QBrush(Qt.white));
+        painter.drawRoundedRect(self.x, self.y, self.w, self.h, 5, 5);
+        if self.text != None:
+            painter.drawText(QRectF(self.x , self.y, self.w, self.h), Qt.AlignCenter | Qt.AlignTop, self.text)
+        #path.addRoundedRect(QRectF(10, 10, 100, 50), 10, 10);
 
 class Organization(Rectangle):
     def __init__(self, x, y, w, h, text=None, id_=None, entity_id_=None ):
         super().__init__( x, y, w, h, text=text, id_=id_, entity_id_=entity_id_ );
         self.etype = "organization";
+
+class Other(Rectangle):
+    def __init__(self, x, y, w, h, text=None, id_=None, entity_id_=None ):
+        super().__init__( x, y, w, h, text=text, id_=id_, entity_id_=entity_id_ );
+        self.etype = "other";
+    def draw(self, painter):
+        penRectangle = QPen(Qt.black)
+        penRectangle.setWidth(1)
+        painter.setPen(penRectangle)
+        frame_text = painter.boundingRect(0, 0, 150, 30, 0, self.text);
+        self.w = frame_text.width() + 10;
+        self.h = frame_text.height() + 2;
+        painter.fillRect( self.x, self.y, self.w, self.h, QBrush(Qt.yellow));
+        if self.text != None:
+            painter.drawText(QRectF(self.x , self.y, self.w, self.h), Qt.AlignCenter | Qt.AlignTop, self.text)
 
 class Link(Rectangle):
     def __init__(self,  x, y, w, h, text=None, id_=None, entity_id_=None ):
@@ -109,9 +143,9 @@ class Link(Rectangle):
         objeto["to"] = [];
         objeto["from"] = [];
         for to_ in self.to_entity:
-            objeto["to"].append(    {"id" : self.id + "_2", "element_id" : to_.id} );
+            objeto["to"].append(    {"id" : self.id[:40] + "_" + to_.id[:40] +  "_2", "element_id" : to_.id} );
         for from_ in self.from_entity:
-            objeto["from"].append(  {"id" : self.id + "_1", "element_id" : from_.id} );
+            objeto["from"].append(  {"id" : self.id[:40] + "_" + to_.id[:40] +  "_1", "element_id" : from_.id} );
         return objeto;
     def hasTo(self, element):
         return element in self.to_entity;
@@ -143,3 +177,12 @@ class Link(Rectangle):
         painter.setPen(QPen(Qt.blue, 1, Qt.DashDotLine, Qt.RoundCap));
         painter.fillRect(self.x, self.y, self.w, self.h, QBrush(Qt.white));
         painter.drawText(QRectF(self.x , self.y, self.w, self.h), Qt.AlignCenter | Qt.AlignTop, self.text);
+    #def DrawLineWithArrow(QPainter& painter, QPoint start, QPoint end) {
+    #    #painter.setRenderHint(QPainter::Antialiasing, true);
+    #    arrowSize = 40;
+    #    #  painter.setPen(Qt::black);
+    #    #  painter.setBrush(Qt::black);
+    #    QLineF line(end, start);
+    #    double angle = std::atan2(-line.dy(), line.dx());
+    #    QPointF arrowP1 = line.p1() + QPointF(sin(angle + M_PI / 3) * arrowSize,cos(angle + M_PI / 3) * arrowSize);
+    #    QPointF arrowP2 = line.p1() + QPointF(sin(angle + M_PI - M_PI / 3) * arrowSize, cos(angle + M_PI - M_PI / 3) * arrowSize);

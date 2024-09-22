@@ -29,6 +29,7 @@ create table entity (
     id VARCHAR(128) PRIMARY KEY,
     text_label VARCHAR(255) NOT NULL,
     description TEXT,
+    data_extra TEXT,
     etype VARCHAR(255) NOT NULL,
     creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP

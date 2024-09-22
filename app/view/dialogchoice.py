@@ -36,15 +36,18 @@ class DialogChoiceEntity(QDialog):
         btn_search = QPushButton("Search existent")
         btn_person = QPushButton("New Person")
         btn_organization = QPushButton("New Organization")
-        btn_relationship = QPushButton("New Relationship")
+        btn_relationship = QPushButton("New Relationship");
+        btn_other = QPushButton("Other")
         btn_cancel = QPushButton("Cancel")
         layout.addWidget(btn_search, 1, 0)
         layout.addWidget(btn_person, 2, 0)
         layout.addWidget(btn_organization, 3, 0)
         layout.addWidget(btn_relationship, 4, 0)
-        layout.addWidget(btn_cancel, 5, 0)
+        layout.addWidget(btn_other, 5, 0)
+        layout.addWidget(btn_cancel, 6, 0)
         btn_search.clicked.connect(self.btn_search_click)
         btn_person.clicked.connect(self.btn_person_click)
+        btn_other.clicked.connect(self.btn_other_click)
         btn_organization.clicked.connect(self.btn_organization_click)
         btn_relationship.clicked.connect(self.btn_relationship_click)
         btn_cancel.clicked.connect(self.btn_cancel_click)
@@ -64,6 +67,9 @@ class DialogChoiceEntity(QDialog):
 
     def btn_person_click(self):
         self.ptype = "person";
+        self.close();
+    def btn_other_click(self):
+        self.ptype = "other";
         self.close();
     def btn_organization_click(self):
         self.ptype = "organization";

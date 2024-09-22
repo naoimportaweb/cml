@@ -9,14 +9,12 @@ class MapRelationship
     private $keyword = "";
     private $person_id = "";
 
-    
-    
     public function load( $ip, $user, $post_data ) {
         $mysql = new Mysql("");
         $buffer_diagram =  $mysql->DataTable("SELECT * from diagram_relationship where id = ?", [ $post_data["parameters"]["id"] ])[0];
         $buffer_diagram["elements"] = array();
 
-        $buffer_elements =  $mysql->DataTable("SELECT dre.id as id, ent.id as entity_id, ent.text_label as text_label, ent.description as full_description, ent.etype, dre.x, dre.y, dre.w, dre.h  FROM entity as ent inner join diagram_relationship_element as dre on ent.id = dre.entity_id where dre.diagram_relationship_id = ? order by dre.creation_time asc", [$post_data["parameters"]["id"]]);
+        $buffer_elements =  $mysql->DataTable("SELECT dre.id as id, ent.id as entity_id, ent.data_extra as data_extra, ent.text_label as text_label, ent.description as full_description, ent.etype, dre.x, dre.y, dre.w, dre.h  FROM entity as ent inner join diagram_relationship_element as dre on ent.id = dre.entity_id where dre.diagram_relationship_id = ? order by dre.creation_time asc", [$post_data["parameters"]["id"]]);
 
         for($i = 0; $i < count($buffer_elements); $i++ ) {
             
@@ -67,7 +65,12 @@ class MapRelationship
         $mysql = new Mysql("");
         $sql = "SELECT * FROM entity  where etype <> 'link' and LOWER(text_label) LIKE LOWER( ? )";
         $valores = [ $post_data["parameters"]["name"]];
-        return $mysql->DataTable($sql, $valores);
+        $entitys = $mysql->DataTable($sql, $valores);
+        for($i = 0; $i < count($entitys); $i++){
+            $sql = "SELECT * FROM entity  where etype <> 'link' and LOWER(text_label) LIKE LOWER( ? )";
+            $entitys[$i]["references"] = $mysql->DataTable("select * from  diagram_relationship_element_reference where entity_id = ?", [ $entitys[$i]["id"] ]);
+        }
+        return $entitys;
     }
     
     public function save($ip, $user, $post_data ){
@@ -83,8 +86,8 @@ class MapRelationship
             //    continue;
             //}
             // entidade
-            array_push($sqls, "INSERT INTO entity (id, text_label, description, etype) VALUES(?, ?, ?, ?) ON DUPLICATE KEY UPDATE text_label = ?, description =?, etype =?");
-            array_push( $valuess,[ $element["entity_id"], $element["text"], $element["full_description"], $element["etype"], $element["text"], $element["full_description"], $element["etype"] ]);
+            array_push($sqls, "INSERT INTO entity (id, text_label, description, data_extra, etype) VALUES(?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE text_label = ?, description =?, data_extra = ?, etype =?");
+            array_push( $valuess,[ $element["entity_id"], $element["text"], $element["full_description"], $element["data_extra"], $element["etype"], $element["text"], $element["full_description"], $element["data_extra"], $element["etype"] ]);
             // relacionamento
             array_push($sqls,  "INSERT INTO diagram_relationship_element (id, diagram_relationship_id, entity_id, x, y, w, h) VALUES(?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE x=?, y=?, w=?, h=?" );
             array_push( $valuess, [ $element["id"], $post_data["parameters"]["id"], $element["entity_id"], $element["x"], $element["y"], $element["w"], $element["h"], $element["x"], $element["y"], $element["w"], $element["h"]  ] );
