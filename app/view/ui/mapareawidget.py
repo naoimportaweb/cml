@@ -27,6 +27,7 @@ class MapAreaWidget(QWidget):
         self.pen.setCapStyle(Qt.RoundCap);
         self.pen.setJoinStyle(Qt.RoundJoin);
         self.selected_element = None;
+        self.diff = [0 , 0];
 
     def getElement(self, x, y):
         for element in reversed(self.mapa.elements):
@@ -72,6 +73,8 @@ class MapAreaWidget(QWidget):
         QWidget.mousePressEvent(self, event);
         current_pos = event.position().toPoint();
         self.selected_element = self.getElement(current_pos.x(), current_pos.y());
+        if self.selected_element != None:
+            self.diff = [current_pos.x() - self.selected_element.x, current_pos.y() - self.selected_element.y];
 
     def redraw(self):
         self.painter.begin(self.pixmap);
@@ -99,12 +102,11 @@ class MapAreaWidget(QWidget):
     def mouseMoveEvent(self, event: QMouseEvent):
         current_pos = event.position().toPoint()
         QWidget.mouseMoveEvent(self, event);
-        if self.selected_element != None:
-            self.selected_element.x = current_pos.x();
-            self.selected_element.y = current_pos.y();
-            if (current_pos.x() % 10) == 0: # Questao de desempenho.....
-                self.redraw();
-
+        if self.selected_element != None and (current_pos.y() % 2) == 0:
+            self.selected_element.x = current_pos.x() - self.diff[0];
+            self.selected_element.y = current_pos.y() - self.diff[1];
+            #if (current_pos.x() % 2) == 0: # Questao de desempenho.....
+            self.redraw();
     def mouseReleaseEvent(self, event: QMouseEvent):
         self.previous_pos = None
         QWidget.mouseReleaseEvent(self, event);

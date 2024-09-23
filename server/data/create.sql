@@ -16,6 +16,13 @@ create table person_sesion(
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
 );
 
+create table person_enter(
+    id VARCHAR(128) PRIMARY KEY,
+    person_id VARCHAR(128),
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
+
 create table diagram_relationship (
     id VARCHAR(128) PRIMARY KEY,
     person_id VARCHAR(128) NOT NULL,
@@ -25,11 +32,29 @@ create table diagram_relationship (
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
 );
 
+create table diagram_relationship_history (
+    id VARCHAR(128) PRIMARY KEY,
+    person_id VARCHAR(128) NOT NULL,
+    diagram_relationship_id VARCHAR(128) NOT NULL,
+    json LONGTEXT NOT NULL,
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
+
+create table diagram_relationship_lock(
+    id VARCHAR(128) PRIMARY KEY,
+    diagram_relationship_id VARCHAR(128) NOT NULL,
+    person_id VARCHAR(128) NOT NULL,
+    lock_time DATETIME NOT NULL,
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
+
 create table entity (
     id VARCHAR(128) PRIMARY KEY,
     text_label VARCHAR(255) NOT NULL,
-    description TEXT,
-    data_extra TEXT,
+    description LONGTEXT,
+    data_extra LONGTEXT,
     etype VARCHAR(255) NOT NULL,
     creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
@@ -62,8 +87,16 @@ create table diagram_relationship_link(
 );
 
 
+
+
+
+ALTER TABLE diagram_relationship_history ADD FOREIGN KEY (diagram_relationship_id) REFERENCES diagram_relationship(id);
+ALTER TABLE diagram_relationship_history ADD FOREIGN KEY (person_id) REFERENCES person(id);
+ALTER TABLE person_enter ADD FOREIGN KEY (person_id) REFERENCES person(id);
 ALTER TABLE person_sesion ADD FOREIGN KEY (person_id) REFERENCES person(id);
 ALTER TABLE diagram_relationship ADD FOREIGN KEY (person_id) REFERENCES person(id);
+ALTER TABLE diagram_relationship_lock ADD FOREIGN KEY (person_id) REFERENCES person(id);
+ALTER TABLE diagram_relationship_lock ADD FOREIGN KEY (diagram_relationship_id) REFERENCES diagram_relationship(id);
 ALTER TABLE diagram_relationship_element ADD FOREIGN KEY (entity_id) REFERENCES entity(id);
 ALTER TABLE diagram_relationship_element ADD FOREIGN KEY (diagram_relationship_id) REFERENCES diagram_relationship(id);
 ALTER TABLE diagram_relationship_element_reference ADD FOREIGN KEY (entity_id) REFERENCES entity(id);
@@ -75,22 +108,57 @@ ALTER TABLE diagram_relationship_link ADD FOREIGN KEY (diagram_relationship_elem
 
 insert into person (id, username, name, password, salt) values ('1', 'nao.importa.web', 'nao.importa.web', '7c61be27eec3fa7cef2e0d44d3145ea37648b0842d5574c0163b92c0bed54924', '1111');
 
-drop table diagram_relationship_link;
-drop table diagram_relationship_element_reference;
-drop table diagram_relationship_element;
-drop table entity;
-drop table diagram_relationship;
-drop table person_sesion;
-drop table person;
-
 delete from diagram_relationship_link;
 delete from diagram_relationship_element_reference;
 delete from diagram_relationship_element;
 delete from entity;
 delete from diagram_relationship;
 
+drop table diagram_relationship_link;
+drop table diagram_relationship_history;
+drop table diagram_relationship_lock;
+drop table diagram_relationship_element_reference;
+drop table diagram_relationship_element;
+drop table entity;
+drop table diagram_relationship;
+drop table person_sesion;
+drop table person_enter;
+drop table person;
+
+
+
 
 # ------------- HOMOLOGAÇAO -------------------------------
 
 
+create table diagram_relationship_lock(
+    id VARCHAR(128) PRIMARY KEY,
+    diagram_relationship_id VARCHAR(128) NOT NULL,
+    person_id VARCHAR(128) NOT NULL,
+    lock_time DATETIME NOT NULL,
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
+ALTER TABLE diagram_relationship_lock ADD FOREIGN KEY (person_id) REFERENCES person(id);
+ALTER TABLE diagram_relationship_lock ADD FOREIGN KEY (diagram_relationship_id) REFERENCES diagram_relationship(id);
 
+create table person_enter(
+    id VARCHAR(128) PRIMARY KEY,
+    person_id VARCHAR(128),
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
+
+ALTER TABLE person_enter ADD FOREIGN KEY (person_id) REFERENCES person(id);
+
+create table diagram_relationship_history (
+    id VARCHAR(128) PRIMARY KEY,
+    person_id VARCHAR(128) NOT NULL,
+    diagram_relationship_id VARCHAR(128) NOT NULL,
+    json LONGTEXT NOT NULL,
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
+
+ALTER TABLE diagram_relationship_history ADD FOREIGN KEY (diagram_relationship_id) REFERENCES diagram_relationship(id);
+ALTER TABLE diagram_relationship_history ADD FOREIGN KEY (person_id) REFERENCES person(id);

@@ -50,6 +50,5 @@ class User (ConnectObject):
             self.user_id = js["return"]["id"];
             if server.token == "":
                 server.token = js["return"]["token"];
-                print("Nova token: ", server.token);
             return True;
         return False;

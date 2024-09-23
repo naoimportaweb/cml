@@ -13,6 +13,7 @@ class MapRelationship
         $mysql = new Mysql("");
         $buffer_diagram =  $mysql->DataTable("SELECT * from diagram_relationship where id = ?", [ $post_data["parameters"]["id"] ])[0];
         $buffer_diagram["elements"] = array();
+        $buffer_diagram["lock"] = array();
 
         $buffer_elements =  $mysql->DataTable("SELECT dre.id as id, ent.id as entity_id, ent.data_extra as data_extra, ent.text_label as text_label, ent.description as full_description, ent.etype, dre.x, dre.y, dre.w, dre.h  FROM entity as ent inner join diagram_relationship_element as dre on ent.id = dre.entity_id where dre.diagram_relationship_id = ? order by dre.creation_time asc", [$post_data["parameters"]["id"]]);
 
@@ -25,6 +26,9 @@ class MapRelationship
                 $buffer_elements[$i]["to"] = $mysql->DataTable("SELECT drl.diagram_relationship_element_id as id FROM diagram_relationship_link AS drl where drl.diagram_relationship_element_id_reference = ? and ltype = 2", [   $buffer_elements[$i]["id"]  ]);
             }
         }
+
+        $buffer_diagram["lock"] = $mysql->DataTable("SELECT drl.lock_time, per.username FROM diagram_relationship_lock as drl inner join person as per on drl.person_id = per.id and diagram_relationship_id = ? order by creation_time DESK LIMIT 5", [$post_data["parameters"]["id"]]);
+
         $buffer_diagram["elements"] = $buffer_elements;
         return $buffer_diagram;
     }
@@ -34,6 +38,7 @@ class MapRelationship
         $this->name = $datatable["name"];
         $this->person_id = $datatable["person_id"];
         $this->keyword = $datatable["keyword"];
+        $this->date_lock = $datatable["date_lock"];
     }
 
     public function create( $ip, $user, $post_data ) {
@@ -46,6 +51,13 @@ class MapRelationship
         $valores = [$this->id, $this->person_id  ,$this->name, $this->keyword];
         return $mysql->ExecuteNoQuery($sql, $valores);
     }    
+
+    public function lock_map( $ip, $user, $post_data ) {
+        $mysql = new Mysql("");
+        $sql = "INSERT INTO diagram_relationship_lock (id, diagram_relationship_id, person_id, lock_time) values(?, ?, ?, ?)";
+        $valores = [ ,$post_data["parameters"]["id"], $user->id, ];
+        return count($mysql->DataTable($sql, $valores) ) > 0;
+    } 
 
     public function exists( $ip, $user, $post_data ) {
         $mysql = new Mysql("");
@@ -77,6 +89,18 @@ class MapRelationship
         $mysql = new Mysql("");
         $sqls = array();
         $valuess = array();
+
+        $buffer_lock = $mysql->DataTable("SELECT drl.lock_time, per.username FROM diagram_relationship_lock as drl inner join person as per on drl.person_id = per.id and diagram_relationship_id = ? order by creation_time DESK LIMIT 1", [$post_data["parameters"]["id"]]);
+
+        // converter lock date e comparar com agora, se a data de lock for maior que agora, entao para e levanta exception.
+        if( count( $buffer_lock ) > 0 ) {
+            $date_lock = DateTime::createFromFormat("Y-m-d H:i:s",$buffer_lock[0]["lock_time"]);
+            $now = new DateTime();
+            if( $date_lock > $now ) {
+                return false;
+            }  
+        }
+
         array_push($sqls,  "INSERT INTO diagram_relationship (id, name, keyword, person_id) VALUES( ?,?,?,? ) ON DUPLICATE KEY UPDATE name = ?, keyword = ?" );
         array_push( $valuess, [ $post_data["parameters"]["id"], $post_data["parameters"]["name"], $post_data["parameters"]["keyword"], $user->id, $post_data["parameters"]["name"], $post_data["parameters"]["keyword"] ] );
 

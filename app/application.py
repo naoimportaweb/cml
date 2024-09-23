@@ -20,8 +20,9 @@ from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow,
 import PySide6.QtExampleIcons  # noqa: F401
 
 from view.mdimap import MdiMap;
-from view.dialogrelationship import DialogRelationship;
-from view.dialogrelationshipload import DialogRelationshipLoad;
+from view.dialog_relationship import DialogRelationship;
+from view.dialog_relationship_load import DialogRelationshipLoad;
+from view.dialog_relationship_edit import DialogRelationshipEdit
 from view.dialogconnect import DialogConnect;
 from classlib.server import Server;
 
@@ -80,7 +81,10 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def map_propert(self):
-        print(self.active_mdi_child() and self.active_mdi_child());
+        buffer = (self.active_mdi_child() and self.active_mdi_child()).mapa;
+        if buffer != None:
+            f = DialogRelationshipEdit(self, buffer);
+            f.exec();
 
     #@Slot()
     #def save_as(self):

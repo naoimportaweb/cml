@@ -21,7 +21,7 @@ class DialogRelationship(QDialog):
     def __init__(self):
         super().__init__();
         self.map = None;
-        self.setWindowTitle("Connect")
+        self.setWindowTitle("New")
         self.layout_principal = CustomVLayout();
         self.setLayout( self.layout_principal );
         self.ui_search_relationship();
