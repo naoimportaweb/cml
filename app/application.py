@@ -115,7 +115,10 @@ class MainWindow(QMainWindow):
         has_mdi_child = (self.active_mdi_child() is not None)
         if self.active_mdi_child() is not None:
             buffer_area = self.active_mdi_child() and self.active_mdi_child();
-            self.setWindowTitle( "Relationship MAP: " + buffer_area.mapa.name )
+            title = "Relationship MAP: " + buffer_area.mapa.name ;
+            if buffer_area.mapa.locked and len(buffer_area.mapa.lock_list) > 0 :
+                title = title + " (ReadOnly at " + buffer_area.mapa.lock_list[-1]["lock_time"] + " ISO DATE)";
+            self.setWindowTitle( title )
         #self._save_act.setEnabled(has_mdi_child)
         #self._save_as_act.setEnabled(has_mdi_child)
         #self._paste_act.setEnabled(has_mdi_child)
@@ -300,13 +303,13 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage("Ready")
 
     def read_settings(self):
-        settings = QSettings('QtProject', 'MDI')
+        settings = QSettings('QtProject', 'CML')
         geometry = settings.value('geometry', QByteArray())
         if geometry.size():
             self.restoreGeometry(geometry)
 
     def write_settings(self):
-        settings = QSettings('QtProject', 'MDI')
+        settings = QSettings('QtProject', 'CML')
         settings.setValue('geometry', self.saveGeometry())
 
     def active_mdi_child(self):

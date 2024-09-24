@@ -115,8 +115,8 @@ class DialogConnect(QDialog):
         self.close();
     def btn_click_login_entrar(self):
         server = Server();
-        #server.ip = "http://localhost";# self.txt_server.text();
-        server.ip = self.txt_server.text();
+        server.ip = "http://localhost";# self.txt_server.text();
+        #server.ip = self.txt_server.text();
         user = User(self.txt_login_username.text());#forca
         buffer_public_pem = user.publickey() ;
         if buffer_public_pem != None:

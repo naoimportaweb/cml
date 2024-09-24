@@ -102,6 +102,8 @@ class MapAreaWidget(QWidget):
     def mouseMoveEvent(self, event: QMouseEvent):
         current_pos = event.position().toPoint()
         QWidget.mouseMoveEvent(self, event);
+        if self.mapa.locked:
+            return;
         if self.selected_element != None and (current_pos.y() % 2) == 0:
             self.selected_element.x = current_pos.x() - self.diff[0];
             self.selected_element.y = current_pos.y() - self.diff[1];

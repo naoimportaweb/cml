@@ -16,10 +16,30 @@ class MapRelationship(ConnectObject):
         self.name = None;
         self.keyword = None;
         self.elements = [];
+        self.lock_list = [];
+        self.locked = False;
 
     def toJson(self):
         return { "id" : self.id,  "name" : self.name, "keyword" : self.keyword, "elements" : []}
     
+    def lock_map(self):
+        js = self.__execute__("MapRelationship", "lock_map", {"diagram_relationship_id" : self.id });
+        if js["status"]:
+            self.lock_list = js["return"];
+            return True;
+        return False;
+    
+    def unlock_map(self):
+        js = self.__execute__("MapRelationship", "unlock_map", {"diagram_relationship_id" : self.id });
+        if js["status"]:
+            self.lock_list = js["return"];
+            return True;
+        return False;
+
+    def locked_map(self):
+        for buffer in self.lock_list:
+            print(buffer);
+
     def save(self):
         objeto = self.toJson();
         for element in self.elements:
@@ -30,10 +50,13 @@ class MapRelationship(ConnectObject):
         return False;
     
     def load_data(self, data):
+        print(data);
         self.id = data["id"];
         self.name = data["name"];
         self.keyword = data["keyword"];
         self.person_id = data["person_id"];
+        self.lock_list = data["lock"];
+        self.locked = data["locked"];
         if data.get("elements") != None:
             for element in data['elements']:
                 if element["etype"] == "link":

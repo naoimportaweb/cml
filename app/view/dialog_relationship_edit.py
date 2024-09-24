@@ -25,6 +25,7 @@ class DialogRelationshipEdit(QDialog):
         self.layout_principal = CustomVLayout();
         self.setLayout( self.layout_principal );
         self.ui_relationship();
+        self.ui_lock();
         self.ui_buttons();
         
     def ui_relationship(self):
@@ -53,12 +54,32 @@ class DialogRelationshipEdit(QDialog):
         layout_server.addWidget( self.lbl_message , 3, 1);
         self.layout_principal.addLayout( "relationship", layout_server );
 
+    def ui_lock(self):
+        layout = QGridLayout()
+        btn_lock = QPushButton("Lock map")
+        btn_lock.clicked.connect(self.btn_lock_click)
+        layout.addWidget(btn_lock, 4, 2)
+
+        btn_unlock = QPushButton("UnLock map")
+        btn_unlock.clicked.connect(self.btn_unlock_click)
+        layout.addWidget(btn_unlock, 4, 1)
+
+        self.layout_principal.addLayout( "lock", layout );
+
     def ui_buttons(self):
         layout = QGridLayout()
         btn_entrar = QPushButton("Save Diagram")
         btn_entrar.clicked.connect(self.btn_save_click)
         layout.addWidget(btn_entrar, 4, 2)
         self.layout_principal.addLayout( "buttons", layout );
+
+    def btn_unlock_click(self):
+        self.map.locked_map();
+        self.map.unlock_map();
+
+    def btn_lock_click(self):
+        self.map.locked_map();
+        self.map.lock_map();
 
     def btn_save_click(self):
         self.map.name = self.txt_name.text();

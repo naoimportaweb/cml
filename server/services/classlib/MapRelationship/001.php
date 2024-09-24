@@ -1,5 +1,7 @@
 <?php
 
+error_reporting(E_ALL);
+
 require_once dirname(dirname(dirname(__DIR__))) . "/api/mysql.php";
 
 class MapRelationship
@@ -27,8 +29,16 @@ class MapRelationship
             }
         }
 
-        $buffer_diagram["lock"] = $mysql->DataTable("SELECT drl.lock_time, per.username FROM diagram_relationship_lock as drl inner join person as per on drl.person_id = per.id and diagram_relationship_id = ? order by creation_time DESK LIMIT 5", [$post_data["parameters"]["id"]]);
-
+        $buffer_diagram["lock"] = $mysql->DataTable("SELECT drl.lock_time, per.username FROM diagram_relationship_lock as drl inner join person as per on drl.person_id = per.id where diagram_relationship_id = ? order by lock_time DESC LIMIT 5", [ $post_data["parameters"]["id"] ]);
+        
+        $buffer_diagram["locked"] = false;
+        $lock = $this->has_lock($post_data["parameters"]["id"]);
+        if( $lock != null ){
+            if( $lock["person_id"] != $user->id ) {
+                $buffer_diagram["locked"] = true;
+            }
+        }
+        
         $buffer_diagram["elements"] = $buffer_elements;
         return $buffer_diagram;
     }
@@ -52,10 +62,40 @@ class MapRelationship
         return $mysql->ExecuteNoQuery($sql, $valores);
     }    
 
+    public function has_lock($diagram_relationship_id){
+        $mysql = new Mysql("");
+        $buffer_lock = $mysql->DataTable("SELECT per.id as person_id, drl.lock_time as lock_time, per.username FROM diagram_relationship_lock as drl inner join person as per on drl.person_id = per.id where drl.diagram_relationship_id = ? order by lock_time DESC LIMIT 1", [ $diagram_relationship_id ]);
+        if( count( $buffer_lock ) > 0 ) {
+            $date_lock = DateTime::createFromFormat("Y-m-d H:i:s",$buffer_lock[0]["lock_time"]);
+            $now = new DateTime();
+            if( $date_lock > $now ) {
+                return $buffer_lock[0];
+            } 
+        }
+        return null;
+    }
+
     public function lock_map( $ip, $user, $post_data ) {
         $mysql = new Mysql("");
+        if( $this->has_lock($post_data["parameters"]["diagram_relationship_id"]) != null ){
+            return [];
+        }
+        $date = new DateTime(); //now
+        
+        $date = $date->add(new DateInterval('PT60M'));//add 60 min / 1 hour
+        
         $sql = "INSERT INTO diagram_relationship_lock (id, diagram_relationship_id, person_id, lock_time) values(?, ?, ?, ?)";
-        $valores = [ ,$post_data["parameters"]["id"], $user->id, ];
+        $valores = [ $post_data["parameters"]["diagram_relationship_id"] . $date->format('Y-m-d H:i:s') ,$post_data["parameters"]["diagram_relationship_id"], $user->id, $date->format('Y-m-d H:i:s') ];
+        $mysql->ExecuteNoQuery($sql, $valores);
+        $buffer  = $mysql->DataTable("SELECT drl.lock_time, per.username FROM diagram_relationship_lock as drl inner join person as per on drl.person_id = per.id where diagram_relationship_id = ? order by lock_time DESC LIMIT 5", [ $post_data["parameters"]["diagram_relationship_id"] ]);
+        return $buffer;
+    } 
+
+    public function unlock_map( $ip, $user, $post_data ) {
+        $mysql = new Mysql("");
+        #$buffer_diagram_lock =  $mysql->DataTable("SELECT * from diagram_relationship_lock where person_id = ? and diagram_relationship_id = ? order by lock_time DESC", [ $user->id, $post_data["parameters"]["id"] ])[0];
+        $sql = "delete from diagram_relationship_lock where person_id = ? and diagram_relationship_id = ?";
+        $valores = [ $user->id ,$post_data["parameters"]["diagram_relationship_id"] ];
         return count($mysql->DataTable($sql, $valores) ) > 0;
     } 
 
@@ -90,26 +130,19 @@ class MapRelationship
         $sqls = array();
         $valuess = array();
 
-        $buffer_lock = $mysql->DataTable("SELECT drl.lock_time, per.username FROM diagram_relationship_lock as drl inner join person as per on drl.person_id = per.id and diagram_relationship_id = ? order by creation_time DESK LIMIT 1", [$post_data["parameters"]["id"]]);
-
-        // converter lock date e comparar com agora, se a data de lock for maior que agora, entao para e levanta exception.
-        if( count( $buffer_lock ) > 0 ) {
-            $date_lock = DateTime::createFromFormat("Y-m-d H:i:s",$buffer_lock[0]["lock_time"]);
-            $now = new DateTime();
-            if( $date_lock > $now ) {
+        $lock = $this->has_lock($post_data["parameters"]["id"]);
+        if( $lock != null ){
+            if( $lock["person_id"] != $user->id ) {
+                error_log("Não pode editar pois já está com LOCK", 0);
                 return false;
-            }  
+            }
         }
-
         array_push($sqls,  "INSERT INTO diagram_relationship (id, name, keyword, person_id) VALUES( ?,?,?,? ) ON DUPLICATE KEY UPDATE name = ?, keyword = ?" );
         array_push( $valuess, [ $post_data["parameters"]["id"], $post_data["parameters"]["name"], $post_data["parameters"]["keyword"], $user->id, $post_data["parameters"]["name"], $post_data["parameters"]["keyword"] ] );
 
         for($i = 0; $i < count($post_data["parameters"]["elements"]); $i++) {
             $element = $post_data["parameters"]["elements"][$i];
-            //if( $element["etype"] == "link"){
-            //    continue;
-            //}
-            // entidade
+
             array_push($sqls, "INSERT INTO entity (id, text_label, description, data_extra, etype) VALUES(?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE text_label = ?, description =?, data_extra = ?, etype =?");
             array_push( $valuess,[ $element["entity_id"], $element["text"], $element["full_description"], $element["data_extra"], $element["etype"], $element["text"], $element["full_description"], $element["data_extra"], $element["etype"] ]);
             // relacionamento
