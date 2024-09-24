@@ -18,8 +18,6 @@ class AESHelper(object):
     def decrypt(self, enc):
         enc = base64.b64decode(enc)
         iv = enc[:16]
-        print(iv);
-        print(enc[16:]);
         cipher = AES.new(self.key, AES.MODE_CBC, iv)
         return AESHelper._unpad(cipher.decrypt(enc[16:])).decode()
 

@@ -57,7 +57,6 @@ class ConnectObject:
         #elif crypto_v == "002":
         #    envelop["parameters"] = "00000002" +  base64.b64encode(aes_encript(server.simetric_key ,json.dumps(parameters).encode("utf-8"))).decode();
         #    envelop["parameters"] = "00000002" + json.dumps(parameters);
-        #    print("Key: ", server.simetric_key);
         envelop["session"] = server.token;
         url = self.ip +"/cml/services/execute.php";
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'};

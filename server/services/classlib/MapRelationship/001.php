@@ -133,7 +133,6 @@ class MapRelationship
         $lock = $this->has_lock($post_data["parameters"]["id"]);
         if( $lock != null ){
             if( $lock["person_id"] != $user->id ) {
-                error_log("Não pode editar pois já está com LOCK", 0);
                 return false;
             }
         }

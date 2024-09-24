@@ -130,35 +130,3 @@ drop table person;
 
 # ------------- HOMOLOGAÇAO -------------------------------
 
-
-create table diagram_relationship_lock(
-    id VARCHAR(128) PRIMARY KEY,
-    diagram_relationship_id VARCHAR(128) NOT NULL,
-    person_id VARCHAR(128) NOT NULL,
-    lock_time DATETIME NOT NULL,
-    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
-    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
-);
-ALTER TABLE diagram_relationship_lock ADD FOREIGN KEY (person_id) REFERENCES person(id);
-ALTER TABLE diagram_relationship_lock ADD FOREIGN KEY (diagram_relationship_id) REFERENCES diagram_relationship(id);
-
-create table person_enter(
-    id VARCHAR(128) PRIMARY KEY,
-    person_id VARCHAR(128),
-    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
-    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
-);
-
-ALTER TABLE person_enter ADD FOREIGN KEY (person_id) REFERENCES person(id);
-
-create table diagram_relationship_history (
-    id VARCHAR(128) PRIMARY KEY,
-    person_id VARCHAR(128) NOT NULL,
-    diagram_relationship_id VARCHAR(128) NOT NULL,
-    json LONGTEXT NOT NULL,
-    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
-    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
-);
-
-ALTER TABLE diagram_relationship_history ADD FOREIGN KEY (diagram_relationship_id) REFERENCES diagram_relationship(id);
-ALTER TABLE diagram_relationship_history ADD FOREIGN KEY (person_id) REFERENCES person(id);

@@ -37,8 +37,7 @@ class MapRelationship(ConnectObject):
         return False;
 
     def locked_map(self):
-        for buffer in self.lock_list:
-            print(buffer);
+        return;
 
     def save(self):
         objeto = self.toJson();
@@ -50,7 +49,6 @@ class MapRelationship(ConnectObject):
         return False;
     
     def load_data(self, data):
-        print(data);
         self.id = data["id"];
         self.name = data["name"];
         self.keyword = data["keyword"];
