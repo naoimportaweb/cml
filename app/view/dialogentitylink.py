@@ -15,8 +15,14 @@ from view.ui.customvlayout import CustomVLayout;
 from view.dialogreference import DialogReference;
 
 class DialogEntityLink(QDialog):
-    def __init__(self, link, mapa):
-        super().__init__()
+    def __init__(self, form, link, mapa):
+        super().__init__(form)
+        #self.resize(800, 660);
+        nWidth = int(form.width() * 0.8); nHeight = int(form.height() * 0.6);
+        self.setGeometry(form.x() + form.width()/2 - nWidth/2,
+            form.y() + form.height()/2 - nHeight/2,
+            nWidth, nHeight);
+
         self.setWindowTitle("Relationship")
         self.link = link;
         self.mapa = mapa;

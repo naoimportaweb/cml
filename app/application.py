@@ -58,9 +58,9 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def open(self):
-        f = DialogRelationshipLoad();
+        f = DialogRelationshipLoad(self);
         f.exec();
-        child = MdiMap(f.map)
+        child = MdiMap(self, f.map)
         self._mdi_area.addSubWindow(child);
         child.new_map()
         child.showMaximized();
@@ -165,10 +165,10 @@ class MainWindow(QMainWindow):
             action.triggered.connect(slot_func)
 
     def create_mdi_map(self):
-        f = DialogRelationship();
+        f = DialogRelationship(self);
         f.exec();
         if f.map != None:
-            child = MdiMap(f.map)
+            child = MdiMap(self, f.map)
             self._mdi_area.addSubWindow(child);
             #self._mdi_area.showFullScreen();
             #child.copyAvailable.connect(self._cut_act.setEnabled)

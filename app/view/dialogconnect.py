@@ -20,6 +20,8 @@ from classlib.user import User;
 class DialogConnect(QDialog):
     def __init__(self):
         super().__init__()
+        self.resize(600, 320);
+
         self.setWindowTitle("Connect")
         self.layout_principal = CustomVLayout();
         self.setLayout( self.layout_principal );

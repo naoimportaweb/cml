@@ -19,6 +19,11 @@ from classlib.server import Server;
 class DialogReference(QDialog):
     def __init__(self, form, element, reference):
         super().__init__()
+        nWidth = int(form.width() * 0.8); nHeight = int(form.height() * 0.6);
+        self.setGeometry(form.x() + form.width()/2 - nWidth/2,
+            form.y() + form.height()/2 - nHeight/2,
+            nWidth, nHeight);
+
         self.element = element;
         self.reference = reference;
         self.form = form;

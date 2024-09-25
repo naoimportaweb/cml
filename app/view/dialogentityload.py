@@ -24,7 +24,11 @@ from classlib.relationship.link import Link
 class DialogEntityLoad(QDialog):
     def __init__(self, form):
         super().__init__();
-        #self.map = None;
+        nWidth = int(form.width() * 0.8); nHeight = int(form.height() * 0.6);
+        self.setGeometry(form.x() + form.width()/2 - nWidth/2,
+            form.y() + form.height()/2 - nHeight/2,
+            nWidth, nHeight);
+
         self.form = form;
         self.entitys = None;
         self.entity = None;

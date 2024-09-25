@@ -15,8 +15,14 @@ from view.ui.customvlayout import CustomVLayout;
 from view.dialogreference import DialogReference;
 
 class DialogEntityOrganization(QDialog):
-    def __init__(self, organizagion):
+    def __init__(self, form, organizagion):
         super().__init__()
+        #self.resize(800, 660);
+        nWidth = int(form.width() * 0.8); nHeight = int(form.height() * 0.6);
+        self.setGeometry(form.x() + form.width()/2 - nWidth/2,
+            form.y() + form.height()/2 - nHeight/2,
+            nWidth, nHeight);
+        config = Configuration();
         self.setWindowTitle("Organization")
         self.organizagion = organizagion;
         self.tab = QTabWidget();  
@@ -27,6 +33,7 @@ class DialogEntityOrganization(QDialog):
         # ------------------------------------------
         self.lbl_text = QLabel("Text");
         self.txt_text = QLineEdit();
+        self.txt_text.setFont(config.getFont());
         self.txt_text.setText( self.organizagion.entity.text ) ;
         self.txt_text.textChanged.connect(self.txt_text_changed)
         CustomVLayout.widget_linha(self, self.page_rel, [self.lbl_text, self.txt_text] );
@@ -35,8 +42,10 @@ class DialogEntityOrganization(QDialog):
         self.txt_descricao.setPlainText( organizagion.entity.full_description );
         self.txt_descricao.setLineWrapMode(QTextEdit.NoWrap);
         self.txt_descricao.textChanged.connect(self.txt_descricao_changed)
-        font = self.txt_descricao.font();
-        font.setFamily("Courier");
+        #font = self.txt_descricao.font();
+        #font.setFamily("Courier");
+        #font.setPointSize(25);
+        self.txt_descricao.setFont(config.getFont());
         self.txt_descricao.setLineWrapMode(QTextEdit.WidgetWidth);  
         self.page_rel.addWidget( self.txt_descricao );
         # --------------------------------------------------

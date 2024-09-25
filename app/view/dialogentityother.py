@@ -15,8 +15,13 @@ from view.ui.customvlayout import CustomVLayout;
 from view.dialogreference import DialogReference;
 
 class DialogEntityOther(QDialog):
-    def __init__(self, other):
+    def __init__(self, form, other):
         super().__init__()
+        nWidth = int(form.width() * 0.8); nHeight = int(form.height() * 0.6);
+        self.setGeometry(form.x() + form.width()/2 - nWidth/2,
+            form.y() + form.height()/2 - nHeight/2,
+            nWidth, nHeight);
+
         self.setWindowTitle("Other")
         self.other = other;
         self.tab = QTabWidget();  

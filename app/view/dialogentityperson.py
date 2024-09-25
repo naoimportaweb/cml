@@ -15,8 +15,13 @@ from view.ui.customvlayout import CustomVLayout;
 from view.dialogreference import DialogReference;
 
 class DialogEntityPerson(QDialog):
-    def __init__(self, person):
+    def __init__(self, form, person):
         super().__init__()
+        nWidth = int(form.width() * 0.8); nHeight = int(form.height() * 0.6);
+        self.setGeometry(form.x() + form.width()/2 - nWidth/2,
+            form.y() + form.height()/2 - nHeight/2,
+            nWidth, nHeight);
+
         self.setWindowTitle("Person")
         self.person = person;
         self.tab = QTabWidget();  
@@ -37,6 +42,7 @@ class DialogEntityPerson(QDialog):
         self.txt_descricao.textChanged.connect(self.txt_descricao_changed)
         font = self.txt_descricao.font();
         font.setFamily("Courier");
+        font.setPointSize(25);
         self.txt_descricao.setLineWrapMode(QTextEdit.WidgetWidth);  
         self.page_rel.addWidget( self.txt_descricao );
         # --------------------------------------------------
@@ -46,6 +52,7 @@ class DialogEntityPerson(QDialog):
         self.txt_doxxing.textChanged.connect(self.txt_doxxing_changed)
         font = self.txt_doxxing.font();
         font.setFamily("Courier");
+        font.setPointSize(25);
         self.txt_doxxing.setLineWrapMode(QTextEdit.WidgetWidth);  
         self.page_dox.addWidget( self.txt_doxxing );
         #-------------------------------------------

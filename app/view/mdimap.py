@@ -15,8 +15,9 @@ from view.dialogentityother import DialogEntityOther;
 from view.dialogchoice import DialogChoiceEntity;
 
 class MdiMap(QWidget):
-    def __init__(self, mapa):
+    def __init__(self, form, mapa):
         super().__init__();
+        self.form_principal = form;
         self.painter_widget = MapAreaWidget(parent=None, mapa=mapa, form=self);
         self.mapa = mapa;
         layout = QHBoxLayout()
@@ -27,13 +28,13 @@ class MdiMap(QWidget):
 
     def entity_double_click(self, entity):
         if entity.entity.etype == "person":
-            form = DialogEntityPerson(entity);
+            form = DialogEntityPerson(self.form_principal,entity);
         elif entity.entity.etype == "other":
-            form = DialogEntityOther(entity);
+            form = DialogEntityOther(self.form_principal,entity);
         elif entity.entity.etype == "organization":
-            form = DialogEntityOrganization(entity);
+            form = DialogEntityOrganization(self.form_principal,entity);
         elif entity.entity.etype == "link":
-            form = DialogEntityLink(entity, self.mapa);
+            form = DialogEntityLink(self.form_principal, entity, self.mapa);
         form.exec();
     
     def map_double_click(self, map, x, y):
