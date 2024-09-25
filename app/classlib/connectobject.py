@@ -1,7 +1,7 @@
 import sys, os, requests, json, uuid;
 import json, hashlib;
 import os, sys, inspect;
-import aes, os
+import os
 import unicodedata
 from Crypto.Cipher import AES
 from base64 import b64decode,b64encode

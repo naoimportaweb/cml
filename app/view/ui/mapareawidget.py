@@ -9,7 +9,10 @@ import os, sys, inspect, json, uuid;
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
 sys.path.append( os.path.dirname( os.path.dirname( CURRENTDIR ) ) );
 
-from classlib.entitys import Person, Organization, Link, Rectangle, Other
+from classlib.relationship.person import Person
+from classlib.relationship.organization import Organization
+from classlib.relationship.other import Other
+from classlib.relationship.link import Link
 
 class MapAreaWidget(QWidget):
     def __init__(self, parent=None, mapa=None, form=None, max_width=15000 , max_height=10000):
@@ -44,8 +47,7 @@ class MapAreaWidget(QWidget):
             self.mapa.elements.append(  Organization(  x, y, 100, 20 , text="Organization")  );
         elif ptype == "link":
             self.mapa.elements.append(  Link(  x, y, 100, 20 , text="Relationship")  );
-        else:
-            self.mapa.elements.append(  Rectangle(  x, y, 100, 20 , text="?????")  );
+
 
     def addExistEntity(self, entity, x, y):
         buffer = None;
@@ -91,7 +93,6 @@ class MapAreaWidget(QWidget):
         buffer = self.getElement(current_pos.x(), current_pos.y());
         if self.form != None:
             if buffer == None:
-                #self.elements.append(  Rectangle( current_pos.x(), current_pos.y(), 100, 20 , text="?????")  );
                 self.form.map_double_click( self, current_pos.x(), current_pos.y() );
             else:
                 self.form.entity_double_click( buffer );

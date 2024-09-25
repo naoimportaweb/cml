@@ -1,11 +1,15 @@
 import json, uuid;
 import os, sys, inspect;
+
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
-sys.path.append(CURRENTDIR);
-sys.path.append( os.path.dirname( CURRENTDIR ));
+sys.path.append( os.path.dirname(  os.path.dirname( CURRENTDIR ) ) );
 
 from classlib.connectobject import ConnectObject;
-from classlib.entitys import Person, Organization, Link, Rectangle, Other
+
+from classlib.relationship.person import Person
+from classlib.relationship.organization import Organization
+from classlib.relationship.other import Other
+from classlib.relationship.link import Link
 
 class MapRelationship(ConnectObject):
     def __init__(self, id_=None):
