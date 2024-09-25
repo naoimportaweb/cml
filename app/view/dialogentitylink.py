@@ -28,12 +28,12 @@ class DialogEntityLink(QDialog):
         # ------------------------------------------
         self.lbl_text = QLabel("Text");
         self.txt_text = QLineEdit();
-        self.txt_text.setText( self.link.text ) ;
+        self.txt_text.setText( self.link.entity.text ) ;
         self.txt_text.textChanged.connect(self.txt_text_changed)
         CustomVLayout.widget_linha(self, self.page_rel, [self.lbl_text, self.txt_text] );
         
         self.txt_descricao = QTextEdit();
-        self.txt_descricao.setPlainText( self.link.full_description );
+        self.txt_descricao.setPlainText( self.link.entity.full_description );
         self.txt_descricao.setLineWrapMode(QTextEdit.NoWrap);
         self.txt_descricao.textChanged.connect(self.txt_descricao_changed)
         font = self.txt_descricao.font();
@@ -45,12 +45,11 @@ class DialogEntityLink(QDialog):
         layout_from = QVBoxLayout();
         self.cmb_combo_from = QComboBox()
         for entity in self.mapa.elements:
-            self.cmb_combo_from.addItem( entity.text + "("+ entity.etype +")" );
+            self.cmb_combo_from.addItem( entity.entity.text + "("+ entity.entity.etype +")" );
         
         btn_from_add = QPushButton("Add");
         btn_from_del = QPushButton("Remove");
         btn_from_add.clicked.connect(self.btn_from_add_click);
-        #btn_from_del.clicked.connect(self.btn_from_del_click);
 
         CustomVLayout.widget_linha(self, layout_from, [ QLabel("<b>From:</b>")] );
         CustomVLayout.widget_linha(self, layout_from, [self.cmb_combo_from, btn_from_add, btn_from_del] );
@@ -62,7 +61,7 @@ class DialogEntityLink(QDialog):
         layout_to = QVBoxLayout();
         self.cmb_combo_to = QComboBox()
         for entity in self.mapa.elements:
-            self.cmb_combo_to.addItem( entity.text + "("+ entity.etype +")" );
+            self.cmb_combo_to.addItem( entity.entity.text + "("+ entity.entity.etype +")" );
         
         btn_to_add = QPushButton("Add");
         btn_to_del = QPushButton("Remove");
@@ -92,19 +91,19 @@ class DialogEntityLink(QDialog):
         self.setLayout(   layout             );
 
     def table_reference_load(self):
-        self.table_reference.setRowCount( len( self.link.references ) );
-        for i in range(len( self.link.references )):
-            self.table_reference.setItem( i, 0, QTableWidgetItem( self.link.references[i].title ) );
+        self.table_reference.setRowCount( len( self.link.entity.references ) );
+        for i in range(len( self.link.entity.references )):
+            self.table_reference.setItem( i, 0, QTableWidgetItem( self.link.entity.references[i].title ) );
     
     def table_reference_click(self):
-        element = self.link.references[ self.table_reference.index() ];
+        element = self.link.entity.references[ self.table_reference.index() ];
         form = DialogReference(self, self.link, reference=element);
         form.exec();
         self.table_reference_load();
 
     def btn_reference_del_click(self):
         index = self.table_reference.index();
-        self.link.references.pop( index );
+        self.link.entity.references.pop( index );
         self.table_reference_load();
     
     def btn_reference_add_click(self):
@@ -115,14 +114,14 @@ class DialogEntityLink(QDialog):
     def table_from_load(self):
         self.table_from.setRowCount( len( self.link.from_entity ) );
         for i in range(len( self.link.from_entity )):
-            self.table_from.setItem( i, 0, QTableWidgetItem( self.link.from_entity[i].etype ) );
-            self.table_from.setItem( i, 1, QTableWidgetItem( self.link.from_entity[i].text ) );
+            self.table_from.setItem( i, 0, QTableWidgetItem( self.link.from_entity[i].entity.etype ) );
+            self.table_from.setItem( i, 1, QTableWidgetItem( self.link.from_entity[i].entity.text ) );
     
     def table_to_load(self):
         self.table_to.setRowCount( len( self.link.to_entity ) );
         for i in range(len( self.link.to_entity )):
-            self.table_to.setItem( i, 0, QTableWidgetItem( self.link.to_entity[i].etype ) );
-            self.table_to.setItem( i, 1, QTableWidgetItem( self.link.to_entity[i].text ) );
+            self.table_to.setItem( i, 0, QTableWidgetItem( self.link.to_entity[i].entity.etype ) );
+            self.table_to.setItem( i, 1, QTableWidgetItem( self.link.to_entity[i].entity.text ) );
 
     def btn_from_add_click(self):
         elemento = self.mapa.elements[ self.cmb_combo_from.currentIndex() ];
@@ -137,8 +136,8 @@ class DialogEntityLink(QDialog):
             self.table_to_load();
 
     def txt_text_changed(self):
-        self.link.text = self.txt_text.text();
+        self.link.entity.text = self.txt_text.text();
     
     def txt_descricao_changed(self):
-        self.link.full_description = self.txt_descricao.toPlainText();
+        self.link.entity.full_description = self.txt_descricao.toPlainText();
 

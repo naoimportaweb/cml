@@ -27,12 +27,12 @@ class DialogEntityOrganization(QDialog):
         # ------------------------------------------
         self.lbl_text = QLabel("Text");
         self.txt_text = QLineEdit();
-        self.txt_text.setText( self.organizagion.text ) ;
+        self.txt_text.setText( self.organizagion.entity.text ) ;
         self.txt_text.textChanged.connect(self.txt_text_changed)
         CustomVLayout.widget_linha(self, self.page_rel, [self.lbl_text, self.txt_text] );
         
         self.txt_descricao = QTextEdit();
-        self.txt_descricao.setPlainText( organizagion.full_description );
+        self.txt_descricao.setPlainText( organizagion.entity.full_description );
         self.txt_descricao.setLineWrapMode(QTextEdit.NoWrap);
         self.txt_descricao.textChanged.connect(self.txt_descricao_changed)
         font = self.txt_descricao.font();
@@ -54,19 +54,19 @@ class DialogEntityOrganization(QDialog):
         self.setLayout(   layout             );
 
     def table_reference_load(self):
-        self.table_reference.setRowCount( len( self.organizagion.references ) );
-        for i in range(len( self.organizagion.references )):
-            self.table_reference.setItem( i, 0, QTableWidgetItem( self.organizagion.references[i].title ) );
+        self.table_reference.setRowCount( len( self.organizagion.entity.references ) );
+        for i in range(len( self.organizagion.entity.references )):
+            self.table_reference.setItem( i, 0, QTableWidgetItem( self.organizagion.entity.references[i].title ) );
     
     def table_reference_click(self):
-        element = self.organizagion.references[ self.table_reference.index() ];
+        element = self.organizagion.entity.references[ self.table_reference.index() ];
         form = DialogReference(self, self.organizagion, reference=element);
         form.exec();
         self.table_reference_load();
 
     def btn_reference_del_click(self):
         index = self.table_reference.index();
-        self.organizagion.references.pop( index );
+        self.organizagion.entity.references.pop( index );
         self.table_reference_load();
     
     def btn_reference_add_click(self):
@@ -75,7 +75,7 @@ class DialogEntityOrganization(QDialog):
         self.table_reference_load()
 
     def txt_text_changed(self):
-        self.organizagion.text = self.txt_text.text();
+        self.organizagion.entity.text = self.txt_text.text();
     
     def txt_descricao_changed(self):
-        self.organizagion.full_description = self.txt_descricao.toPlainText();
+        self.organizagion.entity.full_description = self.txt_descricao.toPlainText();

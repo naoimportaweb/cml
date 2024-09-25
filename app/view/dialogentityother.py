@@ -26,12 +26,12 @@ class DialogEntityOther(QDialog):
         # ------------------------------------------
         self.lbl_text = QLabel("Text");
         self.txt_text = QLineEdit();
-        self.txt_text.setText( self.other.text ) ;
+        self.txt_text.setText( self.other.entity.text ) ;
         self.txt_text.textChanged.connect(self.txt_text_changed)
         CustomVLayout.widget_linha(self, self.page_rel, [self.lbl_text, self.txt_text] );
         
         self.txt_descricao = QTextEdit();
-        self.txt_descricao.setPlainText( other.full_description );
+        self.txt_descricao.setPlainText( other.entity.full_description );
         self.txt_descricao.setLineWrapMode(QTextEdit.NoWrap);
         self.txt_descricao.textChanged.connect(self.txt_descricao_changed)
         font = self.txt_descricao.font();
@@ -53,19 +53,19 @@ class DialogEntityOther(QDialog):
         self.setLayout(   layout             );
 
     def table_reference_load(self):
-        self.table_reference.setRowCount( len( self.other.references ) );
-        for i in range(len( self.other.references )):
-            self.table_reference.setItem( i, 0, QTableWidgetItem( self.other.references[i].title ) );
+        self.table_reference.setRowCount( len( self.other.entity.references ) );
+        for i in range(len( self.other.entity.references )):
+            self.table_reference.setItem( i, 0, QTableWidgetItem( self.other.entity.references[i].title ) );
     
     def table_reference_click(self):
-        element = self.other.references[ self.table_reference.index() ];
+        element = self.other.entity.references[ self.table_reference.index() ];
         form = DialogReference(self, self.other, reference=element);
         form.exec();
         self.table_reference_load();
 
     def btn_reference_del_click(self):
         index = self.table_reference.index();
-        self.other.references.pop( index );
+        self.other.entity.references.pop( index );
         self.table_reference_load();
     
     def btn_reference_add_click(self):
@@ -74,7 +74,7 @@ class DialogEntityOther(QDialog):
         self.table_reference_load()
 
     def txt_text_changed(self):
-        self.other.text = self.txt_text.text();
+        self.other.entity.text = self.txt_text.text();
     
     def txt_descricao_changed(self):
-        self.other.full_description = self.txt_descricao.toPlainText();
+        self.other.entity.full_description = self.txt_descricao.toPlainText();

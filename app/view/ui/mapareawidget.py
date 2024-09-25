@@ -56,9 +56,7 @@ class MapAreaWidget(QWidget):
             buffer = Other(  x, y, 100, 20 , text=entity["text_label"], entity_id_=entity["id"]);
         elif entity["etype"] == "organization":
             buffer = Organization(  x, y, 100, 20 , text=entity["text_label"], entity_id_=entity["id"])  ;
-        #elif entity["etype"] == "link":
-        #    buffer =  Link(  x, y, 100, 20 , text=entity["text_label"], entity_id_=entity["id"])  ;
-        buffer.full_description = entity["description"];
+        buffer.entity.full_description = entity["description"];
         for reference in entity["references"]:
             buffer.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"]);
 
@@ -80,10 +78,10 @@ class MapAreaWidget(QWidget):
         self.painter.begin(self.pixmap);
         self.pixmap.fill(Qt.white);
         for elemento in self.mapa.elements:
-            if elemento.etype == "link":
+            if elemento.entity.etype == "link":
                 elemento.draw( self.painter );
         for elemento in self.mapa.elements:
-            if elemento.etype == "person" or elemento.etype == "organization" or elemento.etype == "other":
+            if elemento.entity.etype == "person" or elemento.entity.etype == "organization" or elemento.entity.etype == "other":
                 elemento.draw( self.painter );
         self.painter.end();
         self.update();

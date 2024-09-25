@@ -72,7 +72,7 @@ class MapRelationship(ConnectObject):
                     continue;
                 for reference in element["references"]:
                     buffer.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"]);
-                buffer.full_description = element["full_description"];
+                buffer.entity.full_description = element["full_description"];
                 self.elements.append(  buffer  );
             for element in data['elements']:
                 if element["etype"] != "link":
