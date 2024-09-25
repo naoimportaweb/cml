@@ -16,7 +16,6 @@ class TimeSlice():
     def toJson(self):
         return {"id" : self.id, "text_label" : self.text_label, "date_start" : self.date_start, "date_end" : self.date_end};
 
-
 class Reference():
     def __init__(self, title, link1, link2, link3, id_=None):
         self.id = uuid.uuid4().hex + "_" + uuid.uuid4().hex + "_" + uuid.uuid4().hex;
@@ -26,7 +25,6 @@ class Reference():
         self.link1 = link1;
         self.link2 = link2;
         self.link3 = link3;
-    
     def toJson(self):
         return {"id" : self.id, "title" : self.title, "link1" : self.link1, "link2" : self.link2, "link3" : self.link3};
 
