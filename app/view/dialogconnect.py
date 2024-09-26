@@ -16,12 +16,14 @@ sys.path.append("/opt/cml/app/");
 from view.ui.customvlayout import CustomVLayout;
 from classlib.server import Server;
 from classlib.user import User;
+from classlib.configuration import Configuration;
 
 class DialogConnect(QDialog):
     def __init__(self):
         super().__init__()
         self.resize(600, 320);
-
+        config = Configuration.instancia();
+        
         self.setWindowTitle("Connect")
         self.layout_principal = CustomVLayout();
         self.setLayout( self.layout_principal );

@@ -5,9 +5,9 @@ sys.path.append( os.path.dirname(  os.path.dirname( CURRENTDIR ) ) );
 
 from PySide6.QtWidgets import (QStyle,QColorDialog,)
 from PySide6.QtCore import Qt, Slot, QStandardPaths,QRectF
-from PySide6.QtGui import (QMouseEvent,QPaintEvent,QPen,QAction,QPainter,QColor,QBrush,QPixmap,QIcon,QKeySequence,);
+from PySide6.QtGui import (QMouseEvent,QPaintEvent,QFont,QPen,QAction,QPainter,QColor,QBrush,QPixmap,QIcon,QKeySequence,);
 
-
+from classlib.configuration import Configuration
 from classlib.entity import Entity
 
 class MapRelationshipBox():
@@ -22,7 +22,8 @@ class MapRelationshipBox():
         self.y = y;
         self.w = w;
         self.h = h;        
-    
+    #def __scale__(self, number):
+    #    return int( number * Configuration.instancia().relationshihp_font_scale );
     def toJson(self):
         objeto = { "id" : self.id, "entity_id": self.entity.id , "x" : self.x, "y" : self.y, "w" : self.w, "h" : self.h, "text" : self.entity.text, "full_description" : self.entity.full_description, "etype" : self.entity.etype, "references" : [], "time_slices" : [], "data_extra" : self.entity.data_extra  };
         
@@ -47,6 +48,7 @@ class MapRelationshipBox():
         penRectangle = QPen(Qt.black)
         penRectangle.setWidth(1)
         painter.setPen(penRectangle)
+        painter.setFont(QFont(Configuration.instancia().relationshihp_font_family, Configuration.instancia().relationshihp_font_size))
         frame_text = painter.boundingRect(0, 0, 150, 30, 0, self.entity.text);
         self.w = frame_text.width() + 10;
         self.h = frame_text.height() + 2;

@@ -5,10 +5,11 @@ sys.path.append( os.path.dirname(  os.path.dirname( CURRENTDIR ) ) );
 
 from PySide6.QtWidgets import (QStyle,QColorDialog,)
 from PySide6.QtCore import Qt, Slot, QStandardPaths,QRectF
-from PySide6.QtGui import (QMouseEvent,QPaintEvent,QPen,QAction,QPainter,QColor,QBrush,QPixmap,QIcon,QKeySequence,);
+from PySide6.QtGui import (QMouseEvent,QPaintEvent,QPen,QFont,QAction,QPainter,QColor,QBrush,QPixmap,QIcon,QKeySequence,);
 
 
 from classlib.relationship.maprelationship_box import MapRelationshipBox;
+from classlib.configuration import Configuration
 
 class Person(MapRelationshipBox):
     def __init__(self, x, y, w, h, text=None, id_=None, entity_id_=None):
@@ -24,7 +25,8 @@ class Person(MapRelationshipBox):
     def draw(self, painter):
         penRectangle = QPen(Qt.black)
         penRectangle.setWidth(1)
-        painter.setPen(penRectangle)
+        painter.setPen(penRectangle);
+        painter.setFont(QFont(Configuration.instancia().relationshihp_font_family, Configuration.instancia().relationshihp_font_size))
         frame_text = painter.boundingRect(0, 0, 150, 30, 0, self.entity.text);
         self.w = frame_text.width() + 10;
         self.h = frame_text.height() + 2;
@@ -32,6 +34,5 @@ class Person(MapRelationshipBox):
         painter.drawRoundedRect(self.x, self.y, self.w, self.h, 5, 5);
         if self.entity.text != None:
             painter.drawText(QRectF(self.x , self.y, self.w, self.h), Qt.AlignCenter | Qt.AlignTop, self.entity.text)
-        #path.addRoundedRect(QRectF(10, 10, 100, 50), 10, 10);
 
         

@@ -5,7 +5,7 @@ sys.path.append( os.path.dirname(  os.path.dirname( CURRENTDIR ) ) );
 
 from PySide6.QtWidgets import (QStyle,QColorDialog,)
 from PySide6.QtCore import Qt, Slot, QStandardPaths,QRectF
-from PySide6.QtGui import (QMouseEvent,QPaintEvent,QPen,QAction,QPainter,QColor,QBrush,QPixmap,QIcon,QKeySequence,);
+from PySide6.QtGui import (QMouseEvent,QPaintEvent,QPen,QFont,QAction,QPainter,QColor,QBrush,QPixmap,QIcon,QKeySequence,);
 
 
 from classlib.relationship.maprelationship_box import MapRelationshipBox;

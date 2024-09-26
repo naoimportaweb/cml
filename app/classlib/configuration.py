@@ -13,15 +13,32 @@ from PySide6.QtGui import QFont;
 class Configuration(metaclass=SingletonMeta):
     def __init__(self):
         self.path_config = os.path.expanduser('~') + "/.cml.json";
-        config_ = {"font" : {"family" : "Courier", "size" : 12}};
+        self.config_ = {};
         if os.path.exists(self.path_config):
-            config_ = json.loads( open( self.path_config, "r").read() );
-        else:
-            with open(self.path_config, "w") as f:
-                f.write( json.dumps(config_) );
-        self.font_size = config_["font"]["size"];
-        self.font_family = config_["font"]["family"];
+            self.config_ = json.loads( open( self.path_config, "r").read() );
+        self.font_size = self.__getParameter__(self.config_,   "form.font.size", 12);
+        self.font_family = self.__getParameter__(self.config_, "form.font.family", "Courier");
+        self.relationshihp_font_size = self.__getParameter__(self.config_,    "relationshihp.font.size", 10);
+        self.relationshihp_font_scale = self.__getParameter__(self.config_,   "relationshihp.font.scale", 1);
+        self.relationshihp_font_family = self.__getParameter__(self.config_,  "relationshihp.font.family", "Vernana");
     
+    def __getParameter__(self, js, name, default):
+        if name.find(".") > 0:
+            if js.get( name[:name.find(".") ] ) == None:
+                js[name[:name.find(".") ]] = {};
+            return self.__getParameter__(js[name[:name.find(".") ]], name[ name.find(".") + 1:], default);
+        else:
+            if js.get(name) == None:
+                js[name] = default;
+                self.__save__(); ## já salva
+            return js[name];
+
+    def __save__(self):
+        with open(self.path_config, "w") as f:
+            f.write( json.dumps(self.config_) );
+            return True;
+        return False;
+
     def getFont(self):
         font = QFont()
         font.setPointSize(self.font_size);
