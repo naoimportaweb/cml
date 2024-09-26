@@ -22,6 +22,8 @@ class DialogRelationship(QDialog):
         super().__init__();
         #self.resize(800, 660);
         nWidth = int(form.width() * 0.8); nHeight = int(form.height() * 0.6);
+        if nWidth > 800:
+            nWidth = 800;
         self.setGeometry(form.x() + form.width()/2 - nWidth/2,
             form.y() + form.height()/2 - nHeight/2,
             nWidth, nHeight);

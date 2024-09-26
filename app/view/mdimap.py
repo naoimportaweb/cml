@@ -38,7 +38,7 @@ class MdiMap(QWidget):
         form.exec();
     
     def map_double_click(self, map, x, y):
-        form = DialogChoiceEntity();
+        form = DialogChoiceEntity(self.form_principal);
         form.exec();
         if form.ptype != None:
             map.addEntity( form.ptype, x, y );

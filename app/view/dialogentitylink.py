@@ -11,6 +11,7 @@ CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 ROOT = os.path.dirname( CURRENTDIR );
 sys.path.append( ROOT );
 
+from classlib.configuration import Configuration;
 from view.ui.customvlayout import CustomVLayout;
 from view.dialogreference import DialogReference;
 
@@ -19,6 +20,8 @@ class DialogEntityLink(QDialog):
         super().__init__(form)
         #self.resize(800, 660);
         nWidth = int(form.width() * 0.8); nHeight = int(form.height() * 0.6);
+        if nWidth > 800:
+            nWidth = 800;
         self.setGeometry(form.x() + form.width()/2 - nWidth/2,
             form.y() + form.height()/2 - nHeight/2,
             nWidth, nHeight);
@@ -33,7 +36,9 @@ class DialogEntityLink(QDialog):
         self.page_ref      = CustomVLayout.widget_tab( self.tab, "References");
         # ------------------------------------------
         self.lbl_text = QLabel("Text");
+        self.lbl_text.setText( self.link.entity.text ) ;
         self.txt_text = QLineEdit();
+        self.txt_text.setFont( Configuration.instancia().getFont() );
         self.txt_text.setText( self.link.entity.text ) ;
         self.txt_text.textChanged.connect(self.txt_text_changed)
         CustomVLayout.widget_linha(self, self.page_rel, [self.lbl_text, self.txt_text] );
@@ -41,9 +46,8 @@ class DialogEntityLink(QDialog):
         self.txt_descricao = QTextEdit();
         self.txt_descricao.setPlainText( self.link.entity.full_description );
         self.txt_descricao.setLineWrapMode(QTextEdit.NoWrap);
+        self.txt_descricao.setFont( Configuration.instancia().getFont() );
         self.txt_descricao.textChanged.connect(self.txt_descricao_changed)
-        font = self.txt_descricao.font();
-        font.setFamily("Courier");
         self.txt_descricao.setLineWrapMode(QTextEdit.WidgetWidth);  
         self.page_rel.addWidget( self.txt_descricao );
 

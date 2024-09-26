@@ -13,6 +13,7 @@ ROOT = os.path.dirname( CURRENTDIR );
 sys.path.append( ROOT );
 sys.path.append("/opt/cml/app/");
 
+from classlib.configuration import Configuration;
 from view.ui.customvlayout import CustomVLayout;
 from classlib.server import Server;
 
@@ -20,6 +21,8 @@ class DialogReference(QDialog):
     def __init__(self, form, element, reference):
         super().__init__()
         nWidth = int(form.width() * 0.8); nHeight = int(form.height() * 0.6);
+        if nWidth > 800:
+            nWidth = 800;
         self.setGeometry(form.x() + form.width()/2 - nWidth/2,
             form.y() + form.height()/2 - nHeight/2,
             nWidth, nHeight);
@@ -30,27 +33,35 @@ class DialogReference(QDialog):
         self.setWindowTitle("Reference")
         layout = QGridLayout()
         lbl_title = QLabel("Title")
+        lbl_title.setFont( Configuration.instancia().getFont() );
         lbl_title.setProperty("class", "normal")
         layout.addWidget(lbl_title, 1, 0)
-        self.txt_title = QLineEdit()
+        self.txt_title = QLineEdit();
+        self.txt_title.setFont( Configuration.instancia().getFont() );
         layout.addWidget(self.txt_title, 1, 1)
 
         lbl_link1 = QLabel("Link:")
+        lbl_link1.setFont( Configuration.instancia().getFont() );
         lbl_link1.setProperty("class", "normal")
         layout.addWidget(lbl_link1, 2, 0)
-        self.txt_link1 = QLineEdit()
+        self.txt_link1 = QLineEdit();
+        self.txt_link1.setFont( Configuration.instancia().getFont() );
         layout.addWidget(self.txt_link1, 2, 1)
 
         lbl_link2 = QLabel("Link:")
+        lbl_link2.setFont( Configuration.instancia().getFont() );
         lbl_link2.setProperty("class", "normal")
         layout.addWidget(lbl_link2, 3, 0)
         self.txt_link2 = QLineEdit()
+        self.txt_link2.setFont( Configuration.instancia().getFont() );
         layout.addWidget(self.txt_link2, 3, 1)
 
         lbl_link3 = QLabel("Link:")
+        lbl_link3.setFont( Configuration.instancia().getFont() );
         lbl_link3.setProperty("class", "normal")
         layout.addWidget(lbl_link3, 4, 0)
-        self.txt_link3 = QLineEdit()
+        self.txt_link3 = QLineEdit();
+        self.txt_link3.setFont( Configuration.instancia().getFont() );
         layout.addWidget(self.txt_link3, 4, 1)
 
         btn_salvar = QPushButton("Save")

@@ -16,8 +16,8 @@ from view.ui.customvlayout import CustomVLayout;
 from view.dialogentityload import DialogEntityLoad;
 
 class DialogChoiceEntity(QDialog):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, form):
+        super().__init__(form)
         self.option = 0;
         self.ptype = None;
         self.search_entity = None;
