@@ -21,9 +21,8 @@ class MapRelationshipBox():
         self.x = x;
         self.y = y;
         self.w = w;
-        self.h = h;        
-    #def __scale__(self, number):
-    #    return int( number * Configuration.instancia().relationshihp_font_scale );
+        self.h = h;
+        
     def toJson(self):
         objeto = { "id" : self.id, "entity_id": self.entity.id , "x" : self.x, "y" : self.y, "w" : self.w, "h" : self.h, "text" : self.entity.text, "full_description" : self.entity.full_description, "etype" : self.entity.etype, "references" : [], "time_slices" : [], "data_extra" : self.entity.data_extra  };
         
@@ -38,6 +37,15 @@ class MapRelationshipBox():
             objeto["time_slices"].append( buffer );
         return objeto;
             
+    def setType(self, id_type):
+        if id_type == 0:
+            self.entity.etype = "person";
+        elif id_type == 1:
+            self.entity.etype = "organization";
+        elif id_type == 2:
+            self.entity.etype = "other";
+        return self.entity.toType();
+
     def addReference(self, title, link1, link2 = "", link3 = "", id_=None):
         return self.entity.addReference(title, link1, link2, link3, id_);
 

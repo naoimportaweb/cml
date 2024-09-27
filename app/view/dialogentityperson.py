@@ -31,6 +31,7 @@ class DialogEntityPerson(QDialog):
         self.page_pho = CustomVLayout.widget_tab( self.tab, "Photo");
         self.page_dox = CustomVLayout.widget_tab( self.tab, "Doxxing");
         self.page_ref = CustomVLayout.widget_tab( self.tab, "References");
+        self.page_act = CustomVLayout.widget_tab( self.tab, "Actions");
         # ------------------------------------------
         self.lbl_text = QLabel("Text");
         self.txt_text = QLineEdit();
@@ -43,8 +44,8 @@ class DialogEntityPerson(QDialog):
         self.txt_descricao.setLineWrapMode(QTextEdit.NoWrap);
         self.txt_descricao.textChanged.connect(self.txt_descricao_changed)
         font = self.txt_descricao.font();
-        font.setFamily("Courier");
-        font.setPointSize(25);
+        #font.setFamily("Courier");
+        #font.setPointSize(25);
         self.txt_descricao.setLineWrapMode(QTextEdit.WidgetWidth);  
         self.page_rel.addWidget( self.txt_descricao );
         # --------------------------------------------------
@@ -53,10 +54,18 @@ class DialogEntityPerson(QDialog):
         self.txt_doxxing.setLineWrapMode(QTextEdit.NoWrap);
         self.txt_doxxing.textChanged.connect(self.txt_doxxing_changed)
         font = self.txt_doxxing.font();
-        font.setFamily("Courier");
-        font.setPointSize(25);
+        #font.setFamily("Courier");
+        #font.setPointSize(25);
         self.txt_doxxing.setLineWrapMode(QTextEdit.WidgetWidth);  
         self.page_dox.addWidget( self.txt_doxxing );
+        #-------------------------------------------
+        self.cmb_type = QComboBox()
+        self.cmb_type.addItem('Person')
+        self.cmb_type.addItem('Organization')
+        self.cmb_type.addItem('Other')
+        btn_alterar_type = QPushButton("Add");
+        btn_alterar_type.clicked.connect(self.btn_alterar_type_click);
+        CustomVLayout.widget_linha(self, self.page_act, [self.cmb_type, btn_alterar_type] );
         #-------------------------------------------
         btn_reference_add = QPushButton("Add");
         btn_reference_del = QPushButton("Remove");
@@ -99,3 +108,8 @@ class DialogEntityPerson(QDialog):
 
     def txt_doxxing_changed(self):
         self.person.doxxing = self.txt_doxxing.toPlainText();
+    
+    def btn_alterar_type_click(self):
+        retorno = self.person.setType( self.cmb_type.currentIndex() );
+        if retorno:
+            self.close();

@@ -35,7 +35,8 @@ class Entity(ConnectObject):
         return { "id" : self.id,  "name" : self.name}
 
     def toType(self):
-        js = self.__execute__("Entity", "to_type", {});
+        js = self.__execute__("Entity", "to_type", {"type" : self.etype, "id" : self.id});
+        print(js);
         if js["status"]:
             return js["return"];
         return False;

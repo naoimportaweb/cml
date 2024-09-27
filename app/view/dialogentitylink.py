@@ -34,6 +34,7 @@ class DialogEntityLink(QDialog):
         self.page_ent_from = CustomVLayout.widget_tab( self.tab, "Entity From");
         self.page_ent_to   = CustomVLayout.widget_tab( self.tab, "Entity To");
         self.page_ref      = CustomVLayout.widget_tab( self.tab, "References");
+        
         # ------------------------------------------
         self.lbl_text = QLabel("Text");
         self.lbl_text.setText( self.link.entity.text ) ;

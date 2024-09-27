@@ -30,6 +30,7 @@ class DialogEntityOther(QDialog):
         self.page_rel = CustomVLayout.widget_tab( self.tab, "other");
         self.page_pho = CustomVLayout.widget_tab( self.tab, "Photo");
         self.page_ref = CustomVLayout.widget_tab( self.tab, "References");
+        self.page_act = CustomVLayout.widget_tab( self.tab, "Actions");
         # ------------------------------------------
         self.lbl_text = QLabel("Text");
         self.txt_text = QLineEdit();
