@@ -13,6 +13,7 @@ sys.path.append( ROOT );
 
 from view.ui.customvlayout import CustomVLayout;
 from view.dialogreference import DialogReference;
+from classlib.configuration import Configuration;
 
 class DialogEntityPerson(QDialog):
     def __init__(self, form, person):
@@ -35,11 +36,13 @@ class DialogEntityPerson(QDialog):
         # ------------------------------------------
         self.lbl_text = QLabel("Text");
         self.txt_text = QLineEdit();
+        self.txt_text.setFont( Configuration.instancia().getFont() );
         self.txt_text.setText( self.person.entity.text ) ;
         self.txt_text.textChanged.connect(self.txt_text_changed)
         CustomVLayout.widget_linha(self, self.page_rel, [self.lbl_text, self.txt_text] );
         
         self.txt_descricao = QTextEdit();
+        self.txt_descricao.setFont( Configuration.instancia().getFont() );
         self.txt_descricao.setPlainText( person.entity.full_description );
         self.txt_descricao.setLineWrapMode(QTextEdit.NoWrap);
         self.txt_descricao.textChanged.connect(self.txt_descricao_changed)
@@ -50,6 +53,7 @@ class DialogEntityPerson(QDialog):
         self.page_rel.addWidget( self.txt_descricao );
         # --------------------------------------------------
         self.txt_doxxing = QTextEdit();
+        self.txt_doxxing.setFont( Configuration.instancia().getFont() );
         self.txt_doxxing.setPlainText( person.doxxing );
         self.txt_doxxing.setLineWrapMode(QTextEdit.NoWrap);
         self.txt_doxxing.textChanged.connect(self.txt_doxxing_changed)
@@ -60,14 +64,18 @@ class DialogEntityPerson(QDialog):
         self.page_dox.addWidget( self.txt_doxxing );
         #-------------------------------------------
         self.cmb_type = QComboBox()
+        self.cmb_type.setFont( Configuration.instancia().getFont() );
         self.cmb_type.addItem('Organization')
         self.cmb_type.addItem('Other')
         btn_alterar_type = QPushButton("Switch to type");
+        btn_alterar_type.setFont( Configuration.instancia().getFont() );
         btn_alterar_type.clicked.connect(self.btn_alterar_type_click);
         CustomVLayout.widget_linha(self, self.page_act, [self.cmb_type, btn_alterar_type] );
         #-------------------------------------------
         btn_reference_add = QPushButton("Add");
         btn_reference_del = QPushButton("Remove");
+        btn_reference_add.setFont( Configuration.instancia().getFont() );
+        btn_reference_del.setFont( Configuration.instancia().getFont() );
         btn_reference_add.clicked.connect(self.btn_reference_add_click);
         btn_reference_del.clicked.connect(self.btn_reference_del_click);
         CustomVLayout.widget_linha(self, self.page_ref, [btn_reference_add, btn_reference_del] );

@@ -15,4 +15,4 @@ class Organization(MapRelationshipBox):
         super().__init__(mapa, x, y, w, h, text=text, id_=id_, entity_id_=entity_id_ );
         self.entity.etype = "organization";
         if text == None:
-            text = "Organization";
+            self.text = "Organization";

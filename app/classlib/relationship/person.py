@@ -15,7 +15,7 @@ class Person(MapRelationshipBox):
     def __init__(self, mapa, x, y, w, h, text=None, id_=None, entity_id_=None):
         super().__init__( mapa, x, y, w, h, text=text, id_=id_, entity_id_=entity_id_ );
         if text == None:
-            text = "Person";
+            self.text = "Person";
         self.entity.etype = "person";
         self.doxxing = "";
     

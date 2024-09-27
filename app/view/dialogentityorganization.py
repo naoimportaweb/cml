@@ -46,23 +46,24 @@ class DialogEntityOrganization(QDialog):
         self.txt_descricao.setPlainText( organizagion.entity.full_description );
         self.txt_descricao.setLineWrapMode(QTextEdit.NoWrap);
         self.txt_descricao.textChanged.connect(self.txt_descricao_changed)
-        #font = self.txt_descricao.font();
-        #font.setFamily("Courier");
-        #font.setPointSize(25);
         self.txt_descricao.setFont(config.getFont());
         self.txt_descricao.setLineWrapMode(QTextEdit.WidgetWidth);  
         self.page_rel.addWidget( self.txt_descricao );
         # --------------------------------------------------
         #-------------------------------------------
         self.cmb_type = QComboBox()
+        self.cmb_type.setFont( Configuration.instancia().getFont() );
         self.cmb_type.addItem('Person')
         self.cmb_type.addItem('Other')
         btn_alterar_type = QPushButton("Switch to type");
+        btn_alterar_type.setFont( Configuration.instancia().getFont() );
         btn_alterar_type.clicked.connect(self.btn_alterar_type_click);
         CustomVLayout.widget_linha(self, self.page_act, [self.cmb_type, btn_alterar_type] );
         #-------------------------------------------
         btn_reference_add = QPushButton("Add");
         btn_reference_del = QPushButton("Remove");
+        btn_reference_add.setFont( Configuration.instancia().getFont() );
+        btn_reference_del.setFont( Configuration.instancia().getFont() );
         btn_reference_add.clicked.connect(self.btn_reference_add_click);
         btn_reference_del.clicked.connect(self.btn_reference_del_click);
         CustomVLayout.widget_linha(self, self.page_ref, [btn_reference_add, btn_reference_del] );

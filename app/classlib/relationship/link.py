@@ -18,7 +18,7 @@ class Link(MapRelationshipBox):
         self.to_entity = [];
         self.from_entity = [];
         if text == None:
-            text = "Relationship";
+            self.text = "Relationship";
 
     def toJson(self):
         objeto = super().toJson();

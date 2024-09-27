@@ -29,6 +29,9 @@ class DialogEntityLink(QDialog):
         self.setWindowTitle("Relationship")
         self.link = link;
         self.mapa = mapa;
+        self.elements_no_link = [];
+        for element in self.mapa.elements:
+            self.elements_no_link.append(element);
         self.tab = QTabWidget();  
         self.page_rel      = CustomVLayout.widget_tab( self.tab, "Relationship");
         self.page_ent_from = CustomVLayout.widget_tab( self.tab, "Entity From");
@@ -55,11 +58,13 @@ class DialogEntityLink(QDialog):
         # -----------------------------------------
         layout_from = QVBoxLayout();
         self.cmb_combo_from = QComboBox()
-        for entity in self.mapa.elements:
+        for entity in self.elements_no_link:
             self.cmb_combo_from.addItem( entity.entity.text + "("+ entity.entity.etype +")" );
         
         btn_from_add = QPushButton("Add");
         btn_from_del = QPushButton("Remove");
+        btn_from_add.setFont( Configuration.instancia().getFont() );
+        btn_from_del.setFont( Configuration.instancia().getFont() );
         btn_from_add.clicked.connect(self.btn_from_add_click);
 
         CustomVLayout.widget_linha(self, layout_from, [ QLabel("<b>From:</b>")] );
@@ -71,13 +76,14 @@ class DialogEntityLink(QDialog):
         # -----------------------------------------
         layout_to = QVBoxLayout();
         self.cmb_combo_to = QComboBox()
-        for entity in self.mapa.elements:
+        for entity in self.elements_no_link:
             self.cmb_combo_to.addItem( entity.entity.text + "("+ entity.entity.etype +")" );
         
         btn_to_add = QPushButton("Add");
         btn_to_del = QPushButton("Remove");
+        btn_to_add.setFont( Configuration.instancia().getFont() );
+        btn_to_del.setFont( Configuration.instancia().getFont() );
         btn_to_add.clicked.connect(self.btn_to_add_click);
-        #btn_to_del.clicked.connect(self.btn_to_del_click);
         CustomVLayout.widget_linha(self, layout_to, [ QLabel("<b>Fo:</b>")] );
         CustomVLayout.widget_linha(self, layout_to, [self.cmb_combo_to, btn_to_add, btn_to_del] );
         self.page_ent_to.addWidget( CustomVLayout.layout_to_widget( layout_to ) );
@@ -87,6 +93,8 @@ class DialogEntityLink(QDialog):
         #-------------------------------------------
         btn_reference_add = QPushButton("Add");
         btn_reference_del = QPushButton("Remove");
+        btn_reference_add.setFont( Configuration.instancia().getFont() );
+        btn_reference_del.setFont( Configuration.instancia().getFont() );
         btn_reference_add.clicked.connect(self.btn_reference_add_click);
         btn_reference_del.clicked.connect(self.btn_reference_del_click);
         CustomVLayout.widget_linha(self, self.page_ref, [btn_reference_add, btn_reference_del] );
@@ -135,13 +143,13 @@ class DialogEntityLink(QDialog):
             self.table_to.setItem( i, 1, QTableWidgetItem( self.link.to_entity[i].entity.text ) );
 
     def btn_from_add_click(self):
-        elemento = self.mapa.elements[ self.cmb_combo_from.currentIndex() ];
+        elemento = self.elements_no_link[ self.cmb_combo_from.currentIndex() ];
         if elemento != self.link  and not self.link.hasFrom(elemento)  and not self.link.hasTo(elemento):
             self.link.addFrom( elemento );
             self.table_from_load();
     
     def btn_to_add_click(self):
-        elemento = self.mapa.elements[ self.cmb_combo_to.currentIndex() ];
+        elemento = self.elements_no_link[ self.cmb_combo_to.currentIndex() ];
         if elemento != self.link and not self.link.hasTo(elemento) and not self.link.hasFrom(elemento):
             self.link.addTo( elemento );
             self.table_to_load();
