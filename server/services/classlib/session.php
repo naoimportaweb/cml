@@ -37,8 +37,46 @@ class Session
         }
     }
 
-    function publickey(){
-        return array( "public" => $this->public_key, "salt" => "1111" ); #forca
+    public function exists( $username ) {
+        $mysql = new Mysql("");
+        $buffer = $mysql->DataTable("select * from person where username = ? ", [$username]);
+        return count($buffer) > 0;
+    }
+
+    //public function exists( $ip, $user, $post_data ) {
+    //    return array( "status" => $this->__exists($post_data["parameters"]["username"]) );
+    //}
+
+    public function register( $ip, $user, $post_data ) {
+        $mysql = new Mysql("");
+        $person_enter = $mysql->DataTable("select * from person_enter where person_id is null and key_enter = ? ", [$post_data["parameters"]["invitation"]]);
+        if ($this->exists($post_data["parameters"]["username"] )) {
+            // usuario já existe
+            return array( "status" => false, "mensage" => "Usuário já existe." );
+        } else {
+            if (count($person_enter) > 0) {
+                $user_id = $mysql->gen_uuid();
+                $sql1 = "INSERT INTO person(id, name, username, password, salt, email) values( ?, ?, ?, ?, ?, ?);";
+                $valores1 = [ $user_id , $post_data["parameters"]["username"], $post_data["parameters"]["username"],$post_data["parameters"]["password"],$post_data["parameters"]["salt"],$post_data["parameters"]["email"]];
+                $sql2 = "UPDATE person_enter set person_id= ? where key_enter = ?";
+                $valores2 = [ $user_id,  $post_data["parameters"]["invitation"]];
+                if( $mysql->ExecuteNoQuery( [$sql1, $sql2], [$valores1, $valores2] ) > 0) {
+                    return array( "status" => true, "mensage" => "Realize o Login" );
+                } else {
+                    return array( "status" => false, "mensage" => "Convite inválido" );
+                }
+            } else {
+                // infelizmente nao tem convite para engrar
+                return array( "status" => false, "mensage" => "Convite inválido" );
+            }
+        }
+    }
+
+    function publickey($post_data){
+        $mysql = new Mysql("");
+        $sql = "select salt from person where username=?";
+        $salt = $mysql->DataTable($sql, [ $post_data["parameters"]["username"] ]) [0]["salt"];
+        return array( "public" => $this->public_key, "salt" => $salt ) ; 
     }
 
     function login( $username, $password, $simetric_key){

@@ -22,17 +22,24 @@ class User (ConnectObject):
         self.salt = None;
     # chama o publickey(), depois o session() depois o login() para logar.....;
     def publickey(self):
-        js = self.__execute__("Session", "publickey", {});
+        js = self.__execute__("Session", "publickey", {"username" : self.username });
         if js["status"]:
             self.salt = js["return"]["salt"];
             return js["return"]["public"];
         return None;
+    def register(self, username, password, email, invitation):
+        salt = str(uuid.uuid4());
+        password = hashlib.sha256( (password + salt).encode() ).hexdigest();
+        js = self.__execute__("Session", "register", {"username" : username, "password" : password, "salt" : salt, "email" : email, "invitation" : invitation}, crypto_v="000");
+        if js["return"]["status"]:
+            return True;
+        raise Exception( js["return"]["mensage"] );
 
-    def teste(self):
-        js = self.__execute__("User", "teste", {"username" : self.username}, crypto_v="000");
-        if js["status"]:
-            return js["return"]["username"];
-        return None;
+    #def teste(self):
+    #    js = self.__execute__("User", "teste", {"username" : self.username}, crypto_v="000");
+    #    if js["status"]:
+    #        return js["return"]["username"];
+    #    return None;
     #def session(self):
     #    js = self.__execute__("Session", "create", {"username" : self.username });
     #    if js["status"]:

@@ -5,6 +5,7 @@ create table person(
     name VARCHAR(255) NOT NULL,
     username VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
     salt VARCHAR(255) NOT NULL
 );
 
@@ -19,6 +20,7 @@ create table person_sesion(
 create table person_enter(
     id VARCHAR(128) PRIMARY KEY,
     person_id VARCHAR(128),
+    key_enter TEXT,
     creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
 );
@@ -102,11 +104,19 @@ ALTER TABLE diagram_relationship_element ADD FOREIGN KEY (diagram_relationship_i
 ALTER TABLE diagram_relationship_element_reference ADD FOREIGN KEY (entity_id) REFERENCES entity(id);
 ALTER TABLE diagram_relationship_link ADD FOREIGN KEY (diagram_relationship_element_id) REFERENCES diagram_relationship_element(id);
 ALTER TABLE diagram_relationship_link ADD FOREIGN KEY (diagram_relationship_element_id_reference) REFERENCES diagram_relationship_element(id);
-
+ALTER TABLE person ADD CONSTRAINT UniqueUsername UNIQUE (username); 
+ALTER TABLE person ADD CONSTRAINT UniqueEmail UNIQUE (email); 
 
 # --------------------------- LIMPANDO -------------------------
 
 insert into person (id, username, name, password, salt) values ('1', 'nao.importa.web', 'nao.importa.web', '7c61be27eec3fa7cef2e0d44d3145ea37648b0842d5574c0163b92c0bed54924', '1111');
+INSERT INTO person_enter(id, key_enter) values("1","1");
+INSERT INTO person_enter(id, key_enter) values("2","2");
+INSERT INTO person_enter(id, key_enter) values("3","3");
+INSERT INTO person_enter(id, key_enter) values("4","4");
+INSERT INTO person_enter(id, key_enter) values("5","5");
+INSERT INTO person_enter(id, key_enter) values("6","6");
+
 
 delete from diagram_relationship_link;
 delete from diagram_relationship_element_reference;
@@ -130,3 +140,7 @@ drop table person;
 
 # ------------- HOMOLOGAÇAO -------------------------------
 
+ALTER TABLE person_enter ADD column key_enter TEXT;
+ALTER TABLE person ADD CONSTRAINT UniqueUsername UNIQUE (username); 
+ALTER TABLE person ADD COLUMN email VARCHAR(255);
+ALTER TABLE person ADD CONSTRAINT UniqueEmail UNIQUE (email); 

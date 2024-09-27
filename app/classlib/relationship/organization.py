@@ -12,7 +12,7 @@ from classlib.relationship.maprelationship_box import MapRelationshipBox;
 
 class Organization(MapRelationshipBox):
     def __init__(self, mapa, x, y, w, h, text=None, id_=None, entity_id_=None ):
+        if text == None:
+            text = "Organization";
         super().__init__(mapa, x, y, w, h, text=text, id_=id_, entity_id_=entity_id_ );
         self.entity.etype = "organization";
-        if text == None:
-            self.text = "Organization";

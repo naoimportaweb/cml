@@ -12,9 +12,10 @@ from classlib.relationship.maprelationship_box import MapRelationshipBox;
 from classlib.configuration import Configuration
 class Other(MapRelationshipBox):
     def __init__(self, mapa, x, y, w, h, text=None, id_=None, entity_id_=None ):
-        super().__init__( mapa, x, y, w, h, text=text, id_=id_, entity_id_=entity_id_ );
         if text == None:
-            self.text = "Other";
+            text = "Other";
+        super().__init__( mapa, x, y, w, h, text=text, id_=id_, entity_id_=entity_id_ );
+        
         self.entity.etype = "other";
     def draw(self, painter):
         penRectangle = QPen(Qt.black)

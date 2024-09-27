@@ -1,6 +1,6 @@
 <?php
 
-error_reporting(E_ALL);
+//error_reporting(E_ALL);
 
 require_once dirname(dirname(dirname(__DIR__))) . "/api/mysql.php";
 

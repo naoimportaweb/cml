@@ -42,14 +42,15 @@ try{
     $return_metehod = "";
     // chamar os métodos, alguns sao fixos pela logica, os outros são dinamicos pelo uso.
     if( $post_data["class"] == "Session" && $post_data["method"] == "publickey" ) {
-        $return_metehod = $session->publickey();
+        $post_data["parameters"] = json_decode(  substr($post_data["parameters"], 8), true ) ;
+        $return_metehod = $session->publickey($post_data);
     } else if( $post_data["class"] == "Session" && $post_data["method"] == "login" ) {
-        // Remover a criptografia por enquanto.....
-        //$post_data["parameters"] = json_decode( $session->decrypt( "", substr($post_data["parameters"], 8) ), true ); // vai usar chave publica chave privada....
-        //error_log("em Json: " . json_encode($post_data["parameters"]), 0);
         $post_data["parameters"] = json_decode(  substr($post_data["parameters"], 8), true ) ;
         $return_metehod = $session->login($post_data["parameters"]["username"], $post_data["parameters"]["password"], $post_data["parameters"]["simetric_key"]); 
         $return_metehod = $session->encrypt($post_data["parameters"]["simetric_key"], "000", json_encode( $return_metehod )); // aqui mandei para 000 para tirar a criptotgrafia de retorno...
+    } else if( $post_data["class"] == "Session" && $post_data["method"] == "register" ) {
+        $post_data["parameters"] = json_decode(  substr($post_data["parameters"], 8), true ) ;
+        $return_metehod = $session->register($ip, null, $post_data); 
     } else{
         // -------------------- FORCAR O CARREGAMENTO AQUI ENQUATNO NAO FAÇO SISTEMA DE LOGIN
         $post_data["parameters"] = substr($post_data["parameters"], 8);

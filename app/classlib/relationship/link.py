@@ -13,12 +13,13 @@ from classlib.configuration import Configuration
 
 class Link(MapRelationshipBox):
     def __init__(self, mapa,  x, y, w, h, text=None, id_=None, entity_id_=None ):
+        if text == None:
+            text = "Relationship";
         super().__init__( mapa, x, y, w, h, text=text, id_=id_, entity_id_=entity_id_ );
         self.entity.etype = "link";
         self.to_entity = [];
         self.from_entity = [];
-        if text == None:
-            self.text = "Relationship";
+
 
     def toJson(self):
         objeto = super().toJson();

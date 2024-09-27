@@ -28,7 +28,6 @@ class MapRelationship(ConnectObject):
             if box_element.entity.toType(etype):
                 self.elements.pop( self.elements.index( box_element ) );
                 buffer = self.addEntity(etype, box_element.x, box_element.y, text=box_element.entity.text, id_=box_element.id, entity_id_=box_element.entity.id);
-                print(buffer);
                 for i in range(len(self.elements)):
                     if self.elements[i].entity.etype == "link":
                         for j in range(len( self.elements[i].to_entity )):
@@ -38,9 +37,6 @@ class MapRelationship(ConnectObject):
                             if self.elements[i].from_entity[j] == box_element:
                                 self.elements[i].from_entity[j] = buffer;
                 return buffer;
-            else:
-                prinit("fala ao salva rno banco de dados");
-        print("o tipo tem que ser person, other ou organization");
         return False;
     
     def addEntity(self, ptype, x, y, text=None, id_=None, entity_id_=None):
