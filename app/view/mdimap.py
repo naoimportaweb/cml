@@ -28,13 +28,13 @@ class MdiMap(QWidget):
 
     def entity_double_click(self, entity):
         if entity.entity.etype == "person":
-            form = DialogEntityPerson(self.form_principal,entity);
+            form = DialogEntityPerson( self.form_principal,entity);
         elif entity.entity.etype == "other":
-            form = DialogEntityOther(self.form_principal,entity);
+            form = DialogEntityOther(  self.form_principal,entity);
         elif entity.entity.etype == "organization":
             form = DialogEntityOrganization(self.form_principal,entity);
         elif entity.entity.etype == "link":
-            form = DialogEntityLink(self.form_principal, entity, self.mapa);
+            form = DialogEntityLink(   self.form_principal, entity, self.mapa);
         form.exec();
     
     def map_double_click(self, map, x, y):

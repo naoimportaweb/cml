@@ -11,8 +11,9 @@ from classlib.configuration import Configuration
 from classlib.entity import Entity
 
 class MapRelationshipBox():
-    def __init__(self, x, y, w, h, text=None, id_=None, entity_id_=None):
+    def __init__(self, mapa, x, y, w, h, text=None, id_=None, entity_id_=None):
         self.id =         uuid.uuid4().hex + "_" + uuid.uuid4().hex + "_" + uuid.uuid4().hex;
+        self.mapa = mapa;
         if id_ != None:
             self.id = id_;
         self.entity = Entity(entity_id_);
@@ -37,14 +38,10 @@ class MapRelationshipBox():
             objeto["time_slices"].append( buffer );
         return objeto;
             
-    def setType(self, id_type):
-        if id_type == 0:
-            self.entity.etype = "person";
-        elif id_type == 1:
-            self.entity.etype = "organization";
-        elif id_type == 2:
-            self.entity.etype = "other";
-        return self.entity.toType();
+    def setType(self, etype):
+        if etype == self.entity.etype:
+            return True;
+        return self.mapa.switchType(self, etype);
 
     def addReference(self, title, link1, link2 = "", link3 = "", id_=None):
         return self.entity.addReference(title, link1, link2, link3, id_);

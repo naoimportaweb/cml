@@ -34,10 +34,11 @@ class Entity(ConnectObject):
     def toJson(self):
         return { "id" : self.id,  "name" : self.name}
 
-    def toType(self):
-        js = self.__execute__("Entity", "to_type", {"type" : self.etype, "id" : self.id});
+    def toType(self, etype):
+        js = self.__execute__("Entity", "to_type", {"type" : etype, "id" : self.id});
         print(js);
         if js["status"]:
+            self.etype = etype;
             return js["return"];
         return False;
     

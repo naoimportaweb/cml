@@ -60,10 +60,9 @@ class DialogEntityPerson(QDialog):
         self.page_dox.addWidget( self.txt_doxxing );
         #-------------------------------------------
         self.cmb_type = QComboBox()
-        self.cmb_type.addItem('Person')
         self.cmb_type.addItem('Organization')
         self.cmb_type.addItem('Other')
-        btn_alterar_type = QPushButton("Add");
+        btn_alterar_type = QPushButton("Switch to type");
         btn_alterar_type.clicked.connect(self.btn_alterar_type_click);
         CustomVLayout.widget_linha(self, self.page_act, [self.cmb_type, btn_alterar_type] );
         #-------------------------------------------
@@ -110,6 +109,11 @@ class DialogEntityPerson(QDialog):
         self.person.doxxing = self.txt_doxxing.toPlainText();
     
     def btn_alterar_type_click(self):
-        retorno = self.person.setType( self.cmb_type.currentIndex() );
+        etype = "";
+        if self.cmb_type.currentIndex() == 0:
+            etype = "organization";
+        elif self.cmb_type.currentIndex() == 1:
+            etype = "other";   
+        retorno = self.person.setType( etype );
         if retorno:
             self.close();

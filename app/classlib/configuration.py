@@ -9,7 +9,6 @@ sys.path.append( ROOT );
 from classlib.singletonmeta import SingletonMeta;
 from PySide6.QtGui import QFont;
 
-
 class Configuration(metaclass=SingletonMeta):
     def __init__(self):
         self.path_config = os.path.expanduser('~') + "/.cml.json";

@@ -39,30 +39,32 @@ class MapAreaWidget(QWidget):
         return None;
 
     def addEntity(self, ptype, x, y):
-        if ptype == "person":
-            self.mapa.elements.append(  Person(  x, y, 100, 20 , text="Person")  );
-        elif ptype == "other":
-            self.mapa.elements.append(  Other(  x, y, 100, 20 , text="Other")  );
-        elif ptype == "organization":
-            self.mapa.elements.append(  Organization(  x, y, 100, 20 , text="Organization")  );
-        elif ptype == "link":
-            self.mapa.elements.append(  Link(  x, y, 100, 20 , text="Relationship")  );
+        return self.mapa.addEntity( ptype, x, y);
+        #if ptype == "person":
+        #    self.mapa.elements.append(  Person(   self.mapa,     x, y, 100, 20 , text="Person")  );
+        #elif ptype == "other":
+        #    self.mapa.elements.append(  Other(    self.mapa,     x, y, 100, 20 , text="Other")  );
+        #elif ptype == "organization":
+        #    self.mapa.elements.append(  Organization( self.mapa, x, y, 100, 20 , text="Organization")  );
+        #elif ptype == "link":
+        #    self.mapa.elements.append(  Link(        self.mapa,  x, y, 100, 20 , text="Relationship")  );
 
 
     def addExistEntity(self, entity, x, y):
-        buffer = None;
+        buffer = self.mapa.addEntity( entity["etype"], x, y, text=entity["text_label"], entity_id_=entity["id"] );
         if entity["etype"] == "person":
-            buffer = Person(  x, y, 100, 20 , text=entity["text_label"], entity_id_=entity["id"]);
             buffer.doxxing = entity["data_extra"];
-        elif entity["etype"] == "other":
-            buffer = Other(  x, y, 100, 20 , text=entity["text_label"], entity_id_=entity["id"]);
-        elif entity["etype"] == "organization":
-            buffer = Organization(  x, y, 100, 20 , text=entity["text_label"], entity_id_=entity["id"])  ;
+        #if entity["etype"] == "person":
+        #    buffer = Person( self.mapa,  x, y, 100, 20 , text=entity["text_label"], entity_id_=entity["id"]);
+        #    buffer.doxxing = entity["data_extra"];
+        #elif entity["etype"] == "other":
+        #    buffer = Other(self.mapa,  x, y, 100, 20 , text=entity["text_label"], entity_id_=entity["id"]);
+        #elif entity["etype"] == "organization":
+        #    buffer = Organization( self.mapa, x, y, 100, 20 , text=entity["text_label"], entity_id_=entity["id"])  ;
         buffer.entity.full_description = entity["description"];
         for reference in entity["references"]:
             buffer.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"]);
-
-        self.mapa.elements.append(  buffer  );
+        #self.mapa.elements.append(  buffer  );
     
     def paintEvent(self, event: QPaintEvent):
         with QPainter(self) as painter:

@@ -48,6 +48,13 @@ class DialogEntityOther(QDialog):
         self.page_rel.addWidget( self.txt_descricao );
         # --------------------------------------------------
         #-------------------------------------------
+        self.cmb_type = QComboBox()
+        self.cmb_type.addItem('Person')
+        self.cmb_type.addItem('Organization')
+        btn_alterar_type = QPushButton("Switch to type");
+        btn_alterar_type.clicked.connect(self.btn_alterar_type_click);
+        CustomVLayout.widget_linha(self, self.page_act, [self.cmb_type, btn_alterar_type] );
+        #-------------------------------------------
         btn_reference_add = QPushButton("Add");
         btn_reference_del = QPushButton("Remove");
         btn_reference_add.clicked.connect(self.btn_reference_add_click);
@@ -86,3 +93,12 @@ class DialogEntityOther(QDialog):
     
     def txt_descricao_changed(self):
         self.other.entity.full_description = self.txt_descricao.toPlainText();
+    def btn_alterar_type_click(self):
+        etype = "";
+        if self.cmb_type.currentIndex() == 0:
+            etype = "person";
+        elif self.cmb_type.currentIndex() == 1:
+            etype = "organization"; 
+        retorno = self.other.setType( etype );
+        if retorno:
+            self.close();

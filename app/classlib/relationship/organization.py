@@ -11,6 +11,8 @@ from PySide6.QtGui import (QMouseEvent,QPaintEvent,QPen,QFont,QAction,QPainter,Q
 from classlib.relationship.maprelationship_box import MapRelationshipBox;
 
 class Organization(MapRelationshipBox):
-    def __init__(self, x, y, w, h, text=None, id_=None, entity_id_=None ):
-        super().__init__( x, y, w, h, text=text, id_=id_, entity_id_=entity_id_ );
+    def __init__(self, mapa, x, y, w, h, text=None, id_=None, entity_id_=None ):
+        super().__init__(mapa, x, y, w, h, text=text, id_=id_, entity_id_=entity_id_ );
         self.entity.etype = "organization";
+        if text == None:
+            text = "Organization";
