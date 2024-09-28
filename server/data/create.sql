@@ -122,6 +122,7 @@ INSERT INTO person_enter(id, key_enter) values("93039e72-db3f-4e74-a7e5-e787fd89
 INSERT INTO person_enter(id, key_enter) values("a4545eb3-1577-47fc-b01c-9829b1ce4f8d","a4545eb3-1577-47fc-b01c-9829b1ce4f8d");
 INSERT INTO person_enter(id, key_enter) values("0d045974-afc7-4699-b116-91672117d517","0d045974-afc7-4699-b116-91672117d517");
 
+
 delete from diagram_relationship_link;
 delete from diagram_relationship_element_reference;
 delete from diagram_relationship_element;

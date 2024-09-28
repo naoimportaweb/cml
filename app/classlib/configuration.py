@@ -20,7 +20,9 @@ class Configuration(metaclass=SingletonMeta):
         self.relationshihp_font_size = self.__getParameter__(self.config_,    "relationshihp.font.size", 10);
         self.relationshihp_font_scale = self.__getParameter__(self.config_,   "relationshihp.font.scale", 1);
         self.relationshihp_font_family = self.__getParameter__(self.config_,  "relationshihp.font.family", "Vernana");
-    
+        self.login_username = self.__getParameter__(self.config_,  "login.username", "");
+        self.login_server =   self.__getParameter__(self.config_,  "login.server", "http://localhost");
+
     def __getParameter__(self, js, name, default):
         if name.find(".") > 0:
             if js.get( name[:name.find(".") ] ) == None:
@@ -33,10 +35,14 @@ class Configuration(metaclass=SingletonMeta):
             return js[name];
 
     def __save__(self):
+        self.path_config = {"form" : {"font" : {"size" :  self.font_size, "family" : self.font_family}}, "relationshihp" : {"font" : {"size" : self.relationshihp_font_size, "scale" : self.relationshihp_font_scale, "family" : self.relationshihp_font_family}}, "login" : {"username" : self.login_username, "server" : self.login_server} }
         with open(self.path_config, "w") as f:
             f.write( json.dumps(self.config_) );
             return True;
         return False;
+
+    def save(self):
+        self.__save__();
 
     def getFont(self):
         font = QFont()
