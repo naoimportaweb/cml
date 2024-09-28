@@ -19,13 +19,25 @@ class MapRelationshipBox():
         self.entity = Entity(entity_id_);
         self.entity.text = text;
         self.entity.full_description = "";
+        self._dirt = False;
         self.x = x;
         self.y = y;
         self.w = w;
         self.h = h;
-        
+    
+    def getDirt(self):
+        return self._dirt or self.entity.getDirt();
+    
+    def setX(self, x):
+        self.x = x;
+        self._dirt = True;
+
+    def setY(self, y):
+        self.y = y;
+        self._dirt = True;
+
     def toJson(self):
-        objeto = { "id" : self.id, "entity_id": self.entity.id , "x" : self.x, "y" : self.y, "w" : self.w, "h" : self.h, "text" : self.entity.text, "full_description" : self.entity.full_description, "etype" : self.entity.etype, "references" : [], "time_slices" : [], "data_extra" : self.entity.data_extra  };
+        objeto = { "id" : self.id, "entity_id": self.entity.id , "x" : self.x, "y" : self.y, "w" : self.w, "h" : self.h, "text" : self.entity.text, "full_description" : self.entity.full_description, "etype" : self.entity.etype, "references" : [], "time_slices" : [], "data_extra" : self.entity.data_extra, "wikipedia" : self.entity.wikipedia  };
         
         for reference in self.entity.references:
             buffer = reference.toJson();

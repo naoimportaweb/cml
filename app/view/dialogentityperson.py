@@ -30,6 +30,7 @@ class DialogEntityPerson(QDialog):
         self.tab = QTabWidget();  
         self.page_rel = CustomVLayout.widget_tab( self.tab, "Person");
         self.page_pho = CustomVLayout.widget_tab( self.tab, "Photo");
+        self.page_url = CustomVLayout.widget_tab( self.tab, "URLs");
         self.page_dox = CustomVLayout.widget_tab( self.tab, "Doxxing");
         self.page_ref = CustomVLayout.widget_tab( self.tab, "References");
         self.page_act = CustomVLayout.widget_tab( self.tab, "Actions");
@@ -52,6 +53,13 @@ class DialogEntityPerson(QDialog):
         self.txt_descricao.setLineWrapMode(QTextEdit.WidgetWidth);  
         self.page_rel.addWidget( self.txt_descricao );
         # --------------------------------------------------
+        self.lbl_wikipedia = QLabel("Wikipedia");
+        self.txt_wikipedia = QLineEdit();
+        self.txt_wikipedia.setFont( Configuration.instancia().getFont() );
+        self.txt_wikipedia.setText( self.person.entity.wikipedia ) ;
+        self.txt_wikipedia.textChanged.connect(self.txt_wikipedia_changed)
+        CustomVLayout.widget_linha(self, self.page_url, [self.lbl_wikipedia, self.txt_wikipedia] );
+        #-----------------
         self.txt_doxxing = QTextEdit();
         self.txt_doxxing.setFont( Configuration.instancia().getFont() );
         self.txt_doxxing.setPlainText( person.doxxing );
@@ -110,6 +118,9 @@ class DialogEntityPerson(QDialog):
     def txt_text_changed(self):
         self.person.entity.text = self.txt_text.text();
     
+    def txt_wikipedia_changed(self):
+        self.person.entity.wikipedia = self.txt_wikipedia.text();
+
     def txt_descricao_changed(self):
         self.person.entity.full_description = self.txt_descricao.toPlainText();
 

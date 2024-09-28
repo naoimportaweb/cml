@@ -106,9 +106,8 @@ class MapAreaWidget(QWidget):
         if self.mapa.locked:
             return;
         if self.selected_element != None and (current_pos.y() % 2) == 0:
-            self.selected_element.x = current_pos.x() - self.diff[0];
-            self.selected_element.y = current_pos.y() - self.diff[1];
-            #if (current_pos.x() % 2) == 0: # Questao de desempenho.....
+            self.selected_element.setX( current_pos.x() - self.diff[0] );
+            self.selected_element.setY( current_pos.y() - self.diff[1] );
             self.redraw();
     def mouseReleaseEvent(self, event: QMouseEvent):
         self.previous_pos = None

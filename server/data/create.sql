@@ -57,6 +57,7 @@ create table entity (
     text_label VARCHAR(255) NOT NULL,
     description LONGTEXT,
     data_extra LONGTEXT,
+    wikipedia VARCHAR(255),
     etype VARCHAR(255) NOT NULL,
     creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
@@ -145,7 +146,5 @@ drop table person;
 
 # ------------- HOMOLOGAÇAO -------------------------------
 
-ALTER TABLE person_enter ADD column key_enter TEXT;
-ALTER TABLE person ADD CONSTRAINT UniqueUsername UNIQUE (username); 
-ALTER TABLE person ADD COLUMN email VARCHAR(255);
-ALTER TABLE person ADD CONSTRAINT UniqueEmail UNIQUE (email); 
+
+

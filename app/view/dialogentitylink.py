@@ -31,7 +31,10 @@ class DialogEntityLink(QDialog):
         self.mapa = mapa;
         self.elements_no_link = [];
         for element in self.mapa.elements:
+            if element.entity.etype == "link":
+                continue;
             self.elements_no_link.append(element);
+        self.elements_no_link.sort(key=lambda x: x.entity.text);
         self.tab = QTabWidget();  
         self.page_rel      = CustomVLayout.widget_tab( self.tab, "Relationship");
         self.page_ent_from = CustomVLayout.widget_tab( self.tab, "Entity From");

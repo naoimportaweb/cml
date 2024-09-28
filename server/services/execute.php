@@ -24,7 +24,7 @@ $part = explode("/", $_SERVER["REQUEST_URI"]);
 
 $post_data = json_decode(file_get_contents('php://input'), true); 
 //(class, version, method, parameters) // OR //(public_key)
-error_log("Chegou:" . file_get_contents('php://input'), 0);
+//error_log("Chegou:" . file_get_contents('php://input'), 0);
 
 
 $token_request = md5(uniqid(rand(), true));

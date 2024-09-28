@@ -31,7 +31,11 @@ class DialogConnect(QDialog):
         self.ui_register();
         self.ui_login   ();
         self.layout_principal.disable("register");
-        
+        if self.txt_login_username.text().strip() == "":
+            self.txt_login_username.setFocus()
+        elif self.txt_login_password.text().strip() == "":
+            self.txt_login_password.setFocus()
+
     def ui_server(self):
         layout_server = QGridLayout()
         layout_server.setContentsMargins(20, 20, 20, 20)
@@ -120,9 +124,6 @@ class DialogConnect(QDialog):
         server = Server();
         server.ip = self.txt_server.text();
         user = User(self.txt_register_username.text());
-        #buffer_public_pem = user.publickey() ;
-        #if buffer_public_pem != None:
-            #server.public_key = buffer_public_pem;
         try:
             if self.txt_register_password.text() != self.txt_register_password_2.text():
                 raise Exception("O password informado não é igual ao teste.");
@@ -149,6 +150,7 @@ class DialogConnect(QDialog):
             server.public_key = buffer_public_pem;
             if user.login( self.txt_login_password.text() ):
                 Configuration.instancia().login_username = self.txt_login_username.text();
-                Configuration.instancia().login_server = self.txt_server.text()
+                Configuration.instancia().login_server = self.txt_server.text();
+                Configuration.instancia().save();
                 server.status = True;
                 self.close();

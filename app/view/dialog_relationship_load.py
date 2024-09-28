@@ -62,6 +62,7 @@ class DialogRelationshipLoad(QDialog):
     def txt_name_finish(self):
         r = MapRelationship();
         self.mapas = r.search( "%" + self.txt_name.text().strip() + "%");
+        self.mapas.sort(key=lambda x: x["name"]);
         self.table_maps.setRowCount( len( self.mapas ) );
         for i in range(len( self.mapas )):
             self.table_maps.setItem( i, 0, QTableWidgetItem( self.mapas[i]["username"] ) );

@@ -12,13 +12,18 @@ class Entity(ConnectObject):
         self.id = uuid.uuid4().hex + "_" + uuid.uuid4().hex + "_" + uuid.uuid4().hex;
         if id_ != None:
             self.id = id_;
+        self._dirt = False;
         self.etype = None;
         self.text = None;
         self.full_description = None;
         self.data_extra = "";
         self.references = [];
         self.time_slices = [];
-
+        self.wikipedia = "";
+    
+    def getDirt(self):
+        return self._dirt;
+    
     def addReference(self, title, link1, link2 = "", link3 = "", id_=None):
         if link1 == "":
             return None;
@@ -32,7 +37,7 @@ class Entity(ConnectObject):
         return self.time_slices[-1];
         
     def toJson(self):
-        return { "id" : self.id,  "name" : self.name}
+        return { "id" : self.id,  "name" : self.name, "wikipedia" : self.wikipedia}
 
     def toType(self, etype):
         js = self.__execute__("Entity", "to_type", {"type" : etype, "id" : self.id});

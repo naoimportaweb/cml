@@ -17,7 +17,7 @@ class MapRelationship
         $buffer_diagram["elements"] = array();
         $buffer_diagram["lock"] = array();
 
-        $buffer_elements =  $mysql->DataTable("SELECT dre.id as id, ent.id as entity_id, ent.data_extra as data_extra, ent.text_label as text_label, ent.description as full_description, ent.etype, dre.x, dre.y, dre.w, dre.h  FROM entity as ent inner join diagram_relationship_element as dre on ent.id = dre.entity_id where dre.diagram_relationship_id = ? order by dre.creation_time asc", [$post_data["parameters"]["id"]]);
+        $buffer_elements =  $mysql->DataTable("SELECT ent.wikipedia as wikipedia, dre.id as id, ent.id as entity_id, ent.data_extra as data_extra, ent.text_label as text_label, ent.description as full_description, ent.etype, dre.x, dre.y, dre.w, dre.h  FROM entity as ent inner join diagram_relationship_element as dre on ent.id = dre.entity_id where dre.diagram_relationship_id = ? order by dre.creation_time asc", [$post_data["parameters"]["id"]]);
 
         for($i = 0; $i < count($buffer_elements); $i++ ) {
             
@@ -142,8 +142,8 @@ class MapRelationship
         for($i = 0; $i < count($post_data["parameters"]["elements"]); $i++) {
             $element = $post_data["parameters"]["elements"][$i];
 
-            array_push($sqls, "INSERT INTO entity (id, text_label, description, data_extra, etype) VALUES(?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE text_label = ?, description =?, data_extra = ?, etype =?");
-            array_push( $valuess,[ $element["entity_id"], $element["text"], $element["full_description"], $element["data_extra"], $element["etype"], $element["text"], $element["full_description"], $element["data_extra"], $element["etype"] ]);
+            array_push($sqls, "INSERT INTO entity (id, text_label, description, data_extra, etype, wikipedia) VALUES(?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE text_label = ?, description =?, data_extra = ?, etype =?, wikipedia = ?");
+            array_push( $valuess,[ $element["entity_id"], $element["text"], $element["full_description"], $element["data_extra"], $element["etype"], $element["wikipedia"], $element["text"], $element["full_description"], $element["data_extra"], $element["etype"], $element["wikipedia"] ]);
             // relacionamento
             array_push($sqls,  "INSERT INTO diagram_relationship_element (id, diagram_relationship_id, entity_id, x, y, w, h) VALUES(?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE x=?, y=?, w=?, h=?" );
             array_push( $valuess, [ $element["id"], $post_data["parameters"]["id"], $element["entity_id"], $element["x"], $element["y"], $element["w"], $element["h"], $element["x"], $element["y"], $element["w"], $element["h"]  ] );

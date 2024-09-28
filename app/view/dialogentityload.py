@@ -62,6 +62,7 @@ class DialogEntityLoad(QDialog):
     def txt_name_finish(self):
         r = MapRelationship();
         self.entitys = r.search_entity( "%" + self.txt_name.text().strip() + "%");
+        self.entitys.sort(key=lambda x: x["text_label"])
         self.table_maps.setRowCount( len( self.entitys ) );
         for i in range(len( self.entitys )):
             self.table_maps.setItem( i, 0, QTableWidgetItem( self.entitys[i]["text_label"]) );

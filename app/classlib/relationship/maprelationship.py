@@ -39,7 +39,7 @@ class MapRelationship(ConnectObject):
                 return buffer;
         return False;
     
-    def addEntity(self, ptype, x, y, text=None, id_=None, entity_id_=None):
+    def addEntity(self, ptype, x, y, text=None, id_=None, entity_id_=None, wikipedia=None):
         if ptype == "person":
             self.elements.append(  Person(self,     x, y, 100, 20 , text=text, id_=id_, entity_id_=entity_id_)  );
         elif ptype == "other":
@@ -48,7 +48,9 @@ class MapRelationship(ConnectObject):
             self.elements.append(  Organization( self, x, y, 100, 20 , text=text, id_=id_, entity_id_=entity_id_)  );
         elif ptype == "link":
             self.elements.append(  Link(  self,  x, y, 100, 20 , text=text, id_=id_, entity_id_=entity_id_)  );
-        return self.elements[-1];
+        buffer = self.elements[-1];
+        buffer.entity.wikipedia = wikipedia;
+        return buffer;
     
     def toJson(self):
         return { "id" : self.id,  "name" : self.name, "keyword" : self.keyword, "elements" : []}
@@ -90,7 +92,7 @@ class MapRelationship(ConnectObject):
             for element in data['elements']:
                 if element['etype'] == "person" or element['etype'] == "other" or element['etype'] == "organization":
                     x = element["x"]; y = element["y"]; w = element["w"]; h = element["h"];
-                    buffer = self.addEntity( element['etype'], x, y, text=element["text_label"], id_=element["id"], entity_id_=element["entity_id"] );
+                    buffer = self.addEntity( element['etype'], x, y, text=element["text_label"], id_=element["id"], entity_id_=element["entity_id"], wikipedia=element["wikipedia"] );
                     if element['etype'] == "person":
                         buffer.doxxing = element["data_extra"];
                     for reference in element["references"]:
@@ -99,7 +101,7 @@ class MapRelationship(ConnectObject):
             for element in data['elements']:
                 if element["etype"] == "link":
                     x = element["x"]; y = element["y"]; w = element["w"]; h = element["h"];
-                    objeto = self.addEntity( "link",  x, y, text=element["text_label"], id_=element["id"], entity_id_=element["entity_id"]);
+                    objeto = self.addEntity( "link",  x, y, text=element["text_label"], id_=element["id"], entity_id_=element["entity_id"], wikipedia=element["wikipedia"]);
                     for to_ in element["to"]:
                         objeto.addTo( self.findById( self.elements, to_["id"] ) );
                     for from_ in element["from"]:
