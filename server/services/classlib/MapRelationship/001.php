@@ -108,8 +108,8 @@ class MapRelationship
 
     public function search( $ip, $user, $post_data ) {
         $mysql = new Mysql("");
-        $sql = "SELECT dr.*, pe.username FROM diagram_relationship as dr inner join person as pe on pe.id = dr.person_id WHERE LOWER(dr.name) LIKE LOWER( ? )";
-        $valores = [ $post_data["parameters"]["name"]];
+        $sql = "SELECT dr.*, pe.username FROM diagram_relationship as dr inner join person as pe on pe.id = dr.person_id WHERE LOWER(dr.name) LIKE LOWER( ? ) or LOWER(dr.keyword) LIKE LOWER( ? )";
+        $valores = [ $post_data["parameters"]["name"], $post_data["parameters"]["name"]];
         return $mysql->DataTable($sql, $valores);
     }
 

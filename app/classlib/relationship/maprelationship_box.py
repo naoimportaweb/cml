@@ -61,14 +61,19 @@ class MapRelationshipBox():
     def addTimeSlice(self, text_label, date_start=None, date_end=None, id_=None):
         return self.entity.addTimeSlice(text_label, date_start, date_end, id_);
     
-    def draw(self, painter):
-        penRectangle = QPen(Qt.black)
-        penRectangle.setWidth(1)
-        painter.setPen(penRectangle)
+    def recalc(self, painter):
         painter.setFont(QFont(Configuration.instancia().relationshihp_font_family, Configuration.instancia().relationshihp_font_size))
         frame_text = painter.boundingRect(0, 0, 150, 30, 0, self.entity.text);
         self.w = frame_text.width() + 10;
         self.h = frame_text.height() + 2;
+    def draw(self, painter):
+        penRectangle = QPen(Qt.black)
+        penRectangle.setWidth(1)
+        painter.setPen(penRectangle)
+        #painter.setFont(QFont(Configuration.instancia().relationshihp_font_family, Configuration.instancia().relationshihp_font_size))
+        #frame_text = painter.boundingRect(0, 0, 150, 30, 0, self.entity.text);
+        #self.w = frame_text.width() + 10;
+        #self.h = frame_text.height() + 2;
         painter.fillRect( self.x, self.y, self.w, self.h, QBrush(Qt.white));
         painter.drawRect( self.x, self.y, self.w, self.h);
         if self.entity.text != None:

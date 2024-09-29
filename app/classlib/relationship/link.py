@@ -20,6 +20,11 @@ class Link(MapRelationshipBox):
         self.to_entity = [];
         self.from_entity = [];
 
+    def delTo(self, index):
+        self.to_entity.pop( index );
+    
+    def delFrom(self, index):
+        self.from_entity.pop( index );
 
     def toJson(self):
         objeto = super().toJson();
@@ -28,7 +33,7 @@ class Link(MapRelationshipBox):
         for to_ in self.to_entity:
             objeto["to"].append(    {"id" : self.id[:40] + "_" + to_.id[:40] +  "_2", "element_id" : to_.id} );
         for from_ in self.from_entity:
-            objeto["from"].append(  {"id" : self.id[:40] + "_" + to_.id[:40] +  "_1", "element_id" : from_.id} );
+            objeto["from"].append(  {"id" : self.id[:40] + "_" + from_.id[:40] +  "_1", "element_id" : from_.id} );
         return objeto;
     def hasTo(self, element):
         return element in self.to_entity;
@@ -48,10 +53,6 @@ class Link(MapRelationshipBox):
         penRectangle = QPen(Qt.black)
         penRectangle.setWidth(1)
         painter.setPen(penRectangle)
-        painter.setFont(QFont(Configuration.instancia().relationshihp_font_family, Configuration.instancia().relationshihp_font_size))
-        frame_text = painter.boundingRect(0, 0, 150, 30, 0, self.entity.text);
-        self.w = frame_text.width() + 10;
-        self.h = frame_text.height() + 2;
         painter.setPen(QPen(Qt.red, 1, Qt.DashDotLine, Qt.RoundCap));
         for element in self.to_entity:
             painter.drawLine( self.x + int( self.w / 2 ) , self.y  + int( self.h / 2 ) , element.x + int( element.w / 2), element.y + int( element.h / 2 ) );

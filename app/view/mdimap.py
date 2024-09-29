@@ -40,9 +40,9 @@ class MdiMap(QWidget):
     def map_double_click(self, map, x, y):
         form = DialogChoiceEntity(self.form_principal);
         form.exec();
-        if form.ptype != None:
+        if form.ptype != None:  # NOVO ITEM É AQUI
             map.addEntity( form.ptype, x, y );
-        else:
+        else:                   # ITEM EXISTENTE É AQUI
             if form.search_entity != None:
                 map.addExistEntity(form.search_entity, x, y);
 

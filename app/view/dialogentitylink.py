@@ -69,6 +69,7 @@ class DialogEntityLink(QDialog):
         btn_from_add.setFont( Configuration.instancia().getFont() );
         btn_from_del.setFont( Configuration.instancia().getFont() );
         btn_from_add.clicked.connect(self.btn_from_add_click);
+        btn_from_del.clicked.connect(self.btn_from_del_click);
 
         CustomVLayout.widget_linha(self, layout_from, [ QLabel("<b>From:</b>")] );
         CustomVLayout.widget_linha(self, layout_from, [self.cmb_combo_from, btn_from_add, btn_from_del] );
@@ -87,6 +88,7 @@ class DialogEntityLink(QDialog):
         btn_to_add.setFont( Configuration.instancia().getFont() );
         btn_to_del.setFont( Configuration.instancia().getFont() );
         btn_to_add.clicked.connect(self.btn_to_add_click);
+        btn_to_del.clicked.connect(self.btn_to_del_click);
         CustomVLayout.widget_linha(self, layout_to, [ QLabel("<b>Fo:</b>")] );
         CustomVLayout.widget_linha(self, layout_to, [self.cmb_combo_to, btn_to_add, btn_to_del] );
         self.page_ent_to.addWidget( CustomVLayout.layout_to_widget( layout_to ) );
@@ -162,4 +164,11 @@ class DialogEntityLink(QDialog):
     
     def txt_descricao_changed(self):
         self.link.entity.full_description = self.txt_descricao.toPlainText();
+#
+    def btn_to_del_click(self):
+        self.link.delTo( self.cmb_combo_to.currentIndex() );
+        self.table_to_load();
 
+    def btn_from_del_click(self):
+        self.link.delFrom( self.cmb_combo_from.currentIndex() );
+        self.table_from_load();

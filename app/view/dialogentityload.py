@@ -23,13 +23,14 @@ from classlib.relationship.link import Link
 
 class DialogEntityLoad(QDialog):
     def __init__(self, form):
-        super().__init__();
-        nWidth = int(form.width() * 0.8); nHeight = int(form.height() * 0.6);
-        if nWidth > 800:
-            nWidth = 800;
-        self.setGeometry(form.x() + form.width()/2 - nWidth/2,
-            form.y() + form.height()/2 - nHeight/2,
-            nWidth, nHeight);
+        super().__init__(form);
+        self.resize(600, 500);
+        #nWidth = int(form.width() * 0.8); nHeight = int(form.height() * 0.6);
+        #if nWidth > 800:
+        #    nWidth = 800;
+        #self.setGeometry(form.x() + form.width()/2 - nWidth/2,
+        #    form.y() + form.height()/2 - nHeight/2,
+        #    nWidth, nHeight);
 
         self.form = form;
         self.entitys = None;
@@ -55,7 +56,7 @@ class DialogEntityLoad(QDialog):
 
     def ui_tabela(self):
         layout = QVBoxLayout();
-        self.table_maps = CustomVLayout.widget_tabela(self, ["Entity"], tamanhos=[QHeaderView.Stretch], double_click=self.table_maps_double);
+        self.table_maps = CustomVLayout.widget_tabela(self, ["Entity", "Type"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch], double_click=self.table_maps_double);
         layout.addWidget(self.table_maps);
         self.layout_principal.addLayout( "list", layout );
 
@@ -66,6 +67,7 @@ class DialogEntityLoad(QDialog):
         self.table_maps.setRowCount( len( self.entitys ) );
         for i in range(len( self.entitys )):
             self.table_maps.setItem( i, 0, QTableWidgetItem( self.entitys[i]["text_label"]) );
+            self.table_maps.setItem( i, 1, QTableWidgetItem( self.entitys[i]["etype"]) );
     
     def table_maps_double(self):
         self.form.entity_selected(self.entitys[ self.table_maps.index() ]);

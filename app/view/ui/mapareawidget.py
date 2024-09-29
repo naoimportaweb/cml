@@ -15,7 +15,7 @@ from classlib.relationship.other import Other
 from classlib.relationship.link import Link
 
 class MapAreaWidget(QWidget):
-    def __init__(self, parent=None, mapa=None, form=None, max_width=15000 , max_height=10000):
+    def __init__(self, parent=None, mapa=None, form=None, max_width=5000 , max_height=3000):
         super().__init__(parent)
         self.setFixedSize(max_width, max_height);
         self.form = form;
@@ -40,31 +40,15 @@ class MapAreaWidget(QWidget):
 
     def addEntity(self, ptype, x, y):
         return self.mapa.addEntity( ptype, x, y);
-        #if ptype == "person":
-        #    self.mapa.elements.append(  Person(   self.mapa,     x, y, 100, 20 , text="Person")  );
-        #elif ptype == "other":
-        #    self.mapa.elements.append(  Other(    self.mapa,     x, y, 100, 20 , text="Other")  );
-        #elif ptype == "organization":
-        #    self.mapa.elements.append(  Organization( self.mapa, x, y, 100, 20 , text="Organization")  );
-        #elif ptype == "link":
-        #    self.mapa.elements.append(  Link(        self.mapa,  x, y, 100, 20 , text="Relationship")  );
 
 
     def addExistEntity(self, entity, x, y):
-        buffer = self.mapa.addEntity( entity["etype"], x, y, text=entity["text_label"], entity_id_=entity["id"] );
+        buffer = self.mapa.addEntity( entity["etype"], x, y, text=entity["text_label"], entity_id_=entity["id"], wikipedia=entity["wikipedia"] );
         if entity["etype"] == "person":
             buffer.doxxing = entity["data_extra"];
-        #if entity["etype"] == "person":
-        #    buffer = Person( self.mapa,  x, y, 100, 20 , text=entity["text_label"], entity_id_=entity["id"]);
-        #    buffer.doxxing = entity["data_extra"];
-        #elif entity["etype"] == "other":
-        #    buffer = Other(self.mapa,  x, y, 100, 20 , text=entity["text_label"], entity_id_=entity["id"]);
-        #elif entity["etype"] == "organization":
-        #    buffer = Organization( self.mapa, x, y, 100, 20 , text=entity["text_label"], entity_id_=entity["id"])  ;
         buffer.entity.full_description = entity["description"];
         for reference in entity["references"]:
             buffer.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"]);
-        #self.mapa.elements.append(  buffer  );
     
     def paintEvent(self, event: QPaintEvent):
         with QPainter(self) as painter:
@@ -81,6 +65,8 @@ class MapAreaWidget(QWidget):
     def redraw(self):
         self.painter.begin(self.pixmap);
         self.pixmap.fill(Qt.white);
+        for elemento in self.mapa.elements:
+            elemento.recalc(self.painter);
         for elemento in self.mapa.elements:
             if elemento.entity.etype == "link":
                 elemento.draw( self.painter );

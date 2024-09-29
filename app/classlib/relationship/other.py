@@ -21,10 +21,10 @@ class Other(MapRelationshipBox):
         penRectangle = QPen(Qt.black)
         penRectangle.setWidth(1)
         painter.setPen(penRectangle)
-        painter.setFont(QFont(Configuration.instancia().relationshihp_font_family, Configuration.instancia().relationshihp_font_size))
-        frame_text = painter.boundingRect(0, 0, 150, 30, 0, self.entity.text);
-        self.w = frame_text.width() + 10;
-        self.h = frame_text.height() + 2;
+        #painter.setFont(QFont(Configuration.instancia().relationshihp_font_family, Configuration.instancia().relationshihp_font_size))
+        #frame_text = painter.boundingRect(0, 0, 150, 30, 0, self.entity.text);
+        #self.w = frame_text.width() + 10;
+        #self.h = frame_text.height() + 2;
         painter.fillRect( self.x, self.y, self.w, self.h, QBrush(Qt.yellow));
         if self.entity.text != None:
             painter.drawText(QRectF(self.x , self.y, self.w, self.h), Qt.AlignCenter | Qt.AlignTop, self.entity.text)
