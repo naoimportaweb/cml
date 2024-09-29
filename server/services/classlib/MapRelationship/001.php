@@ -169,6 +169,74 @@ class MapRelationship
                 array_push( $valuess, [ $element["from"][$j]["id"], $element["from"][$j]["element_id"], 1, $element["id"], $element["from"][$j]["element_id"] ]);
             }
         }
+        // LIMPEZAS DE DADOS QUE NAO QUEREMOS MAIS, EXCLUIDOS PELO USU[ARIO]
+        // Assim nao tem performance, mas estou envitando ijeçao de sql tal como pode ser feito em NOT IN()
+        // se fosse garantido NOT IN() contra injeçao de sql eu faria com notint mais performatico e mais fáci.
+        for($i = 0; $i < count($post_data["parameters"]["elements"]); $i++) {
+            $element = $post_data["parameters"]["elements"][$i];
+            if( $element["etype"] != "link"){
+                continue;
+            }
+            $buffer_links = $mysql->DataTable("select * from diagram_relationship_link where diagram_relationship_element_id_reference = ?", [$element["id"]]);
+            for($j = 0; $j < count($buffer_links); $j++) {
+                $existe = false;
+                for($k = 0; $k < count($element["to"]); $k++) {
+                    if( $buffer_links[$j]["id"] ==  $element["to"][$k]["id"]) {
+                        $existe = true;
+                        break;
+                    }
+                }
+                if( ! $existe ){
+                    for($k = 0; $k < count($element["from"]); $k++) {
+                        if( $buffer_links[$j]["id"] ==  $element["from"][$k]["id"]) {
+                            $existe = true;
+                            break;
+                        }
+                    }
+                }
+                if( ! $existe ){
+                    array_push($sqls, "DELETE FROM diagram_relationship_link WHERE id = ?");
+                    array_push($valuess, [ $buffer_links[$j]["id"] ]);
+                }
+            }
+        }
+
+        for($i = 0; $i < count($post_data["parameters"]["elements"]); $i++) {
+            $element = $post_data["parameters"]["elements"][$i];
+            $buffer_references = $mysql->DataTable("SELECT * FROM diagram_relationship_element_reference WHERE entity_id = ? ", [$element["entity_id"]]) ;
+            for($j = 0; $j < count($buffer_references); $j++){
+                $existe = false;
+                for($k = 0; $k < count($element["references"]); $k++){
+                    $reference = $element["references"][$k];
+                    if( $reference["id"] == $buffer_references[$j]["id"]){
+                        $existe = true;
+                        break;
+                    }
+                }
+                if( ! $existe ){
+                    array_push($sqls, "DELETE FROM diagram_relationship_element_reference WHERE id = ?");
+                    array_push($valuess, [ $buffer_references[$j]["id"] ]);
+                }
+            }
+        }
+
+        $buffer_elements = $mysql->DataTable("SELECT * FROM diagram_relationship_element WHERE  diagram_relationship_id = ? ", [$post_data["parameters"]["id"]]) ;
+        for($i = 0; $i < count($buffer_elements); $i++){
+            $existe = false;
+            for($k = 0; $k < count($post_data["parameters"]["elements"]); $k++) {
+                if($post_data["parameters"]["elements"][$k]["id"] == $buffer_elements[$i]["id"]){
+                    $existe = true;
+                    break;
+                }
+            }
+            if( ! $existe ){
+                array_push($sqls, "DELETE FROM diagram_relationship_element WHERE id = ?");
+                array_push($valuess, [ $buffer_elements[$i]["id"] ]);
+            }
+        }
+        array_push( $sqls ,"INSERT INTO diagram_relationship_history(id, person_id, diagram_relationship_id, json) values(?, ?, ?, ?)");
+        array_push($valuess, [ $mysql->gen_uuid(), $user->id, $post_data["parameters"]["id"], json_encode($post_data["parameters"]) ]);
+        
         return ( $mysql->ExecuteNoQuery($sqls, $valuess) > 0 );
     }
 

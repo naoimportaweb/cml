@@ -47,9 +47,6 @@ class DialogEntityPerson(QDialog):
         self.txt_descricao.setPlainText( person.entity.full_description );
         self.txt_descricao.setLineWrapMode(QTextEdit.NoWrap);
         self.txt_descricao.textChanged.connect(self.txt_descricao_changed)
-        font = self.txt_descricao.font();
-        #font.setFamily("Courier");
-        #font.setPointSize(25);
         self.txt_descricao.setLineWrapMode(QTextEdit.WidgetWidth);  
         self.page_rel.addWidget( self.txt_descricao );
         # --------------------------------------------------
@@ -65,9 +62,6 @@ class DialogEntityPerson(QDialog):
         self.txt_doxxing.setPlainText( person.doxxing );
         self.txt_doxxing.setLineWrapMode(QTextEdit.NoWrap);
         self.txt_doxxing.textChanged.connect(self.txt_doxxing_changed)
-        font = self.txt_doxxing.font();
-        #font.setFamily("Courier");
-        #font.setPointSize(25);
         self.txt_doxxing.setLineWrapMode(QTextEdit.WidgetWidth);  
         self.page_dox.addWidget( self.txt_doxxing );
         #-------------------------------------------
@@ -79,6 +73,10 @@ class DialogEntityPerson(QDialog):
         btn_alterar_type.setFont( Configuration.instancia().getFont() );
         btn_alterar_type.clicked.connect(self.btn_alterar_type_click);
         CustomVLayout.widget_linha(self, self.page_act, [self.cmb_type, btn_alterar_type] );
+        btn_remover = QPushButton("Remove");
+        btn_remover.setFont( Configuration.instancia().getFont() );
+        btn_remover.clicked.connect(self.btn_remover_click);
+        CustomVLayout.widget_linha(self, self.page_act, [btn_remover] );
         #-------------------------------------------
         btn_reference_add = QPushButton("Add");
         btn_reference_del = QPushButton("Remove");
@@ -127,6 +125,10 @@ class DialogEntityPerson(QDialog):
     def txt_doxxing_changed(self):
         self.person.doxxing = self.txt_doxxing.toPlainText();
     
+    def btn_remover_click(self):
+        self.person.mapa.delEntity(self.person);
+        self.close();
+
     def btn_alterar_type_click(self):
         etype = "";
         if self.cmb_type.currentIndex() == 0:

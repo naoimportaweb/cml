@@ -59,6 +59,10 @@ class DialogEntityOrganization(QDialog):
         btn_alterar_type.setFont( Configuration.instancia().getFont() );
         btn_alterar_type.clicked.connect(self.btn_alterar_type_click);
         CustomVLayout.widget_linha(self, self.page_act, [self.cmb_type, btn_alterar_type] );
+        btn_remover = QPushButton("Remove");
+        btn_remover.setFont( Configuration.instancia().getFont() );
+        btn_remover.clicked.connect(self.btn_remover_click);
+        CustomVLayout.widget_linha(self, self.page_act, [btn_remover] );
         #-------------------------------------------
         btn_reference_add = QPushButton("Add");
         btn_reference_del = QPushButton("Remove");
@@ -97,7 +101,9 @@ class DialogEntityOrganization(QDialog):
 
     def txt_text_changed(self):
         self.organizagion.entity.text = self.txt_text.text();
-    
+    def btn_remover_click(self):
+        self.organizagion.mapa.delEntity(self.organizagion);
+        self.close();
     def txt_descricao_changed(self):
         self.organizagion.entity.full_description = self.txt_descricao.toPlainText();
     def btn_alterar_type_click(self):

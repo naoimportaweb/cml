@@ -41,6 +41,8 @@ class MapAreaWidget(QWidget):
     def addEntity(self, ptype, x, y):
         return self.mapa.addEntity( ptype, x, y);
 
+    def delEntity(self, element):
+        return self.mapa.delEntity( element );
 
     def addExistEntity(self, entity, x, y):
         buffer = self.mapa.addEntity( entity["etype"], x, y, text=entity["text_label"], entity_id_=entity["id"], wikipedia=entity["wikipedia"] );

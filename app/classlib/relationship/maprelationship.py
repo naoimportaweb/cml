@@ -39,6 +39,23 @@ class MapRelationship(ConnectObject):
                 return buffer;
         return False;
     
+    def delEntity(self, element):
+        if element.entity.etype == "link" and (len(element.to_entity) > 0 or len(element.from_entity)):
+            raise Exception("O relacionamento possui links para entidades.");
+        for k in range(len(self.elements)):
+            if self.elements[k].entity.etype == "link":
+                for buffer_ref in self.elements[k].to_entity:
+                    if buffer_ref.id == element.id:
+                       raise Exception("O elemento existe em um relacionamento, exclua o relacionamento."); 
+                for buffer_ref in self.elements[k].from_entity:
+                    if buffer_ref.id == element.id:
+                       raise Exception("O elemento existe em um relacionamento, exclua o relacionamento."); 
+
+        for i in range(len(self.elements)):
+            if self.elements[i].id == element.id:
+                self.elements.pop(i);
+                return;
+
     def addEntity(self, ptype, x, y, text=None, id_=None, entity_id_=None, wikipedia=None):
         if ptype == "person":
             self.elements.append(  Person(self,     x, y, 100, 20 , text=text, id_=id_, entity_id_=entity_id_)  );

@@ -40,7 +40,7 @@ class DialogEntityLink(QDialog):
         self.page_ent_from = CustomVLayout.widget_tab( self.tab, "Entity From");
         self.page_ent_to   = CustomVLayout.widget_tab( self.tab, "Entity To");
         self.page_ref      = CustomVLayout.widget_tab( self.tab, "References");
-        
+        self.page_act = CustomVLayout.widget_tab( self.tab, "Actions");
         # ------------------------------------------
         self.lbl_text = QLabel("Text");
         self.lbl_text.setText( self.link.entity.text ) ;
@@ -57,7 +57,11 @@ class DialogEntityLink(QDialog):
         self.txt_descricao.textChanged.connect(self.txt_descricao_changed)
         self.txt_descricao.setLineWrapMode(QTextEdit.WidgetWidth);  
         self.page_rel.addWidget( self.txt_descricao );
-
+        #
+        btn_remover = QPushButton("Remove");
+        btn_remover.setFont( Configuration.instancia().getFont() );
+        btn_remover.clicked.connect(self.btn_remover_click);
+        CustomVLayout.widget_linha(self, self.page_act, [btn_remover] );
         # -----------------------------------------
         layout_from = QVBoxLayout();
         self.cmb_combo_from = QComboBox()
@@ -172,3 +176,6 @@ class DialogEntityLink(QDialog):
     def btn_from_del_click(self):
         self.link.delFrom( self.cmb_combo_from.currentIndex() );
         self.table_from_load();
+    def btn_remover_click(self):
+        self.link.mapa.delEntity(self.link);
+        self.close();
