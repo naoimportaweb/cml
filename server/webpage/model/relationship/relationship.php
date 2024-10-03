@@ -16,8 +16,8 @@ class Relationship{
     public function getWidth(){
         if( $this->width == 0 ){
             foreach($this->elements as $element){
-                if( $element->getX() > $this->width  ) {
-                    $this->width  = $element->getX();
+                if( $element->getX()  + $element->getW() > $this->width  ) {
+                    $this->width  = $element->getX()  + $element->getW();
                 }
             }
         }
@@ -27,8 +27,8 @@ class Relationship{
     public function getHeight(){
         if( $this->height == 0 ){
             foreach($this->elements as $element){
-                if( $element->getY() > $this->height  ) {
-                    $this->height  = $element->getY();
+                if( $element->getY() + $element->getH() > $this->height  ) {
+                    $this->height  = $element->getY() + $element->getH();
                 }
             }
         }
@@ -44,20 +44,22 @@ class Relationship{
     public function recalculateFrame(){
         $min_x = 1500000;
         $min_y = 1500000;
+        
+        
 
         foreach($this->elements as $element){
-            if($element->getX() < $min_x){
-                $min_x = $element->getX();
+            if($element->getX()  < $min_x){
+                $min_x = $element->getX() ;
             }
-            if($element->getY() < $min_y){
-                $min_y = $element->getY();
+            if($element->getY()  < $min_y){
+                $min_y = $element->getY() ;
             }
         }
-        error_log( strval($min_x ) . "," . strval($min_y),0 );
         foreach($this->elements as $element){
             $element->subtractX($min_x);
             $element->subtractY($min_y);
         }
+        
 
     }
     public function load($id) {
