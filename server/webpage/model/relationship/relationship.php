@@ -108,6 +108,10 @@ class Relationship{
         return $this->name;
     }
 
+    public function getId(){
+        return $this->id;
+    }
+
     public function getKeyword(){
         return $this->keyword;
     }

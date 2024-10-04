@@ -21,6 +21,10 @@ class RelationshipController{
         return $this->mapa->getHeight();
     }
 
+    public function getId(){
+        return $this->mapa->getId();
+    }
+
     public function getElements(){
         if( ! $this->loaded ) {
             $carregado = $this->mapa->loadElements() > 0;
@@ -28,6 +32,10 @@ class RelationshipController{
             $this->loaded = $carregado ; 
         }
         return $this->mapa->getElements();
+    }
+
+    public function toJson(){
+        return $this->mapa->toJson();
     }
 }
 
