@@ -108,7 +108,7 @@ class MapRelationship(ConnectObject):
         if data.get("elements") != None:
             for element in data['elements']:
                 if element['etype'] == "person" or element['etype'] == "other" or element['etype'] == "organization":
-                    x = element["x"]; y = element["y"]; w = element["w"]; h = element["h"];
+                    x = int(element["x"]); y = int(element["y"]); w = int(element["w"]); h = int(element["h"]);
                     buffer = self.addEntity( element['etype'], x, y, text=element["text_label"], id_=element["id"], entity_id_=element["entity_id"], wikipedia=element["wikipedia"] );
                     if element['etype'] == "person":
                         buffer.doxxing = element["data_extra"];
@@ -117,7 +117,7 @@ class MapRelationship(ConnectObject):
                     buffer.entity.full_description = element["full_description"];
             for element in data['elements']:
                 if element["etype"] == "link":
-                    x = element["x"]; y = element["y"]; w = element["w"]; h = element["h"];
+                    x = int(element["x"]); y = int(element["y"]); w = int(element["w"]); h = int(element["h"]);
                     objeto = self.addEntity( "link",  x, y, text=element["text_label"], id_=element["id"], entity_id_=element["entity_id"], wikipedia=element["wikipedia"]);
                     for to_ in element["to"]:
                         objeto.addTo( self.findById( self.elements, to_["id"] ) );

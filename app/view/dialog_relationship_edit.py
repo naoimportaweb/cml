@@ -36,6 +36,7 @@ class DialogRelationshipEdit(QDialog):
         self.ui_buttons();
         
     def ui_relationship(self):
+        server = Server();
         layout_server = QGridLayout()
         layout_server.setContentsMargins(20, 20, 20, 20)
         layout_server.setSpacing(10)
@@ -57,8 +58,17 @@ class DialogRelationshipEdit(QDialog):
         self.txt_key.textEdited.connect(      self.txt_key_press );
         #self.txt_key.editingFinished.connect( self.txt_key_finish);
         layout_server.addWidget(self.txt_key, 2, 1);
+        
+        lbl_url = QLabel("URL:")
+        lbl_url.setProperty("class", "normal");
+        layout_server.addWidget(lbl_url, 3, 0)
+        self.txt_url = QLineEdit()
+        self.txt_url.setMinimumWidth(500);
+        self.txt_url.setText( server.ip + "/cml/webpage/view/relationship/relationship.php?id=" + self.map.id);
+        layout_server.addWidget(self.txt_url, 3, 1);
+
         self.lbl_message = QLabel();
-        layout_server.addWidget( self.lbl_message , 3, 1);
+        layout_server.addWidget( self.lbl_message , 4, 1);
         self.layout_principal.addLayout( "relationship", layout_server );
 
     def ui_lock(self):

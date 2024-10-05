@@ -13,6 +13,7 @@ sys.path.append( ROOT );
 
 from view.ui.customvlayout import CustomVLayout;
 from view.dialogreference import DialogReference;
+from view.dialog_classification import DialogClassification;
 from classlib.configuration import Configuration;
 
 class DialogEntityPerson(QDialog):
@@ -33,6 +34,7 @@ class DialogEntityPerson(QDialog):
         self.page_url = CustomVLayout.widget_tab( self.tab, "URLs");
         self.page_dox = CustomVLayout.widget_tab( self.tab, "Doxxing");
         self.page_ref = CustomVLayout.widget_tab( self.tab, "References");
+        self.page_cls = CustomVLayout.widget_tab( self.tab, "Classification");
         self.page_act = CustomVLayout.widget_tab( self.tab, "Actions");
         # ------------------------------------------
         self.lbl_text = QLabel("Text");
@@ -88,6 +90,21 @@ class DialogEntityPerson(QDialog):
         self.table_reference = CustomVLayout.widget_tabela(self, ["Title"], tamanhos=[QHeaderView.Stretch], double_click=self.table_reference_click);
         self.page_ref.addWidget(self.table_reference);
         self.table_reference_load();
+        #layout = QVBoxLayout();
+        #layout.addWidget( self.tab           );
+        #self.setLayout(   layout             );
+        #------------------------------------------
+        btn_class_add = QPushButton("Add");
+        btn_class_del = QPushButton("Remove");
+        btn_class_add.setFont( Configuration.instancia().getFont() );
+        btn_class_del.setFont( Configuration.instancia().getFont() );
+        btn_class_add.clicked.connect(self.btn_class_add_click);
+        btn_class_del.clicked.connect(self.btn_class_del_click);
+        CustomVLayout.widget_linha(self, self.page_cls, [btn_class_add, btn_class_del] );
+        self.table_class = CustomVLayout.widget_tabela(self, ["Classification", "Value"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch], double_click=self.table_class_click);
+        self.page_cls.addWidget(self.table_class);
+        self.table_class_load();
+        
         layout = QVBoxLayout();
         layout.addWidget( self.tab           );
         self.setLayout(   layout             );
@@ -138,3 +155,13 @@ class DialogEntityPerson(QDialog):
         retorno = self.person.setType( etype );
         if retorno:
             self.close();
+    def table_class_click(self):
+        return;
+    def btn_class_del_click(self):
+        return;
+    def btn_class_add_click(self):
+        d = DialogClassification(self);
+        d.exec();
+        return;
+    def table_class_load(self):
+        return;

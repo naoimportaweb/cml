@@ -170,12 +170,13 @@ class DialogEntityLink(QDialog):
         self.link.entity.full_description = self.txt_descricao.toPlainText();
 #
     def btn_to_del_click(self):
-        self.link.delTo( self.cmb_combo_to.currentIndex() );
+        self.link.delTo( self.table_to.currentRow() );
         self.table_to_load();
 
     def btn_from_del_click(self):
-        self.link.delFrom( self.cmb_combo_from.currentIndex() );
+        self.link.delFrom( self.table_from.currentRow() );
         self.table_from_load();
+    
     def btn_remover_click(self):
         self.link.mapa.delEntity(self.link);
         self.close();

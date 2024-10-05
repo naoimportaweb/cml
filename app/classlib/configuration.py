@@ -15,11 +15,11 @@ class Configuration(metaclass=SingletonMeta):
         self.config_ = {};
         if os.path.exists(self.path_config):
             self.config_ = json.loads( open( self.path_config, "r").read() );
-        self.font_size =                             self.__getParameter__(self.config_,   "form.font.size", 12);
-        self.font_family =                           self.__getParameter__(self.config_, "form.font.family", "Courier");
-        self.relationshihp_font_size =               self.__getParameter__(self.config_,    "relationshihp.font.size", 10);
-        self.relationshihp_font_scale =              self.__getParameter__(self.config_,   "relationshihp.font.scale", 1);
-        self.relationshihp_font_family =             self.__getParameter__(self.config_,  "relationshihp.font.family", "Vernana");
+        self.font_size =                             self.__getParameter__(self.config_,  "form.font.size", 12);
+        self.font_family =                           self.__getParameter__(self.config_,  "form.font.family", "Courier");
+        self.relationshihp_font_size =               self.__getParameter__(self.config_,  "relationshihp.font.size", 10);
+        self.relationshihp_font_scale =              self.__getParameter__(self.config_,  "relationshihp.font.scale", 1);
+        self.relationshihp_font_family =             self.__getParameter__(self.config_,  "relationshihp.font.family", "Courier");
         self.login_username =                        self.__getParameter__(self.config_,  "login.username", "");
         self.login_server =                          self.__getParameter__(self.config_,  "login.server", "http://localhost");
 

@@ -63,6 +63,27 @@ create table entity (
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
 );
 
+create table classification(
+    id VARCHAR(128) PRIMARY KEY,
+    text_label VARCHAR(255) NOT NULL,
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
+
+create table classification_item(
+    id VARCHAR(128) PRIMARY KEY,
+    classification_id VARCHAR(128) NOT NULL,
+    text_label VARCHAR(255) NOT NULL,
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
+
+create table entity_classification_item (
+    id VARCHAR(128) PRIMARY KEY,
+    classification_item_id VARCHAR(128) NOT NULL,
+    entity_id VARCHAR(128) NOT NULL
+);
+
 create table diagram_relationship_element(
     id VARCHAR(128) PRIMARY KEY,
     diagram_relationship_id VARCHAR(128) NOT NULL,
@@ -123,6 +144,13 @@ INSERT INTO person_enter(id, key_enter) values("93039e72-db3f-4e74-a7e5-e787fd89
 INSERT INTO person_enter(id, key_enter) values("a4545eb3-1577-47fc-b01c-9829b1ce4f8d","a4545eb3-1577-47fc-b01c-9829b1ce4f8d");
 INSERT INTO person_enter(id, key_enter) values("0d045974-afc7-4699-b116-91672117d517","0d045974-afc7-4699-b116-91672117d517");
 
+INSERT INTO classification(id, text_label) values('1', "Eixo POLÍTICO");
+INSERT INTO classification_item(id, classification_id, text_label) values('1', '1', 'Extrema esquerda');
+INSERT INTO classification_item(id, classification_id, text_label) values('2', '1', 'Esquerda moderada');
+INSERT INTO classification_item(id, classification_id, text_label) values('3', '1', 'Neutro');
+INSERT INTO classification_item(id, classification_id, text_label) values('4', '1', 'Direita moderada');
+INSERT INTO classification_item(id, classification_id, text_label) values('5', '1', 'Extrema direita');
+
 
 delete from diagram_relationship_link;
 delete from diagram_relationship_element_reference;
@@ -146,5 +174,31 @@ drop table person;
 
 # ------------- HOMOLOGAÇAO -------------------------------
 
+create table classification(
+    id VARCHAR(128) PRIMARY KEY,
+    text_label VARCHAR(255) NOT NULL,
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
 
+create table classification_item(
+    id VARCHAR(128) PRIMARY KEY,
+    classification_id VARCHAR(128) NOT NULL,
+    text_label VARCHAR(255) NOT NULL,
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
+
+create table entity_classification_item (
+    id VARCHAR(128) PRIMARY KEY,
+    classification_item_id VARCHAR(128) NOT NULL,
+    entity_id VARCHAR(128) NOT NULL
+);
+
+INSERT INTO classification(id, text_label) values('1', "Eixo POLÍTICO");
+INSERT INTO classification_item(id, classification_id, text_label) values('1', '1', 'Extrema esquerda');
+INSERT INTO classification_item(id, classification_id, text_label) values('2', '1', 'Esquerda moderada');
+INSERT INTO classification_item(id, classification_id, text_label) values('3', '1', 'Neutro');
+INSERT INTO classification_item(id, classification_id, text_label) values('4', '1', 'Direita moderada');
+INSERT INTO classification_item(id, classification_id, text_label) values('5', '1', 'Extrema direita');
 

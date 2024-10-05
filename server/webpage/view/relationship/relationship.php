@@ -1,13 +1,8 @@
 <!DOCTYPE html>
 <html>
-<?php
 
-//require_once dirname(dirname(__DIR__)) . "/controller/relationship/relationship.php";
-//$mapac = new RelationshipController( $_GET['id'] );
-
-?>
 <head>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="../../public/jquery.min.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 body {font-family: Arial;}
@@ -55,16 +50,17 @@ body {font-family: Arial;}
 <div id='div_contents'></div><script>
 
 function drawEntity(entity, canvas, ctx){
+    var fontsize = 9;
 
     ctx.beginPath();
     ctx.fillStyle = "white";
 
-    ctx.font = "16px Courier";
+    ctx.font = "14px Courier";
     ctx.setLineDash([]);
 
     if(entity.etype == "other"){
         ctx.fillStyle = "yellow";
-        ctx.fillRect(entity.x, entity.y, (entity.text_label.length * 10) + 10, entity.h);
+        ctx.fillRect(entity.x, entity.y, (entity.text_label.length * fontsize) , entity.h);
         ctx.fillStyle = "black";
         ctx.fillText(entity.text_label ,entity.x + 5, entity.y + 13);
         ctx.stroke();
@@ -72,9 +68,9 @@ function drawEntity(entity, canvas, ctx){
     if(entity.etype == "person"){
         ctx.beginPath();
         ctx.fillStyle = "white";
-        ctx.fillRect(entity.x, entity.y, (entity.text_label.length * 10) + 10, entity.h);
+        ctx.fillRect(entity.x, entity.y, (entity.text_label.length * fontsize) , entity.h);
         ctx.fillStyle = "black";
-        ctx.roundRect(entity.x, entity.y, (entity.text_label.length * 10) + 10, entity.h, 20);
+        ctx.roundRect(entity.x, entity.y, (entity.text_label.length * fontsize) , entity.h, 20);
         
         ctx.fillStyle = "black";
         ctx.fillText(entity.text_label ,entity.x + 5, entity.y + 13);
@@ -83,9 +79,9 @@ function drawEntity(entity, canvas, ctx){
     if(entity.etype == "organization"){
         ctx.beginPath();
         ctx.fillStyle = "white";
-        ctx.fillRect(entity.x, entity.y, (entity.text_label.length * 10) + 10, entity.h);
+        ctx.fillRect(entity.x, entity.y, (entity.text_label.length * fontsize) , entity.h);
         ctx.fillStyle = "black";
-        ctx.rect(entity.x, entity.y, (entity.text_label.length * 10) + 10, entity.h);
+        ctx.rect(entity.x, entity.y, (entity.text_label.length * fontsize) , entity.h);
         ctx.fillStyle = "black";
         ctx.fillText(entity.text_label ,entity.x + 5, entity.y + 13);
         ctx.stroke();
@@ -95,19 +91,23 @@ function drawEntity(entity, canvas, ctx){
         ctx.fillStyle = "blue";
         ctx.setLineDash([5, 3]);
         ctx.strokeStyle = "red";
-        ctx.moveTo(entity.center_x, entity.center_y);
-        ctx.lineTo(entity.to[0].center_x, entity.to[0].center_y);
+        for(var i = 0; i < entity.to.length; i++) {
+          ctx.moveTo(entity.center_x, entity.center_y - 11);
+          ctx.lineTo(entity.to[i].center_x, entity.to[i].center_y  - 11);
+        }
         ctx.stroke();
         ctx.beginPath();
         ctx.strokeStyle = "blue";
-        ctx.moveTo(entity.center_x, entity.center_y);
-        ctx.lineTo(entity.from[0].center_x, entity.from[0].center_y);
+        for(var i = 0; i < entity.from.length; i++) {
+          ctx.moveTo(entity.center_x, entity.center_y - 11);
+          ctx.lineTo(entity.from[i].center_x, entity.from[i].center_y - 11);
+        }
         ctx.stroke();
         ctx.beginPath();
         ctx.strokeStyle = "black";
         ctx.fillStyle = "white";
-        ctx.fillRect(entity.x, entity.y, (entity.text_label.length * 10) + 10, entity.h);
-        ctx.fillStyle = "black";
+        ctx.fillRect(entity.x, entity.y, (entity.text_label.length * fontsize) , entity.h);
+        ctx.fillStyle = "blue";
         ctx.fillText(entity.text_label ,entity.x + 5, entity.y + 13);
         ctx.stroke();
     }   
@@ -155,21 +155,18 @@ function getMap(id, callback){
 }
 
 function openRelatinship(evt, element_selected_id, tablinks_id, tabcontents_id) {
-  console.log(element_selected_id, tablinks_id, tabcontents_id);
   var i, tabcontent, tablinks;
-  tabcontent = document.getElementById(tabcontents_id).children; //document.getElementsByClassName("tabcontent");
+  tabcontent = document.getElementById(tabcontents_id).children; 
   for (i = 0; i < tabcontent.length; i++) {
     tabcontent[i].style.display = "none";
   }
-  tablinks = document.getElementById(tablinks_id).children; //document.getElementsByClassName("tablinks");
+  tablinks = document.getElementById(tablinks_id).children; 
   for (i = 0; i < tablinks.length; i++) {
     tablinks[i].className = tablinks[i].className.replace(" active", "");
   }
   document.getElementById(element_selected_id).style.display = "block";
   evt.currentTarget.className += " active";
 }
-
-
 
 getMap( '<?php echo $_GET["id"]; ?>', callbackMap );
 </script>
