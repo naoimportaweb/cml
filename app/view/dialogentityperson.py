@@ -157,11 +157,20 @@ class DialogEntityPerson(QDialog):
             self.close();
     def table_class_click(self):
         return;
+    
     def btn_class_del_click(self):
+        self.person.entity.classification.pop(self.table_class.index());
+        self.table_class_load();
         return;
+    
     def btn_class_add_click(self):
-        d = DialogClassification(self);
+        d = DialogClassification(self, self.person.entity);
         d.exec();
         return;
+    
     def table_class_load(self):
+        self.table_class.setRowCount( len( self.person.entity.classification ) );
+        for i in range(len( self.person.entity.classification )):
+            self.table_class.setItem( i, 0, QTableWidgetItem( self.person.entity.classification[i]["text_label"] ) );
+            self.table_class.setItem( i, 1, QTableWidgetItem( self.person.entity.classification[i]["text_label_choice"] ) );
         return;

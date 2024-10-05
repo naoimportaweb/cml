@@ -13,15 +13,21 @@ class Classification
         $sql = "SELECT * FROM classification as cls WHERE LOWER(cls.text_label) LIKE LOWER( ? ) ";
         $valores = [ $post_data["parameters"]["text_label"]];
         $buffers = $mysql->DataTable($sql, $valores);
-        foreach($buffers as $buffer) {
+        for($i = 0; $i < count($buffers); $i++) {
             $sql = "SELECT * FROM classification_item where classification_id = ? ";
-            $valores = [ $buffer["id"] ];
-            $buffer["itens"] = $mysql->DataTable($sql, $valores);
+            $valores = [ $buffers[$i]["id"] ];
+            $buffers[$i]["itens"] = $mysql->DataTable($sql, $valores);
         }
         return $buffers;
     }
 
-    
+    public function add( $ip, $user, $post_data ) {
+        $mysql = new Mysql("");
+        $id = $post_data["parameters"]["classification_item_id"] . $post_data["parameters"]["entity_id"];
+        $sql = "INSERT INTO entity_classification_item(id, classification_item_id, entity_id) values( ?, ?, ?)";
+        return $mysql->ExecuteNoQuery($sql, [ $id, $post_data["parameters"]["classification_item_id"], $post_data["parameters"]["entity_id"] ]) > 0;
+    }
+
 
 }
 

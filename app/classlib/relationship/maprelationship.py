@@ -93,6 +93,7 @@ class MapRelationship(ConnectObject):
         objeto = self.toJson();
         for element in self.elements:
             objeto["elements"].append( element.toJson() );
+        
         js = self.__execute__("MapRelationship", "save", objeto);
         if js["status"]:
             return js["return"];
@@ -115,6 +116,7 @@ class MapRelationship(ConnectObject):
                     for reference in element["references"]:
                         buffer.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"]);
                     buffer.entity.full_description = element["full_description"];
+                    buffer.entity.classification = element["classification"];
             for element in data['elements']:
                 if element["etype"] == "link":
                     x = int(element["x"]); y = int(element["y"]); w = int(element["w"]); h = int(element["h"]);

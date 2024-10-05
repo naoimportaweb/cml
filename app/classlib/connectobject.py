@@ -61,7 +61,7 @@ class ConnectObject:
         url = self.ip +"/cml/services/execute.php";
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'};
         r = requests.post(url, data=json.dumps(envelop), headers=headers);
-        print(r.text.strip());
+        
         retorno_json = json.loads(r.text.strip());
         if type(retorno_json["return"]) == type(""):
             retorno_body = retorno_json["return"][8:];

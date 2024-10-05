@@ -37,7 +37,7 @@ class MapRelationshipBox():
         self._dirt = True;
 
     def toJson(self):
-        objeto = { "id" : self.id, "entity_id": self.entity.id , "x" : self.x, "y" : self.y, "w" : self.w, "h" : self.h, "text" : self.entity.text, "full_description" : self.entity.full_description, "etype" : self.entity.etype, "references" : [], "time_slices" : [], "data_extra" : self.entity.data_extra, "wikipedia" : self.entity.wikipedia  };
+        objeto = { "id" : self.id, "entity_id": self.entity.id , "x" : self.x, "y" : self.y, "w" : self.w, "h" : self.h, "text" : self.entity.text, "full_description" : self.entity.full_description, "etype" : self.entity.etype, "references" : [], "time_slices" : [], "data_extra" : self.entity.data_extra, "wikipedia" : self.entity.wikipedia, "classification" : self.entity.classification  };
         
         for reference in self.entity.references:
             buffer = reference.toJson();

@@ -14,6 +14,7 @@ sys.path.append( ROOT );
 from view.ui.customvlayout import CustomVLayout;
 from view.dialogreference import DialogReference;
 from classlib.configuration import Configuration;
+from view.dialog_classification import DialogClassification;
 
 class DialogEntityOther(QDialog):
     def __init__(self, form, other):
@@ -31,6 +32,7 @@ class DialogEntityOther(QDialog):
         self.page_rel = CustomVLayout.widget_tab( self.tab, "other");
         self.page_pho = CustomVLayout.widget_tab( self.tab, "Photo");
         self.page_ref = CustomVLayout.widget_tab( self.tab, "References");
+        self.page_cls = CustomVLayout.widget_tab( self.tab, "Classification");
         self.page_act = CustomVLayout.widget_tab( self.tab, "Actions");
         # ------------------------------------------
         self.lbl_text = QLabel("Text");
@@ -62,6 +64,17 @@ class DialogEntityOther(QDialog):
         btn_remover.clicked.connect(self.btn_remover_click);
         CustomVLayout.widget_linha(self, self.page_act, [btn_remover] );
         #-------------------------------------------
+        btn_class_add = QPushButton("Add");
+        btn_class_del = QPushButton("Remove");
+        btn_class_add.setFont( Configuration.instancia().getFont() );
+        btn_class_del.setFont( Configuration.instancia().getFont() );
+        btn_class_add.clicked.connect(self.btn_class_add_click);
+        btn_class_del.clicked.connect(self.btn_class_del_click);
+        CustomVLayout.widget_linha(self, self.page_cls, [btn_class_add, btn_class_del] );
+        self.table_class = CustomVLayout.widget_tabela(self, ["Classification", "Value"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch], double_click=self.table_class_click);
+        self.page_cls.addWidget(self.table_class);
+        self.table_class_load();
+        #
         btn_reference_add = QPushButton("Add");
         btn_reference_add.setFont( Configuration.instancia().getFont() );
         btn_reference_del = QPushButton("Remove");
@@ -113,3 +126,23 @@ class DialogEntityOther(QDialog):
         retorno = self.other.setType( etype );
         if retorno:
             self.close();
+    def table_class_click(self):
+        return;
+    
+    def btn_class_del_click(self):
+        self.other.entity.classification.pop(self.table_class.index());
+        self.table_class_load();
+        return;
+    
+    def btn_class_add_click(self):
+        d = DialogClassification(self, self.other.entity);
+        d.exec();
+        return;
+    
+    def table_class_load(self):
+        
+        self.table_class.setRowCount( len( self.other.entity.classification ) );
+        for i in range(len( self.other.entity.classification )):
+            self.table_class.setItem( i, 0, QTableWidgetItem( self.other.entity.classification[i]["text_label"] ) );
+            self.table_class.setItem( i, 1, QTableWidgetItem( self.other.entity.classification[i]["text_label_choice"] ) );
+        return;

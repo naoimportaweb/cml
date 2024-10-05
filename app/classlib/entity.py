@@ -20,7 +20,15 @@ class Entity(ConnectObject):
         self.references = [];
         self.time_slices = [];
         self.wikipedia = "";
+        self.classification = [];
     
+    def addClassification(self, classification_id, text_label, classification_item_id, text_label_choice):
+        for buffer in self.classification:
+            if buffer["id"] == classification_id + self.id:
+                return False;
+        self.classification.append({ "entity_id" : self.id , "id" : classification_id + self.id, "classification_id" : classification_id, "text_label" : text_label, "classification_item_id" : classification_item_id, "text_label_choice" : text_label_choice  });
+        return True;
+        
     def getDirt(self):
         return self._dirt;
     
@@ -37,7 +45,7 @@ class Entity(ConnectObject):
         return self.time_slices[-1];
         
     def toJson(self):
-        return { "id" : self.id,  "name" : self.name, "wikipedia" : self.wikipedia}
+        return { "id" : self.id,  "name" : self.name, "wikipedia" : self.wikipedia, "classification" : self.classification}
 
     def toType(self, etype):
         js = self.__execute__("Entity", "to_type", {"type" : etype, "id" : self.id});

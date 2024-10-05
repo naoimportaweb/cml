@@ -19,3 +19,12 @@ class Classification(ConnectObject):
         if js["status"]:
             return js["return"];
         return None;
+
+    #def add(self, entity_id, classification_item_id):
+    #    js = self.__execute__("Classification", "add", {"entity_id" : entity_id, "classification_item_id" : classification_item_id});
+    #    if js["status"]:
+    #        return js["return"];
+    #    return None;
+
+    
+    

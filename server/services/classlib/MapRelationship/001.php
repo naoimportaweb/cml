@@ -23,6 +23,8 @@ class MapRelationship
             
             $buffer_elements[$i]["references"] = $mysql->DataTable("SELECT drer.id, drer.title, drer.link1, drer.link2, drer.link3 FROM diagram_relationship_element_reference AS drer where drer.entity_id = ?", [$buffer_elements[$i]["entity_id"]]);
 
+            $buffer_elements[$i]["classification"] = $mysql->DataTable("select eci.entity_id as entity_id, eci.id as id, clsi.text_label as text_label_choice, cls.text_label as text_label, clsi.id as classification_item_id from entity_classification_item as eci inner join classification_item as clsi on eci.classification_item_id = clsi.id inner join classification as cls on clsi.classification_id = cls.id where eci.entity_id = ?", [$buffer_elements[$i]["entity_id"]]);
+
             if( $buffer_elements[$i]["etype"] == "link" ){
                 $buffer_elements[$i]["from"] = $mysql->DataTable("SELECT drl.diagram_relationship_element_id as id FROM diagram_relationship_link AS drl where drl.diagram_relationship_element_id_reference = ? and ltype = 1", [   $buffer_elements[$i]["id"]  ]);
                 $buffer_elements[$i]["to"] = $mysql->DataTable("SELECT drl.diagram_relationship_element_id as id FROM diagram_relationship_link AS drl where drl.diagram_relationship_element_id_reference = ? and ltype = 2", [   $buffer_elements[$i]["id"]  ]);
@@ -153,6 +155,16 @@ class MapRelationship
                 array_push($sqls, "INSERT INTO diagram_relationship_element_reference (id, entity_id, title, link1, link2, link3 ) VALUES(?, ?, ?, ?, ?, ? )  ON DUPLICATE KEY UPDATE  title=?, link1=?, link2=?, link3=?");
                 array_push( $valuess, [ $reference["id"], $reference["entity_id"], $reference["title"], $reference["link1"], $reference["link2"], $reference["link3"], $reference["title"], $reference["link1"], $reference["link2"], $reference["link3"] ] );
             }
+            if( array_key_exists("classification", $element) ) {
+                for($j = 0; $j < count($element["classification"]); $j++){
+                    if( count( $mysql->DataTable("select * from entity_classification_item where id = ? ", [ $element["classification"][$j]["id"] ] ) ) > 0 ){
+                        continue;
+                    }
+                    
+                    array_push($sqls, "INSERT INTO entity_classification_item(id, classification_item_id, entity_id) values( ?, ?, ?)  ");
+                    array_push($valuess, [ $element["classification"][$j]["id"], $element["classification"][$j]["classification_item_id"], $element["classification"][$j]["entity_id"] ] );
+                }
+            }
         }
 
         for($i = 0; $i < count($post_data["parameters"]["elements"]); $i++) {
@@ -234,8 +246,31 @@ class MapRelationship
                 array_push($valuess, [ $buffer_elements[$i]["id"] ]);
             }
         }
+
+        for($i = 0; $i < count($post_data["parameters"]["elements"]); $i++) {
+            $element = $post_data["parameters"]["elements"][$i];
+            $buffer_classification = $mysql->DataTable("SELECT * FROM entity_classification_item WHERE entity_id = ? ", [$element["entity_id"]]) ;
+            for($j = 0; $j < count($buffer_classification); $j++){
+                $existe = false;
+                for($k = 0; $k < count($element["classification"]); $k++){
+                    $classification = $element["classification"][$k];
+                    if( $classification["id"] == $buffer_classification[$j]["id"]){
+                        $existe = true;
+                        break;
+                    }
+                }
+                if( ! $existe ){
+                    array_push($sqls, "DELETE FROM entity_classification_item WHERE id = ?");
+                    array_push($valuess, [ $buffer_classification[$j]["id"] ]);
+                }
+            }
+        }
+
+
         array_push( $sqls ,"INSERT INTO diagram_relationship_history(id, person_id, diagram_relationship_id, json) values(?, ?, ?, ?)");
         array_push($valuess, [ $mysql->gen_uuid(), $user->id, $post_data["parameters"]["id"], json_encode($post_data["parameters"]) ]);
+
+
         
         return ( $mysql->ExecuteNoQuery($sqls, $valuess) > 0 );
     }

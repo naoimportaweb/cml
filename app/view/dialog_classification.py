@@ -19,8 +19,10 @@ from classlib.configuration import Configuration;
 from classlib.classification import Classification;
 
 class DialogClassification(QDialog):
-    def __init__(self, form):
-        super().__init__();
+    def __init__(self, form, entity):
+        super().__init__(form);
+        self.form = form;
+        self.entity = entity;
         nWidth = int(form.width() * 0.8); nHeight = int(form.height() * 0.6);
         if nWidth > 800:
             nWidth = 800;
@@ -32,18 +34,15 @@ class DialogClassification(QDialog):
         self.setWindowTitle("Search Classification")
         self.layout_principal = CustomVLayout();
         self.setLayout( self.layout_principal );
-        #self.ui_search_relationship();
         self.cmb_type = QComboBox()
         self.cmb_type.setFont( Configuration.instancia().getFont() );
-        #self.cmb_type.addItem('Organization')
-        #self.cmb_type.addItem('Other')
         self.ui_search_classification();
         self.ui_tabela();
         btn_alterar_type = QPushButton("Select classification");
         btn_alterar_type.setFont( Configuration.instancia().getFont() );
+        btn_alterar_type.setFocusPolicy(Qt.NoFocus);
         btn_alterar_type.clicked.connect(self.btn_alterar_type_click);
         CustomVLayout.widget_linha(self, self.layout_principal, [self.cmb_type, btn_alterar_type] );
-        #self.ui_tabela();
         
     def ui_search_classification(self):
         layout_server = QGridLayout()
@@ -71,22 +70,15 @@ class DialogClassification(QDialog):
         for i in range(len( self.classifications )):
             self.table_classification.setItem( i, 0, QTableWidgetItem( self.classifications[i]["text_label"] ) );
         return;
-        #r = MapRelationship();
-        #self.mapas = r.search( "%" + self.txt_name.text().strip() + "%");
-        #self.mapas.sort(key=lambda x: x["name"]);
-        #self.table_maps.setRowCount( len( self.mapas ) );
-        #for i in range(len( self.mapas )):
-        #    self.table_maps.setItem( i, 0, QTableWidgetItem( self.mapas[i]["username"] ) );
-        #    self.table_maps.setItem( i, 1, QTableWidgetItem( self.mapas[i]["name"]) );
     
     def table_classification_double(self):
-        for buffer in self.classifications:
+        for buffer in self.classifications[self.table_classification.index()]["itens"]:
             self.cmb_type.addItem( buffer["text_label"] )
         return;
-        #r = MapRelationship();
-        #if r.load( self.mapas[ self.table_maps.index() ]["id"] ):
-        #    self.map = r;
-        #    self.close();
+    
     def btn_alterar_type_click(self):
+        if self.entity.addClassification(self.classifications[self.table_classification.index()]["id"] , self.classifications[self.table_classification.index()]["text_label"], self.classifications[self.table_classification.index()]["itens"][self.cmb_type.currentIndex()]["id"], self.classifications[self.table_classification.index()]["itens"][self.cmb_type.currentIndex()]["text_label"]):
+            self.form.table_class_load();
+            self.close();
         return;
 
