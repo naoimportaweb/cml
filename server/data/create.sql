@@ -152,6 +152,16 @@ INSERT INTO classification_item(id, classification_id, text_label) values('4', '
 INSERT INTO classification_item(id, classification_id, text_label) values('5', '1', 'Extrema direita');
 
 
+INSERT INTO classification(id, text_label) values('2', "Profissão");
+INSERT INTO classification_item(id, classification_id, text_label) values('6', '2', 'Jornalista');
+INSERT INTO classification_item(id, classification_id, text_label) values('7', '2', 'Político');
+INSERT INTO classification_item(id, classification_id, text_label) values('8', '2', 'Empresário');
+INSERT INTO classification_item(id, classification_id, text_label) values('9', '2', 'Funcionário público de baixo status');
+INSERT INTO classification_item(id, classification_id, text_label) values('10', '2', 'Ministro');
+INSERT INTO classification_item(id, classification_id, text_label) values('11', '2', 'Cargo de Indicação Política');
+
+
+
 delete from diagram_relationship_link;
 delete from diagram_relationship_element_reference;
 delete from diagram_relationship_element;
