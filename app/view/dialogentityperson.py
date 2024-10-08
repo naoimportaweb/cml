@@ -37,12 +37,19 @@ class DialogEntityPerson(QDialog):
         self.page_cls = CustomVLayout.widget_tab( self.tab, "Classification");
         self.page_act = CustomVLayout.widget_tab( self.tab, "Actions");
         # ------------------------------------------
-        self.lbl_text = QLabel("Text");
+        self.lbl_text = QLabel("Full Name");
         self.txt_text = QLineEdit();
         self.txt_text.setFont( Configuration.instancia().getFont() );
         self.txt_text.setText( self.person.entity.text ) ;
         self.txt_text.textChanged.connect(self.txt_text_changed)
         CustomVLayout.widget_linha(self, self.page_rel, [self.lbl_text, self.txt_text] );
+
+        self.lbl_text_small = QLabel("Nickname");
+        self.txt_text_small = QLineEdit();
+        self.txt_text_small.setFont( Configuration.instancia().getFont() );
+        self.txt_text_small.setText( self.person.entity.small_label ) ;
+        self.txt_text_small.textChanged.connect(self.txt_text_small_changed)
+        CustomVLayout.widget_linha(self, self.page_rel, [self.lbl_text_small, self.txt_text_small] );
         
         self.txt_descricao = QTextEdit();
         self.txt_descricao.setFont( Configuration.instancia().getFont() );
@@ -130,6 +137,9 @@ class DialogEntityPerson(QDialog):
         form.exec();
         self.table_reference_load()
 
+    def txt_text_small_changed(self):
+        self.person.entity.small_label = self.txt_text_small.text();
+        
     def txt_text_changed(self):
         self.person.entity.text = self.txt_text.text();
     

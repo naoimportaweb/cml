@@ -37,12 +37,19 @@ class DialogEntityOrganization(QDialog):
         self.page_cls = CustomVLayout.widget_tab( self.tab, "Classification");
         self.page_act = CustomVLayout.widget_tab( self.tab, "Actions");
         # ------------------------------------------
-        self.lbl_text = QLabel("Text");
+        self.lbl_text = QLabel("Name");
         self.txt_text = QLineEdit();
         self.txt_text.setFont(config.getFont());
         self.txt_text.setText( self.organizagion.entity.text ) ;
         self.txt_text.textChanged.connect(self.txt_text_changed)
         CustomVLayout.widget_linha(self, self.page_rel, [self.lbl_text, self.txt_text] );
+
+        self.lbl_text_small = QLabel("Acronym");
+        self.txt_text_small = QLineEdit();
+        self.txt_text_small.setFont( Configuration.instancia().getFont() );
+        self.txt_text_small.setText( self.organizagion.entity.small_label ) ;
+        self.txt_text_small.textChanged.connect(self.txt_text_small_changed)
+        CustomVLayout.widget_linha(self, self.page_rel, [self.lbl_text_small, self.txt_text_small] );
         
         self.txt_descricao = QTextEdit();
         self.txt_descricao.setPlainText( organizagion.entity.full_description );
@@ -113,11 +120,17 @@ class DialogEntityOrganization(QDialog):
 
     def txt_text_changed(self):
         self.organizagion.entity.text = self.txt_text.text();
+
+    def txt_text_small_changed(self):
+        self.organizagion.entity.small_label = self.txt_text_small.text();
+
     def btn_remover_click(self):
         self.organizagion.mapa.delEntity(self.organizagion);
         self.close();
+    
     def txt_descricao_changed(self):
         self.organizagion.entity.full_description = self.txt_descricao.toPlainText();
+    
     def btn_alterar_type_click(self):
         etype = "";
         if self.cmb_type.currentIndex() == 0:

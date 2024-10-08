@@ -37,7 +37,7 @@ class MapRelationshipBox():
         self._dirt = True;
 
     def toJson(self):
-        objeto = { "id" : self.id, "entity_id": self.entity.id , "x" : self.x, "y" : self.y, "w" : self.w, "h" : self.h, "text" : self.entity.text, "full_description" : self.entity.full_description, "etype" : self.entity.etype, "references" : [], "time_slices" : [], "data_extra" : self.entity.data_extra, "wikipedia" : self.entity.wikipedia, "classification" : self.entity.classification  };
+        objeto = { "id" : self.id, "entity_id": self.entity.id , "x" : self.x, "y" : self.y, "w" : self.w, "h" : self.h, "text" : self.entity.text, "full_description" : self.entity.full_description, "etype" : self.entity.etype, "references" : [], "time_slices" : [], "data_extra" : self.entity.data_extra, "wikipedia" : self.entity.wikipedia, "classification" : self.entity.classification, "small_label" : self.entity.small_label  };
         
         for reference in self.entity.references:
             buffer = reference.toJson();
@@ -63,17 +63,21 @@ class MapRelationshipBox():
     
     def recalc(self, painter):
         painter.setFont(QFont(Configuration.instancia().relationshihp_font_family, Configuration.instancia().relationshihp_font_size))
-        frame_text = painter.boundingRect(0, 0, 150, 30, 0, self.entity.text);
+        buffer_text_for_calc = self.entity.text;
+        if self.entity.etype == "person":
+            if self.entity.small_label != None and self.entity.small_label.strip() != "":
+                buffer_text_for_calc = self.entity.small_label;
+        elif self.entity.etype == "organization":
+            if  self.entity.small_label != None and self.entity.small_label.strip() != "":
+                buffer_text_for_calc = self.entity.text + " (" + self.entity.small_label + ")";
+        frame_text = painter.boundingRect(0, 0, 150, 30, 0, buffer_text_for_calc);
+
         self.w = frame_text.width() + 10;
         self.h = frame_text.height() + 2;
     def draw(self, painter):
         penRectangle = QPen(Qt.black)
         penRectangle.setWidth(1)
         painter.setPen(penRectangle)
-        #painter.setFont(QFont(Configuration.instancia().relationshihp_font_family, Configuration.instancia().relationshihp_font_size))
-        #frame_text = painter.boundingRect(0, 0, 150, 30, 0, self.entity.text);
-        #self.w = frame_text.width() + 10;
-        #self.h = frame_text.height() + 2;
         painter.fillRect( self.x, self.y, self.w, self.h, QBrush(Qt.white));
         painter.drawRect( self.x, self.y, self.w, self.h);
         if self.entity.text != None:

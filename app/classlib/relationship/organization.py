@@ -16,3 +16,14 @@ class Organization(MapRelationshipBox):
             text = "Organization";
         super().__init__(mapa, x, y, w, h, text=text, id_=id_, entity_id_=entity_id_ );
         self.entity.etype = "organization";
+    def draw(self, painter):
+        penRectangle = QPen(Qt.black)
+        penRectangle.setWidth(1)
+        painter.setPen(penRectangle)
+        painter.fillRect( self.x, self.y, self.w, self.h, QBrush(Qt.white));
+        painter.drawRect( self.x, self.y, self.w, self.h);
+        if self.entity.text != None:
+            texto = self.entity.text;
+            if self.entity.small_label != None and self.entity.small_label.strip() != "":
+                texto += " (" + self.entity.small_label + ")";
+            painter.drawText(QRectF(self.x , self.y, self.w, self.h), Qt.AlignCenter | Qt.AlignTop, texto);

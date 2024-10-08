@@ -28,13 +28,12 @@ class Person(MapRelationshipBox):
         penRectangle = QPen(Qt.black)
         penRectangle.setWidth(1)
         painter.setPen(penRectangle);
-        #painter.setFont(QFont(Configuration.instancia().relationshihp_font_family, Configuration.instancia().relationshihp_font_size))
-        #frame_text = painter.boundingRect(0, 0, 150, 30, 0, self.entity.text);
-        #self.w = frame_text.width() + 10;
-        #self.h = frame_text.height() + 2;
         painter.fillRect( self.x, self.y, self.w, self.h, QBrush(Qt.white));
         painter.drawRoundedRect(self.x, self.y, self.w, self.h, 5, 5);
         if self.entity.text != None:
-            painter.drawText(QRectF(self.x , self.y, self.w, self.h), Qt.AlignCenter | Qt.AlignTop, self.entity.text)
+            texto = self.entity.text;
+            if self.entity.small_label != None and self.entity.small_label.strip() != "":
+                texto = self.entity.small_label;
+            painter.drawText(QRectF(self.x , self.y, self.w, self.h), Qt.AlignCenter | Qt.AlignTop, texto );
 
         

@@ -117,6 +117,7 @@ class MapRelationship(ConnectObject):
                         buffer.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"]);
                     buffer.entity.full_description = element["full_description"];
                     buffer.entity.classification = element["classification"];
+                    buffer.entity.small_label = element["small_label"];
             for element in data['elements']:
                 if element["etype"] == "link":
                     x = int(element["x"]); y = int(element["y"]); w = int(element["w"]); h = int(element["h"]);

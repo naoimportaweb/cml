@@ -21,6 +21,7 @@ class Entity(ConnectObject):
         self.time_slices = [];
         self.wikipedia = "";
         self.classification = [];
+        self.small_label = None;
     
     def addClassification(self, classification_id, text_label, classification_item_id, text_label_choice):
         for buffer in self.classification:
@@ -45,7 +46,7 @@ class Entity(ConnectObject):
         return self.time_slices[-1];
         
     def toJson(self):
-        return { "id" : self.id,  "name" : self.name, "wikipedia" : self.wikipedia, "classification" : self.classification}
+        return { "id" : self.id,  "name" : self.name, "wikipedia" : self.wikipedia, "classification" : self.classification, "small_label" : self.small_label}
 
     def toType(self, etype):
         js = self.__execute__("Entity", "to_type", {"type" : etype, "id" : self.id});
