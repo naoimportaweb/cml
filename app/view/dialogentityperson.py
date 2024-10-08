@@ -108,7 +108,7 @@ class DialogEntityPerson(QDialog):
         btn_class_add.clicked.connect(self.btn_class_add_click);
         btn_class_del.clicked.connect(self.btn_class_del_click);
         CustomVLayout.widget_linha(self, self.page_cls, [btn_class_add, btn_class_del] );
-        self.table_class = CustomVLayout.widget_tabela(self, ["Classification", "Value"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch], double_click=self.table_class_click);
+        self.table_class = CustomVLayout.widget_tabela(self, ["Classification", "Value", "Start", "End"], tamanhos=[QHeaderView.Stretch,QHeaderView.Stretch,QHeaderView.Stretch, QHeaderView.Stretch], double_click=self.table_class_click);
         self.page_cls.addWidget(self.table_class);
         self.table_class_load();
         
@@ -183,4 +183,6 @@ class DialogEntityPerson(QDialog):
         for i in range(len( self.person.entity.classification )):
             self.table_class.setItem( i, 0, QTableWidgetItem( self.person.entity.classification[i]["text_label"] ) );
             self.table_class.setItem( i, 1, QTableWidgetItem( self.person.entity.classification[i]["text_label_choice"] ) );
+            self.table_class.setItem( i, 2, QTableWidgetItem( self.person.entity.classification[i]["start_date"] ) );
+            self.table_class.setItem( i, 3, QTableWidgetItem( self.person.entity.classification[i]["end_date"] ) );
         return;

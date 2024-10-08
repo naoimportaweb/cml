@@ -24,8 +24,8 @@ class Classification
     public function add( $ip, $user, $post_data ) {
         $mysql = new Mysql("");
         $id = $post_data["parameters"]["classification_item_id"] . $post_data["parameters"]["entity_id"];
-        $sql = "INSERT INTO entity_classification_item(id, classification_item_id, entity_id) values( ?, ?, ?)";
-        return $mysql->ExecuteNoQuery($sql, [ $id, $post_data["parameters"]["classification_item_id"], $post_data["parameters"]["entity_id"] ]) > 0;
+        $sql = "INSERT INTO entity_classification_item(id, classification_item_id, entity_id, start_date, end_date) values( ?, ?, ?, ?, ?)";
+        return $mysql->ExecuteNoQuery($sql, [ $id, $post_data["parameters"]["classification_item_id"], $post_data["parameters"]["entity_id"], $post_data["parameters"]["start_date"], $post_data["parameters"]["end_date"] ]) > 0;
     }
 
 

@@ -38,6 +38,10 @@ class DialogClassification(QDialog):
         self.cmb_type.setFont( Configuration.instancia().getFont() );
         self.ui_search_classification();
         self.ui_tabela();
+        
+        #d = QDate()
+        #self.date.setDate(d)
+
         btn_alterar_type = QPushButton("Select classification");
         btn_alterar_type.setFont( Configuration.instancia().getFont() );
         btn_alterar_type.setFocusPolicy(Qt.NoFocus);
@@ -61,6 +65,12 @@ class DialogClassification(QDialog):
         layout = QVBoxLayout();
         self.table_classification = CustomVLayout.widget_tabela(self, ["Name"], tamanhos=[QHeaderView.Stretch], double_click=self.table_classification_double);
         layout.addWidget(self.table_classification);
+        self.start_date = QDateEdit(self);
+        self.end_date =   QDateEdit(self)
+        lbl_start_date = QLabel("Start Date");
+        lbl_end_date = QLabel("End Date");
+        CustomVLayout.widget_linha(self, self.layout_principal, [lbl_start_date, self.start_date] );
+        CustomVLayout.widget_linha(self, self.layout_principal, [lbl_end_date, self.end_date] );
         self.layout_principal.addLayout( "list", layout );
 
     def txt_name_finish(self):
@@ -77,7 +87,7 @@ class DialogClassification(QDialog):
         return;
     
     def btn_alterar_type_click(self):
-        if self.entity.addClassification(self.classifications[self.table_classification.index()]["id"] , self.classifications[self.table_classification.index()]["text_label"], self.classifications[self.table_classification.index()]["itens"][self.cmb_type.currentIndex()]["id"], self.classifications[self.table_classification.index()]["itens"][self.cmb_type.currentIndex()]["text_label"]):
+        if self.entity.addClassification(self.classifications[self.table_classification.index()]["id"] , self.classifications[self.table_classification.index()]["text_label"], self.classifications[self.table_classification.index()]["itens"][self.cmb_type.currentIndex()]["id"], self.classifications[self.table_classification.index()]["itens"][self.cmb_type.currentIndex()]["text_label"], start_date=self.start_date.getDate(), end_date=self.end_date.getDate()):
             self.form.table_class_load();
             self.close();
         return;

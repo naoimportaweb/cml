@@ -7,6 +7,7 @@ create table person(
     password VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
     usertype INT NOT NULL DEFAULT 0,
+    status INT NOT NULL DEFAULT 0,
     salt VARCHAR(255) NOT NULL
 );
 
@@ -84,7 +85,11 @@ create table classification_item(
 create table entity_classification_item (
     id VARCHAR(128) PRIMARY KEY,
     classification_item_id VARCHAR(128) NOT NULL,
-    entity_id VARCHAR(128) NOT NULL
+    entity_id VARCHAR(128) NOT NULL,
+    start_date         DATE DEFAULT NULL,
+    end_date           DATE DEFAULT NULL,
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
 );
 
 create table diagram_relationship_element(
@@ -113,15 +118,23 @@ create table diagram_relationship_link(
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
 );
 
+create table document_type( 
+    id VARCHAR(128) PRIMARY KEY,
+    name VARCHAR(255),
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
+
 create table diagram_relationship_document( 
     id VARCHAR(128) PRIMARY KEY,
     diagram_relationship_id VARCHAR(128) NOT NULL,
+    document_type_id VARCHAR(128) NOT NULL,
     title VARCHAR(255), link1 TEXT, link2 TEXT, link3 TEXT,
     creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
 );
 
-
+ALTER TABLE diagram_relationship_document ADD FOREIGN KEY (document_type_id) REFERENCES document_type(id);
 ALTER TABLE diagram_relationship_document ADD FOREIGN KEY (diagram_relationship_id) REFERENCES diagram_relationship(id);
 ALTER TABLE diagram_relationship_history ADD FOREIGN KEY (diagram_relationship_id) REFERENCES diagram_relationship(id);
 ALTER TABLE diagram_relationship_history ADD FOREIGN KEY (person_id) REFERENCES person(id);
@@ -189,19 +202,39 @@ drop table classification;
 drop table person;
 
 
+create table document_type( 
+    id VARCHAR(128) PRIMARY KEY,
+    name VARCHAR(255)
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
 
 
 # ------------- HOMOLOGAÇAO -------------------------------
+ALTER TABLE person ADD COLUMN usertype INT NOT NULL DEFAULT 0;
+ALTER TABLE person ADD COLUMN status INT NOT NULL DEFAULT 0;
+ALTER TABLE entity ADD COLUMN small_label VARCHAR(255);
+ALTER TABLE diagram_relationship ADD COLUMN visibility int NOT NULL DEFAULT 0;
+
+
 create table diagram_relationship_document( 
     id VARCHAR(128) PRIMARY KEY,
     diagram_relationship_id VARCHAR(128) NOT NULL,
+    document_type_id VARCHAR(128) NOT NULL,
     title VARCHAR(255), link1 TEXT, link2 TEXT, link3 TEXT,
     creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
 );
 
-ALTER TABLE person ADD COLUMN usertype INT NOT NULL DEFAULT 0;
-ALTER TABLE entity ADD COLUMN small_label VARCHAR(255);
-ALTER TABLE diagram_relationship ADD COLUMN visibility int NOT NULL DEFAULT 0;
-ALTER TABLE diagram_relationship_document ADD FOREIGN KEY (diagram_relationship_id) REFERENCES diagram_relationship(id);
+create table document_type( 
+    id VARCHAR(128) PRIMARY KEY,
+    name VARCHAR(255),
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
 
+ALTER TABLE diagram_relationship_document ADD FOREIGN KEY (diagram_relationship_id) REFERENCES diagram_relationship(id);
+ALTER TABLE diagram_relationship_document ADD FOREIGN KEY (document_type_id) REFERENCES document_type(id);
+
+ALTER TABLE entity_classification_item ADD COLUMN start_date       DATE DEFAULT NULL;
+ALTER TABLE entity_classification_item ADD COLUMN end_date         DATE DEFAULT NULL;
