@@ -3,7 +3,7 @@ import os, sys, inspect;
 from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings,
                             QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence
-from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow,
+from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QTabWidget,
                                QMdiArea, QMessageBox, QTextEdit, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
 
 import os, sys, inspect;
@@ -29,66 +29,57 @@ class DialogRelationshipEdit(QDialog):
 
         self.map = mapa;
         self.setWindowTitle("Edit")
-        self.layout_principal = CustomVLayout();
-        self.setLayout( self.layout_principal );
+        self.tab = QTabWidget();  
+        self.page_info = CustomVLayout.widget_tab( self.tab, "Information");
+        self.page_perm = CustomVLayout.widget_tab( self.tab, "Persmission");
+        self.page_docs = CustomVLayout.widget_tab( self.tab, "Documents");
+        layout = QVBoxLayout();
+        layout.addWidget( self.tab );
+        self.setLayout(   layout   );
         self.ui_relationship();
         self.ui_lock();
         self.ui_buttons();
         
     def ui_relationship(self):
         server = Server();
-        layout_server = QGridLayout()
-        layout_server.setContentsMargins(20, 20, 20, 20)
-        layout_server.setSpacing(10)
-        self.setWindowTitle("Relationship Map")
+        
         lbl_name = QLabel("Map name:")
         lbl_name.setProperty("class", "normal")
-        layout_server.addWidget(lbl_name, 1, 0)
         self.txt_name = QLineEdit()
         self.txt_name.setMinimumWidth(500);
         self.txt_name.editingFinished.connect(self.txt_name_finish);
         self.txt_name.setText( self.map.name );
-        layout_server.addWidget(self.txt_name, 1, 1);
+        CustomVLayout.widget_linha(self, self.page_info, [lbl_name, self.txt_name] );
+        
         lbl_key = QLabel("Map name:")
         lbl_key.setProperty("class", "normal");
-        layout_server.addWidget(lbl_key, 2, 0)
         self.txt_key = QLineEdit()
         self.txt_key.setMinimumWidth(500);
         self.txt_key.setText( self.map.keyword );
         self.txt_key.textEdited.connect(      self.txt_key_press );
-        #self.txt_key.editingFinished.connect( self.txt_key_finish);
-        layout_server.addWidget(self.txt_key, 2, 1);
+        CustomVLayout.widget_linha(self, self.page_info, [lbl_key, self.txt_key] );
         
         lbl_url = QLabel("URL:")
         lbl_url.setProperty("class", "normal");
-        layout_server.addWidget(lbl_url, 3, 0)
-        self.txt_url = QLineEdit()
-        self.txt_url.setMinimumWidth(500);
-        self.txt_url.setText( server.ip + "/cml/webpage/view/relationship/relationship.php?id=" + self.map.id);
-        layout_server.addWidget(self.txt_url, 3, 1);
+        self.txt_url = QTextEdit()
+        self.txt_url.setPlainText( server.ip + "/cml/webpage/view/relationship/relationship.php?id=" + self.map.id);
+        CustomVLayout.widget_linha(self, self.page_info, [lbl_url] );
+        CustomVLayout.widget_linha(self, self.page_info, [self.txt_url] );
 
         self.lbl_message = QLabel();
-        layout_server.addWidget( self.lbl_message , 4, 1);
-        self.layout_principal.addLayout( "relationship", layout_server );
+        CustomVLayout.widget_linha(self, self.page_info, [self.lbl_message] );
 
     def ui_lock(self):
-        layout = QGridLayout()
         btn_lock = QPushButton("Lock map")
         btn_lock.clicked.connect(self.btn_lock_click)
-        layout.addWidget(btn_lock, 4, 2)
-
         btn_unlock = QPushButton("UnLock map")
         btn_unlock.clicked.connect(self.btn_unlock_click)
-        layout.addWidget(btn_unlock, 4, 1)
-
-        self.layout_principal.addLayout( "lock", layout );
+        CustomVLayout.widget_linha(self, self.page_perm, [btn_unlock,btn_lock] );
 
     def ui_buttons(self):
-        layout = QGridLayout()
         btn_entrar = QPushButton("Save Diagram")
         btn_entrar.clicked.connect(self.btn_save_click)
-        layout.addWidget(btn_entrar, 4, 2)
-        self.layout_principal.addLayout( "buttons", layout );
+        CustomVLayout.widget_linha(self, self.page_info, [btn_entrar] );
 
     def btn_unlock_click(self):
         self.map.locked_map();

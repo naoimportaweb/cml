@@ -6,6 +6,7 @@ create table person(
     username VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
+    usertype INT NOT NULL DEFAULT 0,
     salt VARCHAR(255) NOT NULL
 );
 
@@ -30,6 +31,7 @@ create table diagram_relationship (
     person_id VARCHAR(128) NOT NULL,
     keyword VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
+    visibility INT NOT NULL DEFAULT 0,
     creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
 );
@@ -111,10 +113,16 @@ create table diagram_relationship_link(
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
 );
 
+create table diagram_relationship_document( 
+    id VARCHAR(128) PRIMARY KEY,
+    diagram_relationship_id VARCHAR(128) NOT NULL,
+    title VARCHAR(255), link1 TEXT, link2 TEXT, link3 TEXT,
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
 
 
-
-
+ALTER TABLE diagram_relationship_document ADD FOREIGN KEY (diagram_relationship_id) REFERENCES diagram_relationship(id);
 ALTER TABLE diagram_relationship_history ADD FOREIGN KEY (diagram_relationship_id) REFERENCES diagram_relationship(id);
 ALTER TABLE diagram_relationship_history ADD FOREIGN KEY (person_id) REFERENCES person(id);
 ALTER TABLE person_enter ADD FOREIGN KEY (person_id) REFERENCES person(id);
@@ -151,9 +159,6 @@ INSERT INTO classification_item(id, classification_id, text_label) values('3', '
 INSERT INTO classification_item(id, classification_id, text_label) values('4', '1', 'Direita moderada');
 INSERT INTO classification_item(id, classification_id, text_label) values('5', '1', 'Extrema direita');
 
-<<<<<<< HEAD
-=======
-
 INSERT INTO classification(id, text_label) values('2', "Profissão");
 INSERT INTO classification_item(id, classification_id, text_label) values('6', '2', 'Jornalista');
 INSERT INTO classification_item(id, classification_id, text_label) values('7', '2', 'Político');
@@ -163,8 +168,6 @@ INSERT INTO classification_item(id, classification_id, text_label) values('10', 
 INSERT INTO classification_item(id, classification_id, text_label) values('11', '2', 'Cargo de Indicação Política');
 
 
-
->>>>>>> refs/remotes/origin/main
 delete from diagram_relationship_link;
 delete from diagram_relationship_element_reference;
 delete from diagram_relationship_element;
@@ -189,5 +192,16 @@ drop table person;
 
 
 # ------------- HOMOLOGAÇAO -------------------------------
+create table diagram_relationship_document( 
+    id VARCHAR(128) PRIMARY KEY,
+    diagram_relationship_id VARCHAR(128) NOT NULL,
+    title VARCHAR(255), link1 TEXT, link2 TEXT, link3 TEXT,
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
 
+ALTER TABLE person ADD COLUMN usertype INT NOT NULL DEFAULT 0;
 ALTER TABLE entity ADD COLUMN small_label VARCHAR(255);
+ALTER TABLE diagram_relationship ADD COLUMN visibility int NOT NULL DEFAULT 0;
+ALTER TABLE diagram_relationship_document ADD FOREIGN KEY (diagram_relationship_id) REFERENCES diagram_relationship(id);
+

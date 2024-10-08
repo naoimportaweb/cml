@@ -47,6 +47,13 @@ class CustomVLayout(QVBoxLayout):
         self.__enable_disable__(name, False);
     def enable(self, name):
         self.__enable_disable__(name, True);
+    #def toWidget(self):
+    #    widget1 = QWidget();
+    #    widget1_layout = QHBoxLayout();
+    #    widget1.setLayout(widget1_layout);
+    #    for control in controls:
+    #        widget1_layout.addWidget( control );
+    #    return widget1;
     
     @staticmethod
     def widget_linha(form, layout, controls, stretch_inicio=False, stretch_fim=False):
