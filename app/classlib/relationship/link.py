@@ -10,6 +10,8 @@ from PySide6.QtGui import (QMouseEvent,QPaintEvent,QFont,QPen,QAction,QPainter,Q
 
 from classlib.relationship.maprelationship_box import MapRelationshipBox;
 from classlib.configuration import Configuration
+from classlib.relationship.link_entity import LinkEntity;
+
 
 class Link(MapRelationshipBox):
     def __init__(self, mapa,  x, y, w, h, text=None, id_=None, entity_id_=None ):
@@ -31,9 +33,10 @@ class Link(MapRelationshipBox):
         objeto["to"] = [];
         objeto["from"] = [];
         for to_ in self.to_entity:
-            objeto["to"].append(    {"id" : self.id[:40] + "_" + to_.id[:40] +  "_2", "element_id" : to_.id} );
+            objeto["to"].append(    {"id" : self.id[:40] + "_" + to_.entity.id[:40] +  "_2", "element_id" : to_.entity.id, "start_date" : to_.start_date, "end_date" : to_.end_date} );
         for from_ in self.from_entity:
-            objeto["from"].append(  {"id" : self.id[:40] + "_" + from_.id[:40] +  "_1", "element_id" : from_.id} );
+            objeto["from"].append(  {"id" : self.id[:40] + "_" + from_.entity.id[:40] +  "_1", "element_id" : from_.entity.id, "start_date" : from_.start_date, "end_date" : from_.end_date} );
+        print("Enviar:", objeto);
         return objeto;
     def hasTo(self, element):
         return element in self.to_entity;
@@ -41,23 +44,31 @@ class Link(MapRelationshipBox):
     def hasFrom(self, element):
         return element in self.from_entity;
 
-    def addTo(self, entity):
-        if not entity in self.to_entity:
-            self.to_entity.append( entity );
+    def addTo(self, entity, start_date=None, end_date=None):
+        lentity = LinkEntity(entity, start_date, end_date);
+        for buffer in self.to_entity:
+            if buffer.entity.id == lentity.entity.id:
+                return True;
+        self.to_entity.append( lentity );
 
     def addFrom(self, entity):
-        if not entity in self.from_entity:
-            self.from_entity.append( entity );
+        lentity = LinkEntity(entity, None, None);
+        for buffer in self.from_entity:
+            if buffer.entity.id == lentity.entity.id:
+                return True;
+        self.from_entity.append( lentity );
 
     def draw(self, painter):
         penRectangle = QPen(Qt.black)
         penRectangle.setWidth(1)
         painter.setPen(penRectangle)
         painter.setPen(QPen(Qt.red, 1, Qt.DashDotLine, Qt.RoundCap));
-        for element in self.to_entity:
+        for buffer_entity in self.to_entity:
+            element = buffer_entity.entity;
             painter.drawLine( self.x + int( self.w / 2 ) , self.y  + int( self.h / 2 ) , element.x + int( element.w / 2), element.y + int( element.h / 2 ) );
         painter.setPen(QPen(Qt.blue, 1, Qt.DashDotLine, Qt.RoundCap));
-        for element in self.from_entity:
+        for buffer_entity in self.from_entity:
+            element = buffer_entity.entity;
             painter.drawLine( self.x + int( self.w / 2 ) , self.y  + int( self.h / 2 ) , element.x + int( element.w / 2), element.y + int( element.h / 2 ) );
         painter.setPen(QPen(Qt.blue, 1, Qt.DashDotLine, Qt.RoundCap));
         painter.fillRect(self.x, self.y, self.w, self.h, QBrush(Qt.white));

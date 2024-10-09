@@ -114,6 +114,8 @@ create table diagram_relationship_link(
     diagram_relationship_element_id VARCHAR(128) NOT NULL,
     diagram_relationship_element_id_reference VARCHAR(128) NOT NULL,
     ltype int NOT NULL,
+    start_date         DATE DEFAULT NULL,
+    end_date           DATE DEFAULT NULL,
     creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
 );
@@ -245,3 +247,7 @@ ALTER TABLE diagram_relationship_document ADD FOREIGN KEY (document_type_id) REF
 
 ALTER TABLE entity_classification_item ADD COLUMN start_date       DATE DEFAULT NULL;
 ALTER TABLE entity_classification_item ADD COLUMN end_date         DATE DEFAULT NULL;
+
+ALTER TABLE diagram_relationship_link ADD COLUMN start_date       DATE DEFAULT NULL;
+ALTER TABLE diagram_relationship_link ADD COLUMN end_date         DATE DEFAULT NULL;
+

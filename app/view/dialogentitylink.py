@@ -77,8 +77,7 @@ class DialogEntityLink(QDialog):
         btn_from_del.clicked.connect(self.btn_from_del_click);
 
         CustomVLayout.widget_linha(self, layout_from, [ QLabel("<b>From:</b>")] );
-        CustomVLayout.widget_linha(self, layout_from, [self.cmb_combo_from, btn_from_add] );
-        CustomVLayout.widget_linha(self, layout_from, [btn_from_del, btn_from_dat] );
+        CustomVLayout.widget_linha(self, layout_from, [self.cmb_combo_from, btn_from_add, btn_from_del] );
         self.page_ent_from.addWidget( CustomVLayout.layout_to_widget( layout_from ) );
         self.table_from = CustomVLayout.widget_tabela(self, ["Type", "Text"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch]);
         self.page_ent_from.addWidget(self.table_from);
@@ -96,11 +95,11 @@ class DialogEntityLink(QDialog):
         btn_to_del.setFont( Configuration.instancia().getFont() );
         btn_to_add.clicked.connect(self.btn_to_add_click);
         btn_to_del.clicked.connect(self.btn_to_del_click);
-        CustomVLayout.widget_linha(self, layout_to, [ QLabel("<b>Fo:</b>")] );
+        CustomVLayout.widget_linha(self, layout_to, [ QLabel("<b>To:</b>")] );
         CustomVLayout.widget_linha(self, layout_to, [self.cmb_combo_to, btn_to_add] );
         CustomVLayout.widget_linha(self, layout_to, [ btn_to_del, btn_to_dat] );
         self.page_ent_to.addWidget( CustomVLayout.layout_to_widget( layout_to ) );
-        self.table_to = CustomVLayout.widget_tabela(self, ["Type", "Text"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch]);
+        self.table_to = CustomVLayout.widget_tabela(self, ["Type", "Text", "Start", "End"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch, QHeaderView.Stretch, QHeaderView.Stretch]);
         self.page_ent_to.addWidget(self.table_to);
 
         #-------------------------------------------
@@ -146,14 +145,17 @@ class DialogEntityLink(QDialog):
     def table_from_load(self):
         self.table_from.setRowCount( len( self.link.from_entity ) );
         for i in range(len( self.link.from_entity )):
-            self.table_from.setItem( i, 0, QTableWidgetItem( self.link.from_entity[i].entity.etype ) );
-            self.table_from.setItem( i, 1, QTableWidgetItem( self.link.from_entity[i].entity.text ) );
+            self.table_from.setItem( i, 0, QTableWidgetItem( self.link.from_entity[i].entity.entity.etype ) );
+            self.table_from.setItem( i, 1, QTableWidgetItem( self.link.from_entity[i].entity.entity.text ) );
     
     def table_to_load(self):
+
         self.table_to.setRowCount( len( self.link.to_entity ) );
         for i in range(len( self.link.to_entity )):
-            self.table_to.setItem( i, 0, QTableWidgetItem( self.link.to_entity[i].entity.etype ) );
-            self.table_to.setItem( i, 1, QTableWidgetItem( self.link.to_entity[i].entity.text ) );
+            self.table_to.setItem( i, 0, QTableWidgetItem( self.link.to_entity[i].entity.entity.etype ) );
+            self.table_to.setItem( i, 1, QTableWidgetItem( self.link.to_entity[i].entity.entity.text ) );
+            self.table_to.setItem( i, 2, QTableWidgetItem( self.link.to_entity[i].start_date ) );
+            self.table_to.setItem( i, 3, QTableWidgetItem( self.link.to_entity[i].end_date ) );
 
     def btn_from_add_click(self):
         elemento = self.elements_no_link[ self.cmb_combo_from.currentIndex() ];

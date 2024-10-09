@@ -179,7 +179,6 @@ class DialogEntityPerson(QDialog):
         return;
     
     def table_class_load(self):
-        print(self.person.entity.classification);
         self.table_class.setRowCount( len( self.person.entity.classification ) );
         for i in range(len( self.person.entity.classification )):
             self.table_class.setItem( i, 0, QTableWidgetItem( self.person.entity.classification[i]["text_label"] ) );
