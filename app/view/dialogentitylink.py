@@ -70,13 +70,15 @@ class DialogEntityLink(QDialog):
         
         btn_from_add = QPushButton("Add");
         btn_from_del = QPushButton("Remove");
+        btn_from_dat = QPushButton("Date");
         btn_from_add.setFont( Configuration.instancia().getFont() );
         btn_from_del.setFont( Configuration.instancia().getFont() );
         btn_from_add.clicked.connect(self.btn_from_add_click);
         btn_from_del.clicked.connect(self.btn_from_del_click);
 
         CustomVLayout.widget_linha(self, layout_from, [ QLabel("<b>From:</b>")] );
-        CustomVLayout.widget_linha(self, layout_from, [self.cmb_combo_from, btn_from_add, btn_from_del] );
+        CustomVLayout.widget_linha(self, layout_from, [self.cmb_combo_from, btn_from_add] );
+        CustomVLayout.widget_linha(self, layout_from, [btn_from_del, btn_from_dat] );
         self.page_ent_from.addWidget( CustomVLayout.layout_to_widget( layout_from ) );
         self.table_from = CustomVLayout.widget_tabela(self, ["Type", "Text"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch]);
         self.page_ent_from.addWidget(self.table_from);
@@ -89,12 +91,14 @@ class DialogEntityLink(QDialog):
         
         btn_to_add = QPushButton("Add");
         btn_to_del = QPushButton("Remove");
+        btn_to_dat = QPushButton("Date");
         btn_to_add.setFont( Configuration.instancia().getFont() );
         btn_to_del.setFont( Configuration.instancia().getFont() );
         btn_to_add.clicked.connect(self.btn_to_add_click);
         btn_to_del.clicked.connect(self.btn_to_del_click);
         CustomVLayout.widget_linha(self, layout_to, [ QLabel("<b>Fo:</b>")] );
-        CustomVLayout.widget_linha(self, layout_to, [self.cmb_combo_to, btn_to_add, btn_to_del] );
+        CustomVLayout.widget_linha(self, layout_to, [self.cmb_combo_to, btn_to_add] );
+        CustomVLayout.widget_linha(self, layout_to, [ btn_to_del, btn_to_dat] );
         self.page_ent_to.addWidget( CustomVLayout.layout_to_widget( layout_to ) );
         self.table_to = CustomVLayout.widget_tabela(self, ["Type", "Text"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch]);
         self.page_ent_to.addWidget(self.table_to);
