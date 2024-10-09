@@ -23,11 +23,11 @@ class MapRelationship
             
             $buffer_elements[$i]["references"] = $mysql->DataTable("SELECT drer.id, drer.title, drer.link1, drer.link2, drer.link3 FROM diagram_relationship_element_reference AS drer where drer.entity_id = ?", [$buffer_elements[$i]["entity_id"]]);
 
-            $buffer_elements[$i]["classification"] = $mysql->DataTable("select eci.entity_id as entity_id, eci.start_date as start_date, eci.end_date as end_date, eci.id as id, clsi.text_label as text_label_choice, cls.text_label as text_label, clsi.id as classification_item_id from entity_classification_item as eci inner join classification_item as clsi on eci.classification_item_id = clsi.id inner join classification as cls on clsi.classification_id = cls.id where eci.entity_id = ?", [$buffer_elements[$i]["entity_id"]]);
+            $buffer_elements[$i]["classification"] = $mysql->DataTable("select eci.format_date as format_date, eci.entity_id as entity_id, eci.start_date as start_date, eci.end_date as end_date, eci.id as id, clsi.text_label as text_label_choice, cls.text_label as text_label, clsi.id as classification_item_id from entity_classification_item as eci inner join classification_item as clsi on eci.classification_item_id = clsi.id inner join classification as cls on clsi.classification_id = cls.id where eci.entity_id = ?", [$buffer_elements[$i]["entity_id"]]);
 
             if( $buffer_elements[$i]["etype"] == "link" ){
-                $buffer_elements[$i]["from"] = $mysql->DataTable("SELECT drl.diagram_relationship_element_id as id, drl.start_date as start_date, drl.end_date as end_date FROM diagram_relationship_link AS drl where drl.diagram_relationship_element_id_reference = ? and ltype = 1", [   $buffer_elements[$i]["id"]  ]);
-                $buffer_elements[$i]["to"] = $mysql->DataTable("SELECT drl.diagram_relationship_element_id as id, drl.start_date as start_date, drl.end_date as end_date  FROM diagram_relationship_link AS drl where drl.diagram_relationship_element_id_reference = ? and ltype = 2", [   $buffer_elements[$i]["id"]  ]);
+                $buffer_elements[$i]["from"] = $mysql->DataTable("SELECT drl.diagram_relationship_element_id as id, drl.start_date as start_date, drl.end_date as end_date, drl.format_date as format_date FROM diagram_relationship_link AS drl where drl.diagram_relationship_element_id_reference = ? and ltype = 1", [   $buffer_elements[$i]["id"]  ]);
+                $buffer_elements[$i]["to"] = $mysql->DataTable("SELECT drl.diagram_relationship_element_id as id, drl.start_date as start_date, drl.end_date as end_date, drl.format_date as format_date  FROM diagram_relationship_link AS drl where drl.diagram_relationship_element_id_reference = ? and ltype = 2", [   $buffer_elements[$i]["id"]  ]);
             }
         }
 
@@ -157,8 +157,8 @@ class MapRelationship
             }
             if( array_key_exists("classification", $element) ) {
                 for($j = 0; $j < count($element["classification"]); $j++){
-                    array_push($sqls, "INSERT INTO entity_classification_item(id, classification_item_id, entity_id, start_date, end_date) values( ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE  start_date=?, end_date=? ");
-                    array_push($valuess, [ $element["classification"][$j]["id"], $element["classification"][$j]["classification_item_id"], $element["classification"][$j]["entity_id"], $element["classification"][$j]["start_date"], $element["classification"][$j]["end_date"], $element["classification"][$j]["start_date"], $element["classification"][$j]["end_date"] ] );
+                    array_push($sqls, "INSERT INTO entity_classification_item(id, classification_item_id, entity_id, start_date, end_date, format_date) values( ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE  start_date=?, end_date=?, format_date=? ");
+                    array_push($valuess, [ $element["classification"][$j]["id"], $element["classification"][$j]["classification_item_id"], $element["classification"][$j]["entity_id"], $element["classification"][$j]["start_date"], $element["classification"][$j]["end_date"], $element["classification"][$j]["format_date"]  , $element["classification"][$j]["start_date"], $element["classification"][$j]["end_date"],  $element["classification"][$j]["format_date"] ] );
                 }
             }
         }
@@ -169,13 +169,13 @@ class MapRelationship
                 continue;
             }
             for($j = 0; $j < count($element["to"]); $j++) {
-                error_log( $element["to"][$j]["start_date"] . "-" .  $element["from"][$j]["end_date"], 0);
-                array_push($sqls, "INSERT INTO diagram_relationship_link (id, diagram_relationship_element_id, ltype, diagram_relationship_element_id_reference, start_date, end_date) values(?, ?, ?, ?, ?, ?)  ON DUPLICATE KEY UPDATE start_date = ?, end_date = ?");
-                array_push( $valuess,  [ $element["to"][$j]["id"], $element["to"][$j]["element_id"] ,2, $element["id"], $element["from"][$j]["start_date"], $element["from"][$j]["end_date"] , $element["to"][$j]["start_date"], $element["from"][$j]["end_date"] ]);
+                
+                array_push($sqls, "INSERT INTO diagram_relationship_link (id, diagram_relationship_element_id, ltype, diagram_relationship_element_id_reference, start_date, end_date, format_date) values(?, ?, ?, ?, ?, ?, ?)  ON DUPLICATE KEY UPDATE start_date = ?, end_date = ?, format_date = ?");
+                array_push( $valuess,  [ $element["to"][$j]["id"], $element["to"][$j]["element_id"] ,2, $element["id"], $element["to"][$j]["start_date"], $element["to"][$j]["end_date"] , $element["to"][$j]["format_date"] , $element["to"][$j]["start_date"], $element["to"][$j]["end_date"], $element["to"][$j]["format_date"] ]);
             }
             for($j = 0; $j < count($element["from"]); $j++) {
-                array_push($sqls, "INSERT INTO diagram_relationship_link (id, diagram_relationship_element_id, ltype, diagram_relationship_element_id_reference, start_date, end_date) values(?, ?, ?, ?, ?, ?)  ON DUPLICATE KEY UPDATE start_date = ?, end_date = ?");
-                array_push( $valuess, [ $element["from"][$j]["id"], $element["from"][$j]["element_id"], 1, $element["id"], $element["from"][$j]["start_date"], $element["from"][$j]["end_date"] ,$element["from"][$j]["start_date"], $element["from"][$j]["end_date"] ]);
+                array_push($sqls, "INSERT INTO diagram_relationship_link (id, diagram_relationship_element_id, ltype, diagram_relationship_element_id_reference, start_date, end_date, format_date) values(?, ?, ?, ?, ?, ?, ?)  ON DUPLICATE KEY UPDATE start_date = ?, end_date = ?, format_date = ?");
+                array_push( $valuess, [ $element["from"][$j]["id"], $element["from"][$j]["element_id"], 1, $element["id"], $element["from"][$j]["start_date"], $element["from"][$j]["end_date"] , $element["from"][$j]["format_date"] ,$element["from"][$j]["start_date"], $element["from"][$j]["end_date"], $element["from"][$j]["format_date"] ]);
             }
         }
         // LIMPEZAS DE DADOS QUE NAO QUEREMOS MAIS, EXCLUIDOS PELO USU[ARIO]

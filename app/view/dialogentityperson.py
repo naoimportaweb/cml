@@ -1,6 +1,6 @@
 import os, sys, inspect;
 
-from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings,
+from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QDate,
                             QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QTabWidget, QComboBox, QTableWidgetItem, QHeaderView,
@@ -183,6 +183,6 @@ class DialogEntityPerson(QDialog):
         for i in range(len( self.person.entity.classification )):
             self.table_class.setItem( i, 0, QTableWidgetItem( self.person.entity.classification[i]["text_label"] ) );
             self.table_class.setItem( i, 1, QTableWidgetItem( self.person.entity.classification[i]["text_label_choice"] ) );
-            self.table_class.setItem( i, 2, QTableWidgetItem( self.person.entity.classification[i]["start_date"] ) );
-            self.table_class.setItem( i, 3, QTableWidgetItem( self.person.entity.classification[i]["end_date"] ) );
+            self.table_class.setItem( i, 2, QTableWidgetItem( QDate.fromString(self.person.entity.classification[i]["start_date"], "yyyy-MM-dd").toString(self.person.entity.classification[i]["format_date"]) ) );
+            self.table_class.setItem( i, 3, QTableWidgetItem( QDate.fromString(self.person.entity.classification[i]["end_date"], "yyyy-MM-dd").toString(self.person.entity.classification[i]["format_date"])  ) );
         return;

@@ -23,12 +23,12 @@ class Entity(ConnectObject):
         self.classification = [];
         self.small_label = None;
     
-    def addClassification(self, classification_id, text_label, classification_item_id, text_label_choice, start_date, end_date):
+    def addClassification(self, classification_id, text_label, classification_item_id, text_label_choice, start_date, end_date, format_date):
         for buffer in self.classification:
             if buffer["id"] == classification_id + self.id:
                 return False;
         self.classification.append({ "entity_id" : self.id , "id" : classification_id + self.id, "classification_id" : classification_id, "text_label" : text_label, 
-            "classification_item_id" : classification_item_id, "text_label_choice" : text_label_choice, "start_date" : start_date,  "end_date" : end_date  });
+            "classification_item_id" : classification_item_id, "text_label_choice" : text_label_choice, "start_date" : start_date,  "end_date" : end_date, "format_date" : format_date });
         return True;
         
     def getDirt(self):

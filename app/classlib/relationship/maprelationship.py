@@ -123,7 +123,7 @@ class MapRelationship(ConnectObject):
                     x = int(element["x"]); y = int(element["y"]); w = int(element["w"]); h = int(element["h"]);
                     objeto = self.addEntity( "link",  x, y, text=element["text_label"], id_=element["id"], entity_id_=element["entity_id"], wikipedia=element["wikipedia"]);
                     for to_ in element["to"]:
-                        objeto.addTo( self.findById( self.elements, to_["id"] ), start_date=to_["start_date"], end_date=to_["end_date"] );
+                        objeto.addTo( self.findById( self.elements, to_["id"] ), start_date=to_["start_date"], end_date=to_["end_date"], format_date=to_["format_date"] );
                     for from_ in element["from"]:
                         objeto.addFrom( self.findById( self.elements, from_["id"] ) );
                     for reference in element["references"]:

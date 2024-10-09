@@ -1,6 +1,6 @@
 import os, sys, inspect;
 
-from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings,
+from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QDate,
                             QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QTabWidget, QComboBox, QTableWidgetItem, QHeaderView,
@@ -17,7 +17,7 @@ from view.dialogreference import DialogReference;
 from view.dialog_classification import DialogClassification;
 
 class DialogEntityOrganization(QDialog):
-    def __init__(self, form, organizagion):
+    def __init__(self, form, organization):
         super().__init__()
         #self.resize(800, 660);
         nWidth = int(form.width() * 0.8); nHeight = int(form.height() * 0.6);
@@ -28,7 +28,7 @@ class DialogEntityOrganization(QDialog):
             nWidth, nHeight);
         config = Configuration();
         self.setWindowTitle("Organization")
-        self.organizagion = organizagion;
+        self.organization = organization;
         self.tab = QTabWidget();  
         self.page_rel = CustomVLayout.widget_tab( self.tab, "Organization");
         self.page_pho = CustomVLayout.widget_tab( self.tab, "Photo");
@@ -40,19 +40,19 @@ class DialogEntityOrganization(QDialog):
         self.lbl_text = QLabel("Name");
         self.txt_text = QLineEdit();
         self.txt_text.setFont(config.getFont());
-        self.txt_text.setText( self.organizagion.entity.text ) ;
+        self.txt_text.setText( self.organization.entity.text ) ;
         self.txt_text.textChanged.connect(self.txt_text_changed)
         CustomVLayout.widget_linha(self, self.page_rel, [self.lbl_text, self.txt_text] );
 
         self.lbl_text_small = QLabel("Acronym");
         self.txt_text_small = QLineEdit();
         self.txt_text_small.setFont( Configuration.instancia().getFont() );
-        self.txt_text_small.setText( self.organizagion.entity.small_label ) ;
+        self.txt_text_small.setText( self.organization.entity.small_label ) ;
         self.txt_text_small.textChanged.connect(self.txt_text_small_changed)
         CustomVLayout.widget_linha(self, self.page_rel, [self.lbl_text_small, self.txt_text_small] );
         
         self.txt_descricao = QTextEdit();
-        self.txt_descricao.setPlainText( organizagion.entity.full_description );
+        self.txt_descricao.setPlainText( organization.entity.full_description );
         self.txt_descricao.setLineWrapMode(QTextEdit.NoWrap);
         self.txt_descricao.textChanged.connect(self.txt_descricao_changed)
         self.txt_descricao.setFont(config.getFont());
@@ -66,7 +66,8 @@ class DialogEntityOrganization(QDialog):
         btn_class_add.clicked.connect(self.btn_class_add_click);
         btn_class_del.clicked.connect(self.btn_class_del_click);
         CustomVLayout.widget_linha(self, self.page_cls, [btn_class_add, btn_class_del] );
-        self.table_class = CustomVLayout.widget_tabela(self, ["Classification", "Value"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch], double_click=self.table_class_click);
+        #self.table_class = CustomVLayout.widget_tabela(self, ["Classification", "Value"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch], double_click=self.table_class_click);
+        self.table_class = CustomVLayout.widget_tabela(self, ["Classification", "Value", "Start", "End"], tamanhos=[QHeaderView.Stretch,QHeaderView.Stretch,QHeaderView.Stretch, QHeaderView.Stretch], double_click=self.table_class_click);
         self.page_cls.addWidget(self.table_class);
         self.table_class_load();
         #-------------------------------------------
@@ -98,38 +99,38 @@ class DialogEntityOrganization(QDialog):
         self.setLayout(   layout             );
 
     def table_reference_load(self):
-        self.table_reference.setRowCount( len( self.organizagion.entity.references ) );
-        for i in range(len( self.organizagion.entity.references )):
-            self.table_reference.setItem( i, 0, QTableWidgetItem( self.organizagion.entity.references[i].title ) );
+        self.table_reference.setRowCount( len( self.organization.entity.references ) );
+        for i in range(len( self.organization.entity.references )):
+            self.table_reference.setItem( i, 0, QTableWidgetItem( self.organization.entity.references[i].title ) );
     
     def table_reference_click(self):
-        element = self.organizagion.entity.references[ self.table_reference.index() ];
-        form = DialogReference(self, self.organizagion, reference=element);
+        element = self.organization.entity.references[ self.table_reference.index() ];
+        form = DialogReference(self, self.organization, reference=element);
         form.exec();
         self.table_reference_load();
 
     def btn_reference_del_click(self):
         index = self.table_reference.index();
-        self.organizagion.entity.references.pop( index );
+        self.organization.entity.references.pop( index );
         self.table_reference_load();
     
     def btn_reference_add_click(self):
-        form = DialogReference(self, self.organizagion, reference=None);
+        form = DialogReference(self, self.organization, reference=None);
         form.exec();
         self.table_reference_load()
 
     def txt_text_changed(self):
-        self.organizagion.entity.text = self.txt_text.text();
+        self.organization.entity.text = self.txt_text.text();
 
     def txt_text_small_changed(self):
-        self.organizagion.entity.small_label = self.txt_text_small.text();
+        self.organization.entity.small_label = self.txt_text_small.text();
 
     def btn_remover_click(self):
-        self.organizagion.mapa.delEntity(self.organizagion);
+        self.organization.mapa.delEntity(self.organization);
         self.close();
     
     def txt_descricao_changed(self):
-        self.organizagion.entity.full_description = self.txt_descricao.toPlainText();
+        self.organization.entity.full_description = self.txt_descricao.toPlainText();
     
     def btn_alterar_type_click(self):
         etype = "";
@@ -137,25 +138,27 @@ class DialogEntityOrganization(QDialog):
             etype = "person";
         elif self.cmb_type.currentIndex() == 1:
             etype = "other";   
-        retorno = self.organizagion.setType( etype );
+        retorno = self.organization.setType( etype );
         if retorno:
             self.close();
     def table_class_click(self):
         return;
     
     def btn_class_del_click(self):
-        self.organizagion.entity.classification.pop(self.table_class.index());
+        self.organization.entity.classification.pop(self.table_class.index());
         self.table_class_load();
         return;
     
     def btn_class_add_click(self):
-        d = DialogClassification(self, self.organizagion.entity);
+        d = DialogClassification(self, self.organization.entity);
         d.exec();
         return;
     
     def table_class_load(self):
-        self.table_class.setRowCount( len( self.organizagion.entity.classification ) );
-        for i in range(len( self.organizagion.entity.classification )):
-            self.table_class.setItem( i, 0, QTableWidgetItem( self.organizagion.entity.classification[i]["text_label"] ) );
-            self.table_class.setItem( i, 1, QTableWidgetItem( self.organizagion.entity.classification[i]["text_label_choice"] ) );
+        self.table_class.setRowCount( len( self.organization.entity.classification ) );
+        for i in range(len( self.organization.entity.classification )):
+            self.table_class.setItem( i, 0, QTableWidgetItem( self.organization.entity.classification[i]["text_label"] ) );
+            self.table_class.setItem( i, 1, QTableWidgetItem( self.organization.entity.classification[i]["text_label_choice"] ) );
+            self.table_class.setItem( i, 2, QTableWidgetItem( QDate.fromString(self.organization.entity.classification[i]["start_date"], "yyyy-MM-dd").toString(self.organization.entity.classification[i]["format_date"]) ) );
+            self.table_class.setItem( i, 3, QTableWidgetItem( QDate.fromString(self.organization.entity.classification[i]["end_date"], "yyyy-MM-dd").toString(self.organization.entity.classification[i]["format_date"])  ) );
         return;

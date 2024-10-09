@@ -33,10 +33,9 @@ class Link(MapRelationshipBox):
         objeto["to"] = [];
         objeto["from"] = [];
         for to_ in self.to_entity:
-            objeto["to"].append(    {"id" : self.id[:40] + "_" + to_.entity.id[:40] +  "_2", "element_id" : to_.entity.id, "start_date" : to_.start_date, "end_date" : to_.end_date} );
+            objeto["to"].append(    {"id" : self.id[:40] + "_" + to_.entity.id[:40] +  "_2", "element_id" : to_.entity.id, "start_date" : to_.start_date, "end_date" : to_.end_date, "format_date" : to_.format_date} );
         for from_ in self.from_entity:
-            objeto["from"].append(  {"id" : self.id[:40] + "_" + from_.entity.id[:40] +  "_1", "element_id" : from_.entity.id, "start_date" : from_.start_date, "end_date" : from_.end_date} );
-        print("Enviar:", objeto);
+            objeto["from"].append(  {"id" : self.id[:40] + "_" + from_.entity.id[:40] +  "_1", "element_id" : from_.entity.id, "start_date" : from_.start_date, "end_date" : from_.end_date, "format_date" : from_.format_date} );
         return objeto;
     def hasTo(self, element):
         return element in self.to_entity;
@@ -44,15 +43,15 @@ class Link(MapRelationshipBox):
     def hasFrom(self, element):
         return element in self.from_entity;
 
-    def addTo(self, entity, start_date=None, end_date=None):
-        lentity = LinkEntity(entity, start_date, end_date);
+    def addTo(self, entity, start_date=None, end_date=None, format_date="yyyy-MM-dd"):
+        lentity = LinkEntity(entity, start_date, end_date, format_date);
         for buffer in self.to_entity:
             if buffer.entity.id == lentity.entity.id:
                 return True;
         self.to_entity.append( lentity );
 
     def addFrom(self, entity):
-        lentity = LinkEntity(entity, None, None);
+        lentity = LinkEntity(entity, None, None, "yyyy-MM-dd");
         for buffer in self.from_entity:
             if buffer.entity.id == lentity.entity.id:
                 return True;

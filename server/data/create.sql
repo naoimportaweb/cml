@@ -88,6 +88,7 @@ create table entity_classification_item (
     entity_id VARCHAR(128) NOT NULL,
     start_date         DATE DEFAULT NULL,
     end_date           DATE DEFAULT NULL,
+    format_date         VARCHAR(255) DEFAULT 'yyyy-MM-dd',
     creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
 );
@@ -116,6 +117,7 @@ create table diagram_relationship_link(
     ltype int NOT NULL,
     start_date         DATE DEFAULT NULL,
     end_date           DATE DEFAULT NULL,
+    format_date         VARCHAR(255) DEFAULT 'yyyy-MM-dd',
     creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
 );
@@ -251,3 +253,6 @@ ALTER TABLE entity_classification_item ADD COLUMN end_date         DATE DEFAULT 
 ALTER TABLE diagram_relationship_link ADD COLUMN start_date       DATE DEFAULT NULL;
 ALTER TABLE diagram_relationship_link ADD COLUMN end_date         DATE DEFAULT NULL;
 
+
+ALTER TABLE diagram_relationship_link ADD COLUMN format_date         VARCHAR(255) DEFAULT 'yyyy-MM-dd';
+ALTER TABLE entity_classification_item ADD COLUMN format_date         VARCHAR(255) DEFAULT 'yyyy-MM-dd';

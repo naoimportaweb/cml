@@ -3,7 +3,7 @@ import os, sys, inspect;
 from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QDate,
                             QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence
-from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QHeaderView, QTableWidgetItem, QComboBox, QDateEdit,
+from PySide6.QtWidgets import (QComboBox, QApplication, QFileDialog, QMainWindow, QHeaderView, QTableWidgetItem, QComboBox, QDateEdit,
                                QMdiArea, QMessageBox, QTextEdit, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
 
 import os, sys, inspect;
@@ -64,6 +64,12 @@ class DialogClassification(QDialog):
         lbl_end_date = QLabel("End Date");
         CustomVLayout.widget_linha(self, self.layout_principal, [lbl_start_date, self.start_date, self.btn_start_date_enable] );
         CustomVLayout.widget_linha(self, self.layout_principal, [lbl_end_date, self.end_date, self.btn_end_date_enable] );
+        self.combo_format_date = QComboBox();
+        self.combo_format_date.addItem("yyyy-MM-dd");
+        self.combo_format_date.addItem("yyyy-MM");
+        self.combo_format_date.addItem("yyyy");
+        self.combo_format_date.currentTextChanged.connect(self.combo_format_date_changed)
+        CustomVLayout.widget_linha(self, self.layout_principal, [self.combo_format_date] );
         CustomVLayout.widget_linha(self, self.layout_principal, [self.cmb_type, btn_alterar_type] );
         
     def ui_search_classification(self):
@@ -106,7 +112,7 @@ class DialogClassification(QDialog):
         if self.end_date_flag:
             buffer_end_date =    self.end_date.date().toString("yyyy-MM-dd");
         
-        if self.entity.addClassification(self.classifications[self.table_classification.index()]["id"] , self.classifications[self.table_classification.index()]["text_label"], self.classifications[self.table_classification.index()]["itens"][self.cmb_type.currentIndex()]["id"], self.classifications[self.table_classification.index()]["itens"][self.cmb_type.currentIndex()]["text_label"], buffer_start_date, buffer_end_date):
+        if self.entity.addClassification(self.classifications[self.table_classification.index()]["id"] , self.classifications[self.table_classification.index()]["text_label"], self.classifications[self.table_classification.index()]["itens"][self.cmb_type.currentIndex()]["id"], self.classifications[self.table_classification.index()]["itens"][self.cmb_type.currentIndex()]["text_label"], buffer_start_date, buffer_end_date, self.combo_format_date.currentText()):
             self.form.table_class_load();
             self.close();
         return;
@@ -130,3 +136,6 @@ class DialogClassification(QDialog):
             self.end_date.setVisible(True);
             self.btn_end_date_enable.setText("Disable");
 
+    def combo_format_date_changed(self):
+        self.start_date.setDisplayFormat(self.combo_format_date.currentText());
+        self.end_date.setDisplayFormat(self.combo_format_date.currentText());

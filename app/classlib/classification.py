@@ -13,6 +13,7 @@ class Classification(ConnectObject):
         if id_ != None:
             self.id = id_;
         self.text_label = text_label;
+        self.format_date = None;
     
     def search(self, text_label):
         js = self.__execute__("Classification", "search", {"text_label" : text_label});
@@ -20,11 +21,3 @@ class Classification(ConnectObject):
             return js["return"];
         return None;
 
-    #def add(self, entity_id, classification_item_id):
-    #    js = self.__execute__("Classification", "add", {"entity_id" : entity_id, "classification_item_id" : classification_item_id});
-    #    if js["status"]:
-    #        return js["return"];
-    #    return None;
-
-    
-    
