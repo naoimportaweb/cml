@@ -58,7 +58,7 @@ create table diagram_relationship_lock(
 create table entity (
     id VARCHAR(128) PRIMARY KEY,
     text_label VARCHAR(255) NOT NULL,
-    small_label VARCHAR(255) NOT NULL,
+    small_label VARCHAR(255) DEFAULT NULL,
     description LONGTEXT,
     data_extra LONGTEXT,
     wikipedia VARCHAR(255),
@@ -153,7 +153,7 @@ ALTER TABLE person ADD CONSTRAINT UniqueEmail UNIQUE (email);
 
 # --------------------------- LIMPANDO -------------------------
 
-insert into person (id, username, name, password, salt) values ('1', 'nao.importa.web', 'nao.importa.web', '7c61be27eec3fa7cef2e0d44d3145ea37648b0842d5574c0163b92c0bed54924', '1111');
+insert into person (id, username, name, password, salt, email) values ('1', 'nao.importa.web', 'nao.importa.web', '7c61be27eec3fa7cef2e0d44d3145ea37648b0842d5574c0163b92c0bed54924', '1111', '');
 INSERT INTO person_enter(id, key_enter) values("c32648a2-a451-4571-810c-de3d6b61941c","c32648a2-a451-4571-810c-de3d6b61941c");
 INSERT INTO person_enter(id, key_enter) values("89bb1f15-9446-409d-8ef0-863f67c23437","89bb1f15-9446-409d-8ef0-863f67c23437");
 INSERT INTO person_enter(id, key_enter) values("38b196aa-c5bc-48be-a5b5-06960c10f82b","38b196aa-c5bc-48be-a5b5-06960c10f82b");
@@ -187,6 +187,8 @@ delete from diagram_relationship_element;
 delete from entity;
 delete from diagram_relationship;
 
+
+drop table diagram_relationship_document;
 drop table diagram_relationship_link;
 drop table diagram_relationship_history;
 drop table diagram_relationship_lock;
@@ -199,8 +201,14 @@ drop table person_sesion;
 drop table person_enter;
 drop table classification_item;
 drop table classification;
+drop table document_type;
 drop table person;
 
+
+
+
+
+# ------------- HOMOLOGAÇAO -------------------------------
 
 create table document_type( 
     id VARCHAR(128) PRIMARY KEY,
@@ -210,7 +218,6 @@ create table document_type(
 );
 
 
-# ------------- HOMOLOGAÇAO -------------------------------
 ALTER TABLE person ADD COLUMN usertype INT NOT NULL DEFAULT 0;
 ALTER TABLE person ADD COLUMN status INT NOT NULL DEFAULT 0;
 ALTER TABLE entity ADD COLUMN small_label VARCHAR(255);

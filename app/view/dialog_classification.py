@@ -3,7 +3,7 @@ import os, sys, inspect;
 from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings,
                             QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence
-from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QHeaderView, QTableWidgetItem, QComboBox,
+from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QHeaderView, QTableWidgetItem, QComboBox, QDateEdit,
                                QMdiArea, QMessageBox, QTextEdit, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
 
 import os, sys, inspect;
@@ -47,6 +47,18 @@ class DialogClassification(QDialog):
         btn_alterar_type.setFocusPolicy(Qt.NoFocus);
         btn_alterar_type.clicked.connect(self.btn_alterar_type_click);
         CustomVLayout.widget_linha(self, self.layout_principal, [self.cmb_type, btn_alterar_type] );
+        self.btn_start_date_enable = QPushButton("Enable");
+        self.btn_end_date_enable = QPushButton("Enable");
+        self.btn_start_date_enable.clicked.connect(self.btn_start_date_enable_click);
+        self.btn_end_date_enable.clicked.connect(self.btn_end_date_enable_click);
+        self.start_date = QDateEdit(self);
+        self.end_date =   QDateEdit(self)
+        self.start_date.setEnabled(False);
+        self.end_date.setEnabled(False);
+        lbl_start_date = QLabel("Start Date");
+        lbl_end_date = QLabel("End Date");
+        CustomVLayout.widget_linha(self, self.layout_principal, [lbl_start_date, self.start_date, self.btn_start_date_enable] );
+        CustomVLayout.widget_linha(self, self.layout_principal, [lbl_end_date, self.end_date, self.btn_end_date_enable] );
         
     def ui_search_classification(self):
         layout_server = QGridLayout()
@@ -65,12 +77,6 @@ class DialogClassification(QDialog):
         layout = QVBoxLayout();
         self.table_classification = CustomVLayout.widget_tabela(self, ["Name"], tamanhos=[QHeaderView.Stretch], double_click=self.table_classification_double);
         layout.addWidget(self.table_classification);
-        self.start_date = QDateEdit(self);
-        self.end_date =   QDateEdit(self)
-        lbl_start_date = QLabel("Start Date");
-        lbl_end_date = QLabel("End Date");
-        CustomVLayout.widget_linha(self, self.layout_principal, [lbl_start_date, self.start_date] );
-        CustomVLayout.widget_linha(self, self.layout_principal, [lbl_end_date, self.end_date] );
         self.layout_principal.addLayout( "list", layout );
 
     def txt_name_finish(self):
@@ -87,8 +93,28 @@ class DialogClassification(QDialog):
         return;
     
     def btn_alterar_type_click(self):
-        if self.entity.addClassification(self.classifications[self.table_classification.index()]["id"] , self.classifications[self.table_classification.index()]["text_label"], self.classifications[self.table_classification.index()]["itens"][self.cmb_type.currentIndex()]["id"], self.classifications[self.table_classification.index()]["itens"][self.cmb_type.currentIndex()]["text_label"], start_date=self.start_date.getDate(), end_date=self.end_date.getDate()):
+        buffer_start_date = self.start_date.getDate();
+        buffer_end_date = self.end_date.getDate();
+        if self.start_date.isEnabled():
+            buffer_start_date = None;
+        if self.end_date.isEnabled():
+            buffer_end_date = None;
+        if self.entity.addClassification(self.classifications[self.table_classification.index()]["id"] , self.classifications[self.table_classification.index()]["text_label"], self.classifications[self.table_classification.index()]["itens"][self.cmb_type.currentIndex()]["id"], self.classifications[self.table_classification.index()]["itens"][self.cmb_type.currentIndex()]["text_label"], start_date=buffer_start_date, end_date=buffer_end_date):
             self.form.table_class_load();
             self.close();
         return;
+    def btn_start_date_enable_click(self):
+        if self.start_date.isEnabled():
+            self.start_date.setEnabled( False );
+            self.btn_start_date_enable.setText("Enable");
+        else:
+            self.start_date.setEnabled( True );
+            self.btn_start_date_enable.setText("Disable");
 
+    def btn_end_date_enable_click(self):
+        if self.end_date.isEnabled():
+            self.end_date.setEnabled( False );
+            self.btn_end_date_enable.setText("Enable");
+        else:
+            self.end_date.setEnabled( True );
+            self.btn_end_date_enable.setText("Disable");
