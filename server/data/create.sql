@@ -212,7 +212,7 @@ drop table person;
 
 create table document_type( 
     id VARCHAR(128) PRIMARY KEY,
-    name VARCHAR(255)
+    name VARCHAR(255),
     creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
 );

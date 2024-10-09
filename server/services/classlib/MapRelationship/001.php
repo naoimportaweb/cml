@@ -23,7 +23,7 @@ class MapRelationship
             
             $buffer_elements[$i]["references"] = $mysql->DataTable("SELECT drer.id, drer.title, drer.link1, drer.link2, drer.link3 FROM diagram_relationship_element_reference AS drer where drer.entity_id = ?", [$buffer_elements[$i]["entity_id"]]);
 
-            $buffer_elements[$i]["classification"] = $mysql->DataTable("select eci.entity_id as entity_id, eci.entity_id as start_date, eci.entity_id as end_date, eci.id as id, clsi.text_label as text_label_choice, cls.text_label as text_label, clsi.id as classification_item_id from entity_classification_item as eci inner join classification_item as clsi on eci.classification_item_id = clsi.id inner join classification as cls on clsi.classification_id = cls.id where eci.entity_id = ?", [$buffer_elements[$i]["entity_id"]]);
+            $buffer_elements[$i]["classification"] = $mysql->DataTable("select eci.entity_id as entity_id, eci.start_date as start_date, eci.end_date as end_date, eci.id as id, clsi.text_label as text_label_choice, cls.text_label as text_label, clsi.id as classification_item_id from entity_classification_item as eci inner join classification_item as clsi on eci.classification_item_id = clsi.id inner join classification as cls on clsi.classification_id = cls.id where eci.entity_id = ?", [$buffer_elements[$i]["entity_id"]]);
 
             if( $buffer_elements[$i]["etype"] == "link" ){
                 $buffer_elements[$i]["from"] = $mysql->DataTable("SELECT drl.diagram_relationship_element_id as id FROM diagram_relationship_link AS drl where drl.diagram_relationship_element_id_reference = ? and ltype = 1", [   $buffer_elements[$i]["id"]  ]);
@@ -157,12 +157,12 @@ class MapRelationship
             }
             if( array_key_exists("classification", $element) ) {
                 for($j = 0; $j < count($element["classification"]); $j++){
-                    if( count( $mysql->DataTable("select * from entity_classification_item where id = ? ", [ $element["classification"][$j]["id"] ] ) ) > 0 ){
-                        continue;
-                    }
+                    //if( count( $mysql->DataTable("select * from entity_classification_item where id = ? ", [ $element["classification"][$j]["id"] ] ) ) > 0 ){
+                    //    continue;
+                    //}
                     
-                    array_push($sqls, "INSERT INTO entity_classification_item(id, classification_item_id, entity_id) values( ?, ?, ?)  ");
-                    array_push($valuess, [ $element["classification"][$j]["id"], $element["classification"][$j]["classification_item_id"], $element["classification"][$j]["entity_id"] ] );
+                    array_push($sqls, "INSERT INTO entity_classification_item(id, classification_item_id, entity_id, start_date, end_date) values( ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE  start_date=?, end_date=? ");
+                    array_push($valuess, [ $element["classification"][$j]["id"], $element["classification"][$j]["classification_item_id"], $element["classification"][$j]["entity_id"], $element["classification"][$j]["start_date"], $element["classification"][$j]["end_date"], $element["classification"][$j]["start_date"], $element["classification"][$j]["end_date"] ] );
                 }
             }
         }
