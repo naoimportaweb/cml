@@ -175,6 +175,7 @@ INSERT INTO classification_item(id, classification_id, text_label) values('2', '
 INSERT INTO classification_item(id, classification_id, text_label) values('3', '1', 'Neutro');
 INSERT INTO classification_item(id, classification_id, text_label) values('4', '1', 'Direita moderada');
 INSERT INTO classification_item(id, classification_id, text_label) values('5', '1', 'Extrema direita');
+INSERT INTO classification_item(id, classification_id, text_label) values('14', '1', 'Centro');
 
 INSERT INTO classification(id, text_label) values('2', "Profissão");
 INSERT INTO classification_item(id, classification_id, text_label) values('6', '2', 'Jornalista');
@@ -213,3 +214,39 @@ drop table person;
 
 
 # ------------- HOMOLOGAÇAO -------------------------------
+INSERT INTO classification_item(id, classification_id, text_label) values('14', '1', 'Centro');
+
+
+create table organization_chart( 
+    id VARCHAR(128) PRIMARY KEY,
+    text_label VARCHAR(255) NOT NULL,
+    organization_id VARCHAR(128) NOT NULL,
+    person_id VARCHAR(128) NOT NULL,
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
+
+create table organization_chart_item( 
+    id VARCHAR(128) PRIMARY KEY,
+    text_label VARCHAR(255) NOT NULL,
+    etype VARCHAR(255) NOT NULL,
+    organization_chart_id VARCHAR(128) NOT NULL,
+    organization_chart_item_parent_id VARCHAR(128) NOT NULL,
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
+
+create table organization_chart_item_entity( 
+    id VARCHAR(128) PRIMARY KEY,
+    organization_chart_item_id VARCHAR(128) NOT NULL,
+    entity_id VARCHAR(128) NOT NULL,
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
+
+ALTER TABLE organization_chart ADD FOREIGN KEY (organization_id) REFERENCES entity(id);
+ALTER TABLE organization_chart ADD FOREIGN KEY (person_id) REFERENCES person(id);
+ALTER TABLE organization_chart_item ADD FOREIGN KEY (organization_chart_id) REFERENCES organization_chart(id);
+ALTER TABLE organization_chart_item ADD FOREIGN KEY (organization_chart_item_parent_id) REFERENCES organization_chart_item(id);
+ALTER TABLE organization_chart_item_entity ADD FOREIGN KEY (organization_chart_item_id) REFERENCES organization_chart_item(id);
+ALTER TABLE organization_chart_item_entity ADD FOREIGN KEY (entity_id) REFERENCES entity(id);

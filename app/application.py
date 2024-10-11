@@ -53,11 +53,11 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def new_map(self):
-        f = DialogDiagramChoice(self);
-        f.exec();
-        #child = self.create_mdi_map()
-        #child.new_map()
-        #child.showMaximized();
+        #f = DialogDiagramChoice(self);
+        #f.exec();
+        child = self.create_mdi_map()
+        child.new_map()
+        child.showMaximized();
 
     @Slot()
     def open(self):

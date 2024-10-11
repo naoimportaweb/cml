@@ -21,7 +21,10 @@ class OrganizationChart(ConnectObject):
         self.items = [];
     
     def toJson(self):
-        return {"id" : self.id, "organization_id" : self.organization_id, };
+        buffer = {"id" : self.id, "organization_id" : self.organization_id, "items" : []};
+        for item in self.items:
+            buffer["items"].append( item.toJson() );
+        return buffer;
 
     def addChartItem(self, text_label, organization_chart_item_parent_id=None, _id=None );
         self.items.addItem( OrganizationChartItem(  "entity", text_label, organization_chart_item_parent_id=organization_chart_item_parent_id, _id=_id) );
@@ -33,7 +36,7 @@ class OrganizationChart(ConnectObject):
         js = self.__execute__("OrganizationChart", "load", {"_id" : self.id });
         if js["status"]:
             self.organization = Entity.fromJson(js["return"]["organization"]);
-            self.text_label = js["return"]["text_label"];
+            self.text_label =   js["return"]["text_label"];
             self.organization_chart_id = js["return"]["organization_chart_id"];
             self.organization_id = js["return"]["organization_id"];
             return True;
@@ -53,6 +56,7 @@ class OrganizationChartItem(ConnectObject):
         self.text_label = text_label;
         self.organization_chart_id = organization_chart_id;
         self.organization_chart_item_parent_id = organization_chart_item_parent_id;
+    
     def toJson(self):
         return {"id" : self.id, "etype" : self.etype, "text_label" : self.text_label, "organization_chart_id" : self.organization_chart_id, "organization_chart_item_parent_id" : self.organization_chart_item_parent_id, "entetys" : [] };
 
