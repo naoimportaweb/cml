@@ -147,8 +147,9 @@ class MapRelationship(ConnectObject):
         return False;
 
     def search(self, name):
-        js = self.__execute__("MapRelationship", "search", {"name" : name });
+        js = self.__execute__("Map", "search", {"name" : name });
         return js["return"];
+    
     def search_entity(self, name):
         js = self.__execute__("MapRelationship", "search_entity", {"name" : name });
         return js["return"];

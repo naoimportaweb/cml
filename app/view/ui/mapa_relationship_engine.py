@@ -1,5 +1,4 @@
-# Copyright (C) 2022 The Qt Company Ltd.
-# SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
+# CADA MAPA POSSUI UMA FORMA DE DESENHAR, CLICAR, SELECIONAR, ISSO FICA AQUI
 
 from PySide6.QtWidgets import (QWidget,QMainWindow,QApplication,QFileDialog,QStyle,QColorDialog,)
 from PySide6.QtCore import Qt, Slot, QStandardPaths,QRectF
@@ -14,7 +13,7 @@ from classlib.relationship.organization import Organization
 from classlib.relationship.other import Other
 from classlib.relationship.link import Link
 
-class MapAreaWidget(QWidget):
+class MapaRelationshipEngine(QWidget):
     def __init__(self, parent=None, mapa=None, form=None, max_width=5000 , max_height=3000):
         super().__init__(parent)
         self.setFixedSize(max_width, max_height);

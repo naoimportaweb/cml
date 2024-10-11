@@ -9,6 +9,7 @@ from classlib.connectobject import ConnectObject;
 from classlib.relationship.person import Person
 from classlib.relationship.organization import Organization
 
+
 class OrganizationChart(ConnectObject):
     def __init__(self, organization_id, id_=None):
         super().__init__();
@@ -16,21 +17,28 @@ class OrganizationChart(ConnectObject):
         if id_ != None:
             self.id = id_;
         self.organization_id = organization_id;
-        self.text_label = None;
+        self.text_label = "New Organizatin Chart";
         self.organization = None;
-        self.items = [];
-    
+        self.elements = [];
+    def load(self, id):
+        return True;
+    def create(self):
+        js = self.__execute__("OrganizationChart", "create", {"id" : self.id,  "organization_id" : self.organization_id, "text_label" : self.text_label });
+        if js["status"]:
+            return js["return"];
+        return False;
+
     def toJson(self):
-        buffer = {"id" : self.id, "organization_id" : self.organization_id, "items" : []};
-        for item in self.items:
-            buffer["items"].append( item.toJson() );
+        buffer = {"id" : self.id, "organization_id" : self.organization_id, "elements" : []};
+        for item in self.elements:
+            buffer["elements"].append( item.toJson() );
         return buffer;
 
-    def addChartItem(self, text_label, organization_chart_item_parent_id=None, _id=None );
-        self.items.addItem( OrganizationChartItem(  "entity", text_label, organization_chart_item_parent_id=organization_chart_item_parent_id, _id=_id) );
+    def addChartItem(self, text_label, organization_chart_item_parent_id=None, _id=None ):
+        self.elements.addItem( OrganizationChartItem(  "entity", text_label, organization_chart_item_parent_id=organization_chart_item_parent_id, _id=_id) );
     
-    def addChartItem(self, text_label, organization_chart_id, organization_chart_item_parent_id=None, _id=None );
-        self.items.addItem( OrganizationChartItem(  "chart", text_label, organization_chart_item_parent_id=organization_chart_item_parent_id , organization_chart_id=organization_chart_id, _id=_id) );
+    def addChartItem(self, text_label, organization_chart_id, organization_chart_item_parent_id=None, _id=None ):
+        self.elements.addItem( OrganizationChartItem(  "chart", text_label, organization_chart_item_parent_id=organization_chart_item_parent_id , organization_chart_id=organization_chart_id, _id=_id) );
 
     def loadOrganization(self):
         js = self.__execute__("OrganizationChart", "load", {"_id" : self.id });

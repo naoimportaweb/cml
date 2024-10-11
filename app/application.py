@@ -53,11 +53,21 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def new_map(self):
-        #f = DialogDiagramChoice(self);
-        #f.exec();
-        child = self.create_mdi_map()
-        child.new_map()
-        child.showMaximized();
+        f = DialogDiagramChoice(self);
+        f.exec();
+        if f.map != None:
+            child = MdiMap(self, f.map)
+            self._mdi_area.addSubWindow(child);
+            child.new_map()
+            child.showMaximized();
+    
+    #def create_mdi_map(self):
+    #    f = DialogRelationship(self);
+    #    f.exec();
+    #    if f.map != None:
+    #        child = MdiMap(self, f.map)
+    #        self._mdi_area.addSubWindow(child);
+    #    return child
 
     @Slot()
     def open(self):
@@ -68,13 +78,13 @@ class MainWindow(QMainWindow):
         child.new_map()
         child.showMaximized();
 
-    def load(self, file_name):
-        child = self.create_mdi_map()
-        if child.load_file(file_name):
-            self.statusBar().showMessage("File loaded", 2000)
-            child.show()
-        else:
-            child.close()
+    #def load(self, file_name):
+    #    child = self.create_mdi_map()
+    #    if child.load_file(file_name):
+    #        self.statusBar().showMessage("File loaded", 2000)
+    #        child.show()
+    #    else:
+    #        child.close()
 
     @Slot()
     def save(self):
@@ -166,15 +176,6 @@ class MainWindow(QMainWindow):
             action.setChecked(child is self.active_mdi_child())
             slot_func = partial(self.set_active_sub_window, window=window)
             action.triggered.connect(slot_func)
-
-    def create_mdi_map(self):
-        f = DialogRelationship(self);
-        f.exec();
-        if f.map != None:
-            child = MdiMap(self, f.map)
-            self._mdi_area.addSubWindow(child);
-
-        return child
 
     def create_actions(self):
 

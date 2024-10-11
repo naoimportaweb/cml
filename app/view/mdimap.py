@@ -1,3 +1,5 @@
+# CADA MAPA PRECISA DEUMA CASCA, UMA PONTE ENTRE OS DADOS E A TELA.
+
 import os, sys, inspect;
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
 ROOT = os.path.dirname( CURRENTDIR );
@@ -7,7 +9,8 @@ from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QSaveFile, 
 from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QMdiArea, QMessageBox, QTextEdit, QWidget, QHBoxLayout)
 
-from view.ui.mapareawidget import MapAreaWidget;
+from view.ui.mapa_relationship_engine import MapaRelationshipEngine;
+from view.ui.mapa_organization_chart_engine import MapaOrganizationChartEngine;
 from view.dialogentitylink import DialogEntityLink;
 from view.dialogentityorganization import DialogEntityOrganization;
 from view.dialogentityperson import DialogEntityPerson;
@@ -18,7 +21,7 @@ class MdiMap(QWidget):
     def __init__(self, form, mapa):
         super().__init__();
         self.form_principal = form;
-        self.painter_widget = MapAreaWidget(parent=None, mapa=mapa, form=self);
+        self.painter_widget = MapaRelationshipEngine(parent=None, mapa=mapa, form=self);
         self.mapa = mapa;
         layout = QHBoxLayout()
         layout.addWidget( self.painter_widget );
@@ -45,7 +48,6 @@ class MdiMap(QWidget):
         else:                   # ITEM EXISTENTE É AQUI
             if form.search_entity != None:
                 map.addExistEntity(form.search_entity, x, y);
-
 
     def new_map(self):
         return;

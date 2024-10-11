@@ -20,6 +20,7 @@ from classlib.relationship.person import Person
 from classlib.relationship.organization import Organization
 from classlib.relationship.other import Other
 from classlib.relationship.link import Link
+from classlib.organization_chart.organization_chart import OrganizationChart
 
 class DialogRelationshipLoad(QDialog):
     def __init__(self, form):
@@ -43,7 +44,7 @@ class DialogRelationshipLoad(QDialog):
         layout_server = QGridLayout()
         layout_server.setContentsMargins(20, 20, 20, 20)
         layout_server.setSpacing(10)
-        self.setWindowTitle("Relationship Map")
+        self.setWindowTitle("Map Search")
         lbl_name = QLabel("Map name:")
         lbl_name.setProperty("class", "normal")
         layout_server.addWidget(lbl_name, 1, 0)
@@ -55,23 +56,41 @@ class DialogRelationshipLoad(QDialog):
 
     def ui_tabela(self):
         layout = QVBoxLayout();
-        self.table_maps = CustomVLayout.widget_tabela(self, ["User", "Name"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch], double_click=self.table_maps_double);
+        self.table_maps = CustomVLayout.widget_tabela(self, ["User", "Name", "Map Type"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch, QHeaderView.Stretch], double_click=self.table_maps_double);
         layout.addWidget(self.table_maps);
         self.layout_principal.addLayout( "list", layout );
 
     def txt_name_finish(self):
         r = MapRelationship();
         self.mapas = r.search( "%" + self.txt_name.text().strip() + "%");
-        self.mapas.sort(key=lambda x: x["name"]);
-        self.table_maps.setRowCount( len( self.mapas ) );
-        for i in range(len( self.mapas )):
-            self.table_maps.setItem( i, 0, QTableWidgetItem( self.mapas[i]["username"] ) );
-            self.table_maps.setItem( i, 1, QTableWidgetItem( self.mapas[i]["name"]) );
+        #self.mapas.sort(key=lambda x: x["name"]);
+        self.table_maps.setRowCount( len( self.mapas["organization"] ) + len( self.mapas["relationship"] ) );
+        linhas = 0;
+        for i in range(len( self.mapas["relationship"] )):
+            self.table_maps.setItem( linhas, 0, QTableWidgetItem( self.mapas["relationship"][i]["username"] ) );
+            self.table_maps.setItem( linhas, 1, QTableWidgetItem( self.mapas["relationship"][i]["name"]) );
+            self.table_maps.setItem( linhas, 2, QTableWidgetItem( "Relationship Map" ));
+            linhas += 1;
+        for i in range(len( self.mapas["organization"] )):
+            self.table_maps.setItem( linhas, 0, QTableWidgetItem( self.mapas["organization"][i]["username"] ) );
+            self.table_maps.setItem( linhas, 1, QTableWidgetItem( self.mapas["organization"][i]["organization_text_label"] + " - " + self.mapas["organization"][i]["name"]) );
+            self.table_maps.setItem( linhas, 2, QTableWidgetItem( "Organization Chart") );
+            linhas += 1;
+
     
     def table_maps_double(self):
-        r = MapRelationship();
-        if r.load( self.mapas[ self.table_maps.index() ]["id"] ):
-            self.map = r;
-            self.close();
+        index = self.table_maps.index() ;
+        if index < len( self.mapas["relationship"] ):
+            r = MapRelationship();
+            if r.load( self.mapas["relationship"][index]["id"] ):
+                self.map = r;
+                self.close();
+        else:
+            buffer = self.mapas["organization"][index - len( self.mapas["relationship"] ) ];
+            o = OrganizationChart( buffer["organization_id"] );
+            if o.load( buffer["id"]  ):
+                self.map = o;
+                self.close();
+            return;
 
 

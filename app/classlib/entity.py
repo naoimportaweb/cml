@@ -55,6 +55,14 @@ class Entity(ConnectObject):
             self.etype = etype;
             return js["return"];
         return False;
+
+    @staticmethod
+    def search(etype, text_label):
+        obj = ConnectObject();
+        js = obj.__execute__("Entity", "search", {"etype" : etype, "text_label" : text_label});
+        if js["status"]:
+            return js["return"];
+        return False;
     
     @staticmethod    
     def fromJson( js):

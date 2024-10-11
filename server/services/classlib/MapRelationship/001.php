@@ -108,12 +108,12 @@ class MapRelationship
         return count($mysql->DataTable($sql, $valores) ) > 0;
     } 
 
-    public function search( $ip, $user, $post_data ) {
-        $mysql = new Mysql("");
-        $sql = "SELECT dr.*, pe.username FROM diagram_relationship as dr inner join person as pe on pe.id = dr.person_id WHERE LOWER(dr.name) LIKE LOWER( ? ) or LOWER(dr.keyword) LIKE LOWER( ? )";
-        $valores = [ $post_data["parameters"]["name"], $post_data["parameters"]["name"]];
-        return $mysql->DataTable($sql, $valores);
-    }
+    //public function search( $ip, $user, $post_data ) {
+    //    $mysql = new Mysql("");
+    //    $sql = "SELECT dr.*, pe.username FROM diagram_relationship as dr inner join person as pe on pe.id = dr.person_id WHERE LOWER(dr.name) LIKE LOWER( ? ) or LOWER(dr.keyword) LIKE LOWER( ? )";
+    //    $valores = [ $post_data["parameters"]["name"], $post_data["parameters"]["name"]];
+    //    return $mysql->DataTable($sql, $valores);
+    //}
 
     public function search_entity( $ip, $user, $post_data ) {
         $mysql = new Mysql("");
