@@ -21,6 +21,7 @@ import PySide6.QtExampleIcons  # noqa: F401
 
 from view.mdimap import MdiMap;
 from view.dialog_relationship import DialogRelationship;
+from view.dialog_diagram_choice import DialogDiagramChoice;
 from view.dialog_relationship_load import DialogRelationshipLoad;
 from view.dialog_relationship_edit import DialogRelationshipEdit
 from view.dialogconnect import DialogConnect;
@@ -52,9 +53,11 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def new_map(self):
-        child = self.create_mdi_map()
-        child.new_map()
-        child.showMaximized();
+        f = DialogDiagramChoice(self);
+        f.exec();
+        #child = self.create_mdi_map()
+        #child.new_map()
+        #child.showMaximized();
 
     @Slot()
     def open(self):
@@ -170,9 +173,6 @@ class MainWindow(QMainWindow):
         if f.map != None:
             child = MdiMap(self, f.map)
             self._mdi_area.addSubWindow(child);
-            #self._mdi_area.showFullScreen();
-            #child.copyAvailable.connect(self._cut_act.setEnabled)
-            #child.copyAvailable.connect(self._copy_act.setEnabled)
 
         return child
 

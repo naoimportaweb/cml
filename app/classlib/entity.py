@@ -56,3 +56,13 @@ class Entity(ConnectObject):
             return js["return"];
         return False;
     
+    @staticmethod    
+    def fromJson( js):
+        buffer = Entity(id_=js["id"]);
+        buffer.id = js["id"];
+        buffer.etype = js["etype"];
+        buffer.text = js["text_label"];
+        buffer.full_description = js["full_description"];
+        buffer.data_extra = js["data_extra"];
+        buffer.wikipedia = js["wikipedia"];
+        buffer.small_label = js["small_label"];

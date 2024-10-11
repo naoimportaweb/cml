@@ -15,6 +15,12 @@ class Entity
         return $mysql->ExecuteNoQuery($sql, [ $post_data["parameters"]["type"], $post_data["parameters"]["id"] ]);
     }
 
+    public function search( $ip, $user, $post_data ) {
+        $mysql = new Mysql("");
+        $sql = "SELECT * from entity as ent WHERE ent.etype = ? and (LOWER(ent.text_label) LIKE LOWER( ? ) or  (LOWER(ent.small_label) LIKE LOWER( ? ) ) ";
+        $valores = [ $post_data["parameters"]["etype"], $post_data["parameters"]["text_label"], $post_data["parameters"]["text_label"]];
+        return $mysql->DataTable($sql, $valores);
+    }
     
 
 }
