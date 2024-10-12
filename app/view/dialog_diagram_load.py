@@ -22,7 +22,7 @@ from classlib.relationship.other import Other
 from classlib.relationship.link import Link
 from classlib.organization_chart.organization_chart import OrganizationChart
 
-class DialogRelationshipLoad(QDialog):
+class DialogDiagramLoad(QDialog):
     def __init__(self, form):
         super().__init__();
         #self.resize(800, 660);

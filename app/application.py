@@ -22,7 +22,7 @@ import PySide6.QtExampleIcons  # noqa: F401
 from view.mdimap import MdiMap;
 from view.dialog_relationship import DialogRelationship;
 from view.dialog_diagram_choice import DialogDiagramChoice;
-from view.dialog_relationship_load import DialogRelationshipLoad;
+from view.dialog_diagram_load import DialogDiagramLoad;
 from view.dialog_relationship_edit import DialogRelationshipEdit
 from view.dialogconnect import DialogConnect;
 from classlib.server import Server;
@@ -71,7 +71,7 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def open(self):
-        f = DialogRelationshipLoad(self);
+        f = DialogDiagramLoad(self);
         f.exec();
         child = MdiMap(self, f.map)
         self._mdi_area.addSubWindow(child);
