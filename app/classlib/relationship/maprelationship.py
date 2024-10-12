@@ -23,6 +23,12 @@ class MapRelationship(ConnectObject):
         self.lock_list = [];
         self.locked = False;
     
+    def getName(self):
+        return self.name;
+    
+    def getLocked(self):
+        return self.locked;
+
     def switchType(self, box_element, etype):
         if etype == "person" or etype == "other" or etype == "organization":
             if box_element.entity.toType(etype):

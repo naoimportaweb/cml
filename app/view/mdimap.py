@@ -21,7 +21,10 @@ class MdiMap(QWidget):
     def __init__(self, form, mapa):
         super().__init__();
         self.form_principal = form;
-        self.painter_widget = MapaRelationshipEngine(parent=None, mapa=mapa, form=self);
+        if mapa.__class__.__name__ == "OrganizationChart":
+            self.painter_widget = MapaOrganizationChartEngine(parent=None, mapa=mapa, form=self);
+        else:
+            self.painter_widget = MapaRelationshipEngine(parent=None, mapa=mapa, form=self);
         self.mapa = mapa;
         layout = QHBoxLayout()
         layout.addWidget( self.painter_widget );

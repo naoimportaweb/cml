@@ -90,7 +90,7 @@ class MapaRelationshipEngine(QWidget):
     def mouseMoveEvent(self, event: QMouseEvent):
         current_pos = event.position().toPoint()
         QWidget.mouseMoveEvent(self, event);
-        if self.mapa.locked:
+        if self.mapa.getLocked():
             return;
         if self.selected_element != None and (current_pos.y() % 2) == 0:
             self.selected_element.setX( current_pos.x() - self.diff[0] );

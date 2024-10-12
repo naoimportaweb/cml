@@ -64,19 +64,10 @@ class MapaOrganizationChartEngine(QWidget):
         #    self.diff = [current_pos.x() - self.selected_element.x, current_pos.y() - self.selected_element.y];
 
     def redraw(self):
-        return;
-        #self.painter.begin(self.pixmap);
-        #self.pixmap.fill(Qt.white);
-        #for elemento in self.mapa.elements:
-        #    elemento.recalc(self.painter);
-        #for elemento in self.mapa.elements:
-        #    if elemento.entity.etype == "link":
-        #        elemento.draw( self.painter );
-        #for elemento in self.mapa.elements:
-        #    if elemento.entity.etype == "person" or elemento.entity.etype == "organization" or elemento.entity.etype == "other":
-        #        elemento.draw( self.painter );
-        #self.painter.end();
-        #self.update();
+        self.painter.begin(self.pixmap);
+        self.pixmap.fill(Qt.white);
+        self.painter.end();
+        self.update();
 
     def mouseDoubleClickEvent(self, event):
         return;
@@ -93,7 +84,7 @@ class MapaOrganizationChartEngine(QWidget):
         return;
         #current_pos = event.position().toPoint()
         #QWidget.mouseMoveEvent(self, event);
-        #if self.mapa.locked:
+        #if self.mapa.getLocked():
         #    return;
         #if self.selected_element != None and (current_pos.y() % 2) == 0:
         #    self.selected_element.setX( current_pos.x() - self.diff[0] );

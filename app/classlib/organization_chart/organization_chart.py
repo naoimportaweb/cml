@@ -20,8 +20,16 @@ class OrganizationChart(ConnectObject):
         self.text_label = "New Organizatin Chart";
         self.organization = None;
         self.elements = [];
+    
+    def getLocked(self):
+        return False;    
+    
+    def getName(self):
+        return self.text_label;
+
     def load(self, id):
         return True;
+
     def create(self):
         js = self.__execute__("OrganizationChart", "create", {"id" : self.id,  "organization_id" : self.organization_id, "text_label" : self.text_label });
         if js["status"]:

@@ -128,8 +128,8 @@ class MainWindow(QMainWindow):
         has_mdi_child = (self.active_mdi_child() is not None)
         if self.active_mdi_child() is not None:
             buffer_area = self.active_mdi_child() and self.active_mdi_child();
-            title = "Relationship MAP: " + buffer_area.mapa.name ;
-            if buffer_area.mapa.locked and len(buffer_area.mapa.lock_list) > 0 :
+            title = "Relationship MAP: " + buffer_area.mapa.getName() ;
+            if buffer_area.mapa.getLocked() and len(buffer_area.mapa.lock_list) > 0 :
                 title = title + " (ReadOnly at " + buffer_area.mapa.lock_list[-1]["lock_time"] + " ISO DATE)";
             self.setWindowTitle( title )
         #self._save_act.setEnabled(has_mdi_child)
