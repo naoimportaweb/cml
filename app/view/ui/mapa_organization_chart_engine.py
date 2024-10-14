@@ -8,11 +8,7 @@ import os, sys, inspect, json, uuid;
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
 sys.path.append( os.path.dirname( os.path.dirname( CURRENTDIR ) ) );
 
-#from classlib.relationship.person import Person
-#from classlib.relationship.organization import Organization
-#from classlib.relationship.other import Other
-#from classlib.relationship.link import Link
-from view.dialog_entity_find import DialogEntityFind;
+from view.dialog_organization_item import DialogOrganizationItem;
 
 class MapaOrganizationChartEngine(QWidget):
     def __init__(self, parent=None, mapa=None, form=None, max_width=5000 , max_height=3000):
@@ -75,10 +71,9 @@ class MapaOrganizationChartEngine(QWidget):
         self.update();
 
     def mouseDoubleClickEvent(self, event):
-        f = DialogEntityFind( self.form );
+        f = DialogOrganizationItem( self.form, None, self.mapa );
         f.exec();
-        if f.entity != None:
-            return;
+        self.redraw();
         return;
         #current_pos = event.position().toPoint();
         #buffer = self.getElement(current_pos.x(), current_pos.y());

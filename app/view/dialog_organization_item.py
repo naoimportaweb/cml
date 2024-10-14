@@ -15,16 +15,18 @@ from view.ui.customvlayout import CustomVLayout;
 from classlib.configuration import Configuration;
 from view.dialog_entity_find import DialogEntityFind;
 
-class DialogEntityOther(QDialog):
-    def __init__(self, form, element):
+class DialogOrganizationItem(QDialog):
+    def __init__(self, form, element, graphic):
         super().__init__(form)
         nWidth = int(form.width() * 0.8); nHeight = int(form.height() * 0.6);
         if nWidth > 800:
             nWidth = 800;
         self.setGeometry(form.x() + form.width()/2 - nWidth/2,
-            form.y() + form.height()/2 - nHeight/2,
-            nWidth, nHeight);
+            form.y() + form.height()/2 - nHeight/2, 600, 500);
+        if element == None:
+            element = graphic.addEntityItem("New Item");
         self.element = element;
+        self.graphic = graphic;
         self.setWindowTitle("Organization")
         self.tab = QTabWidget();  
         self.page_org = CustomVLayout.widget_tab( self.tab, "Organization");
@@ -48,14 +50,14 @@ class DialogEntityOther(QDialog):
         # --------------------------------------------------
         
         #-------------------------------------------
-        btn_class_add = QPushButton("Add");
-        btn_class_del = QPushButton("Remove");
-        btn_class_add.setFont( Configuration.instancia().getFont() );
-        btn_class_del.setFont( Configuration.instancia().getFont() );
-        btn_class_add.clicked.connect(self.btn_ele_add_click);
-        btn_class_del.clicked.connect(self.btn_ele_del_click);
-        CustomVLayout.widget_linha(self, self.page_cls, [btn_ele_add, btn_ele_del] );
-        self.table_class = CustomVLayout.widget_tabela(self, ["Name", "Type"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch], double_click=self.table_ele_click);
+        btn_ele_add = QPushButton("Add");
+        btn_ele_del = QPushButton("Remove");
+        btn_ele_add.setFont( Configuration.instancia().getFont() );
+        btn_ele_del.setFont( Configuration.instancia().getFont() );
+        btn_ele_add.clicked.connect(self.btn_ele_add_click);
+        btn_ele_del.clicked.connect(self.btn_ele_del_click);
+        CustomVLayout.widget_linha(self, self.page_ele, [btn_ele_add, btn_ele_del] );
+        self.table_ele = CustomVLayout.widget_tabela(self, ["Name", "Type"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch], double_click=self.table_ele_click);
         self.page_ele.addWidget(self.table_ele);
         self.table_ele_load();
         
@@ -79,17 +81,18 @@ class DialogEntityOther(QDialog):
         return;
     
     def btn_ele_add_click(self):
-        d = DialogEntityFind(self, self.other.entity);
+        d = DialogEntityFind(self);
         d.exec();
         if d.entity != None:
+            self.element.addEntity( d.entity );
+            self.table_ele_load();
             return;
         return;
     
     def table_ele_load(self):
-        self.table_ele.setRowCount( len( self.element.elements ) );
-        for i in range(len( self.element.elements )):
-            self.table_ele.setItem( i, 0, QTableWidgetItem( self.element.elements[i].text ) );
-            self.table_ele.setItem( i, 1, QTableWidgetItem( self.element.elements[i].etype ) );
-            #self.table_ele.setItem( i, 2, QTableWidgetItem( QDate.fromString(self.other.entity.classification[i]["start_date"], "yyyy-MM-dd").toString(self.other.entity.classification[i]["format_date"]) ) );
-            #self.table_ele.setItem( i, 3, QTableWidgetItem( QDate.fromString(self.other.entity.classification[i]["end_date"], "yyyy-MM-dd").toString(self.other.entity.classification[i]["format_date"])  ) );
+        self.table_ele.setRowCount( len( self.element.entitys ) );
+        for i in range(len( self.element.entitys )):
+            print(self.element.entitys[i]["entity"]);
+            self.table_ele.setItem( i, 0, QTableWidgetItem( self.element.entitys[i]["entity"].text ) );
+            self.table_ele.setItem( i, 1, QTableWidgetItem( self.element.entitys[i]["entity"].etype ) );
         return; 

@@ -49,7 +49,7 @@ class DialogEntityFind(QDialog):
         return;
 
     def table_double(self):
-        self.entity = self.entitys[ self.table_search.index ];
+        self.entity = self.entitys[ self.table_search.index() ];
         self.close();
         return;
 
