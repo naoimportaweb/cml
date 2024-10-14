@@ -12,6 +12,7 @@ sys.path.append( os.path.dirname( os.path.dirname( CURRENTDIR ) ) );
 #from classlib.relationship.organization import Organization
 #from classlib.relationship.other import Other
 #from classlib.relationship.link import Link
+from view.dialog_entity_find import DialogEntityFind;
 
 class MapaOrganizationChartEngine(QWidget):
     def __init__(self, parent=None, mapa=None, form=None, max_width=5000 , max_height=3000):
@@ -66,10 +67,18 @@ class MapaOrganizationChartEngine(QWidget):
     def redraw(self):
         self.painter.begin(self.pixmap);
         self.pixmap.fill(Qt.white);
+        for elemento in self.mapa.elements:
+            elemento.recalc(self.painter);
+        for elemento in self.mapa.elements:
+            elemento.draw( self.painter );
         self.painter.end();
         self.update();
 
     def mouseDoubleClickEvent(self, event):
+        f = DialogEntityFind( self.form );
+        f.exec();
+        if f.entity != None:
+            return;
         return;
         #current_pos = event.position().toPoint();
         #buffer = self.getElement(current_pos.x(), current_pos.y());
@@ -100,8 +109,7 @@ class MapaOrganizationChartEngine(QWidget):
         #self.selected_element = None;
 
     def save(self, filename: str):
-        return;
-        #self.mapa.save();
+        self.mapa.save();
 
     def load(self, filename: str):
         return;

@@ -30,6 +30,15 @@ class OrganizationChart(ConnectObject):
     def load(self, id):
         return True;
 
+    def save(self):
+        objeto = self.toJson();
+        for element in self.elements:
+            objeto["elements"].append( element.toJson() );
+        js = self.__execute__("OrganizationChart", "save", objeto);
+        if js["status"]:
+            return js["return"];
+        return False;
+
     def create(self):
         js = self.__execute__("OrganizationChart", "create", {"id" : self.id,  "organization_id" : self.organization_id, "text_label" : self.text_label });
         if js["status"]:
@@ -37,7 +46,7 @@ class OrganizationChart(ConnectObject):
         return False;
 
     def toJson(self):
-        buffer = {"id" : self.id, "organization_id" : self.organization_id, "elements" : []};
+        buffer = {"id" : self.id, "organization_id" : self.organization_id, "text_label" : self.text_label, "elements" : []};
         for item in self.elements:
             buffer["elements"].append( item.toJson() );
         return buffer;
@@ -72,6 +81,24 @@ class OrganizationChartItem(ConnectObject):
         self.text_label = text_label;
         self.organization_chart_id = organization_chart_id;
         self.organization_chart_item_parent_id = organization_chart_item_parent_id;
+        self.x = None;
+        self.h = None;
+    
+    def recalc(self, painter):
+        painter.setFont(QFont(Configuration.instancia().relationshihp_font_family, Configuration.instancia().relationshihp_font_size))
+        frame_text = painter.boundingRect(0, 0, 150, 30, 0, self.text_label);
+        self.w = frame_text.width() + 10;
+        self.h = frame_text.height() + 2;
+        return;
+    
+    def draw(self):
+        penRectangle = QPen(Qt.black)
+        penRectangle.setWidth(1)
+        painter.setPen(penRectangle)
+        painter.fillRect( 10, 10, self.w, self.h, QBrush(Qt.white));
+        painter.drawRect( 10, 10, self.w, self.h);
+        if self.entity.text != None:
+            painter.drawText(QRectF(10, 10, self.w, self.h), Qt.AlignCenter | Qt.AlignTop, self.entity.text)
     
     def toJson(self):
         return {"id" : self.id, "etype" : self.etype, "text_label" : self.text_label, "organization_chart_id" : self.organization_chart_id, "organization_chart_item_parent_id" : self.organization_chart_item_parent_id, "entetys" : [] };

@@ -6,6 +6,7 @@
 //GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost';
 //FLUSH PRIVILEGES;
 
+
 require_once __DIR__ . '/json.php';
 
 class Mysql
@@ -152,7 +153,9 @@ class Mysql
     // preparement state pdo: https://www.w3schools.com/php/php_mysql_prepared_statements.asp
     public function Datatable($sql, $values){
         try{
-            $this->Connection()->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            //$this->Connection()->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            //error_log($sql, 0);
+            //error_log(json_encode($values), 0);
             $query = $this->Connection()->prepare($sql);
             $query->execute($values);
             return $query->fetchAll(PDO::FETCH_ASSOC);
@@ -208,7 +211,7 @@ class Mysql
                 $sqls = [$sqls];
                 $valuess = [$valuess];
             }
-            $this->Connection()->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            //$this->Connection()->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             if( count( $sqls ) > 1 ){
                 $this->Connection()->beginTransaction();
             }

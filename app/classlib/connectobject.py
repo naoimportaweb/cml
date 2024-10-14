@@ -61,12 +61,15 @@ class ConnectObject:
         url = self.ip +"/cml/services/execute.php";
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'};
         r = requests.post(url, data=json.dumps(envelop), headers=headers);
-        retorno_json = json.loads(r.text.strip());
-        if type(retorno_json["return"]) == type(""):
-            retorno_body = retorno_json["return"][8:];
-            retorno_json["return"] = json.loads(base64.b64decode( retorno_body ) );
-        #    if retorno_body[: len("00000002")] == "00000002":
-        #        encriptado = retorno_body[len("00000002"):];
-        #        retorno_json["return"] = json.loads( aes_decript(server.simetric_key, encriptado) );
-        return retorno_json;
-
+        try:
+            retorno_json = json.loads(r.text.strip());
+            if type(retorno_json["return"]) == type(""):
+                retorno_body = retorno_json["return"][8:];
+                retorno_json["return"] = json.loads(base64.b64decode( retorno_body ) );
+            #    if retorno_body[: len("00000002")] == "00000002":
+            #        encriptado = retorno_body[len("00000002"):];
+            #        retorno_json["return"] = json.loads( aes_decript(server.simetric_key, encriptado) );
+            return retorno_json;
+        except:
+            print(r.text.strip());
+            return None;

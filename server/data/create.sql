@@ -251,7 +251,17 @@ ALTER TABLE organization_chart_item ADD FOREIGN KEY (organization_chart_item_par
 ALTER TABLE organization_chart_item_entity ADD FOREIGN KEY (organization_chart_item_id) REFERENCES organization_chart_item(id);
 ALTER TABLE organization_chart_item_entity ADD FOREIGN KEY (entity_id) REFERENCES entity(id);
 
+create table organization_chart_history (
+    id VARCHAR(128) PRIMARY KEY,
+    person_id VARCHAR(128) NOT NULL,
+    organization_chart_id VARCHAR(128) NOT NULL,
+    json LONGTEXT NOT NULL,
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
 
+ALTER TABLE organization_chart_history ADD FOREIGN KEY (organization_chart_id) REFERENCES organization_chart(id);
+ALTER TABLE organization_chart_history ADD FOREIGN KEY (person_id) REFERENCES person(id);
 
 
 
