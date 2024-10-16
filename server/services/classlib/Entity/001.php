@@ -23,10 +23,10 @@ class Entity
         $sql = "";
         $valores = [];
         if( $post_data["parameters"]["etype"] != "" ) {
-            $sql = "SELECT * from entity as ent WHERE ent.etype = ? and ( LOWER(ent.text_label) LIKE LOWER( ? )  or LOWER(ent.small_label) LIKE LOWER( ? )   )";
+            $sql = "SELECT ent.* from entity as ent WHERE ent.etype = ? and ( LOWER(ent.text_label) LIKE LOWER( ? )  or LOWER(ent.small_label) LIKE LOWER( ? )   )";
             $valores = [ $post_data["parameters"]["etype"], $post_data["parameters"]["text_label"], $post_data["parameters"]["text_label"]];
         } else {
-            $sql = "SELECT * from entity as ent WHERE  LOWER(ent.text_label) LIKE LOWER( ? )  or LOWER(ent.small_label) LIKE LOWER( ? )  ";
+            $sql = "SELECT ent.* from entity as ent WHERE  LOWER(ent.text_label) LIKE LOWER( ? )  or LOWER(ent.small_label) LIKE LOWER( ? )  ";
             $valores = [ $post_data["parameters"]["text_label"], $post_data["parameters"]["text_label"]];           
         }
         error_log(json_encode($mysql->DataTable($sql, $valores)), 0);

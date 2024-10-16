@@ -25,6 +25,9 @@ class MapRelationshipBox():
         self.w = w;
         self.h = h;
     
+    def getText(self):
+        return self.entity.getText();
+    
     def getDirt(self):
         return self._dirt or self.entity.getDirt();
     

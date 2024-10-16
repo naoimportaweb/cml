@@ -23,8 +23,8 @@ class DialogOrganizationItem(QDialog):
             nWidth = 800;
         self.setGeometry(form.x() + form.width()/2 - nWidth/2,
             form.y() + form.height()/2 - nHeight/2, 600, 500);
-        if element == None:
-            element = graphic.addEntityItem("New Item");
+        #if element == None:
+        #    element = graphic.addEntityItem("New Item");
         self.element = element;
         self.graphic = graphic;
         self.setWindowTitle("Organization")

@@ -9,6 +9,7 @@ CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 sys.path.append( os.path.dirname( os.path.dirname( CURRENTDIR ) ) );
 
 from view.dialog_organization_item import DialogOrganizationItem;
+from classlib.configuration import Configuration
 
 class MapaOrganizationChartEngine(QWidget):
     def __init__(self, parent=None, mapa=None, form=None, max_width=5000 , max_height=3000):
@@ -63,19 +64,30 @@ class MapaOrganizationChartEngine(QWidget):
     def redraw(self):
         self.painter.begin(self.pixmap);
         self.pixmap.fill(Qt.white);
-        for elemento in self.mapa.elements:
-            elemento.recalc(self.painter);
-        for elemento in self.mapa.elements:
-            elemento.draw( self.painter );
+        self.mapa.draw(self.painter);
+        #for elemento in self.mapa.elements:
+        #    elemento.recalc(self.painter);
+        #for elemento in self.mapa.elements:
+        #    elemento.draw( self.painter );
         self.painter.end();
         self.update();
 
     def mouseDoubleClickEvent(self, event):
-        f = DialogOrganizationItem( self.form, None, self.mapa );
-        f.exec();
+        current_pos = event.position().toPoint();
+        returned = self.mapa.findByXY(current_pos.x(), current_pos.y());
+        if returned == None:
+            element = self.mapa.addEntityItem("New Item");
+            if element != False:
+                f = DialogOrganizationItem( self.form, element, self.mapa );
+                f.exec();
+        else:
+            element = self.mapa.addEntityItem("New Item", organization_chart_item_parent_id=returned.id);
+            if element != False:
+                f = DialogOrganizationItem( self.form, element, self.mapa );
+                f.exec();
         self.redraw();
         return;
-        #current_pos = event.position().toPoint();
+        #
         #buffer = self.getElement(current_pos.x(), current_pos.y());
         #if self.form != None:
         #    if buffer == None:

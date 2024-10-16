@@ -23,6 +23,9 @@ class Entity(ConnectObject):
         self.classification = [];
         self.small_label = None;
     
+    def getText(self):
+        return self.text;
+    
     def addClassification(self, classification_id, text_label, classification_item_id, text_label_choice, start_date, end_date, format_date):
         for buffer in self.classification:
             if buffer["id"] == classification_id + self.id:
@@ -47,7 +50,7 @@ class Entity(ConnectObject):
         return self.time_slices[-1];
         
     def toJson(self):
-        return { "id" : self.id,  "name" : self.name, "wikipedia" : self.wikipedia, "classification" : self.classification, "small_label" : self.small_label}
+        return { "id" : self.id, "etype" : self.etype, "name" : self.text, "data_extra" : self.data_extra, "full_description" : self.full_description, "wikipedia" : self.wikipedia, "classification" : self.classification, "small_label" : self.small_label}
 
     def toType(self, etype):
         js = self.__execute__("Entity", "to_type", {"type" : etype, "id" : self.id});
@@ -70,7 +73,8 @@ class Entity(ConnectObject):
         buffer.id = js["id"];
         buffer.etype = js["etype"];
         buffer.text = js["text_label"];
-        buffer.full_description = js["full_description"];
+        buffer.full_description = js.get("full_description");
         buffer.data_extra = js["data_extra"];
         buffer.wikipedia = js["wikipedia"];
         buffer.small_label = js["small_label"];
+        return buffer;
