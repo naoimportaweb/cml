@@ -39,15 +39,16 @@ unpad = lambda s: s[:-ord(s[len(s) - 1:])]
 class ConnectObject:
     def __init__(self):
         self.id = uuid.uuid4().hex + "_" + uuid.uuid4().hex + "_" + uuid.uuid4().hex;
-        server = Server();
+        server = Server.instancia();
         self.ip = server.ip;
         self.port = server.port;
         self.protocol = server.protocol;
     
-
     def __execute__(self, class_name, method_name, parameters, crypto_v="000"):
-        server = Server();
-        envelop = { "version" : "001", "class" : class_name, "method" :  method_name, "token" : ""}
+        server = Server.instancia();
+        if server.ip == "":
+            return None;
+        envelop = { "version" : "001", "class" : class_name, "method" :  method_name, "token" : "", "domain" : server.domain}
         if crypto_v == "000":
             envelop["parameters"] = "00000000" + json.dumps(parameters);
         elif crypto_v == "001":
@@ -59,10 +60,13 @@ class ConnectObject:
         #    envelop["parameters"] = "00000002" + json.dumps(parameters);
         envelop["session"] = server.token;
         url = self.ip +"/cml/services/execute.php";
+        #url = "http://127.0.0.1/cml/services/execute.php";
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'};
         r = requests.post(url, data=json.dumps(envelop), headers=headers);
         try:
             retorno_json = json.loads(r.text.strip());
+            if type(retorno_json["return"]) == None:
+                raise Exception("return None");
             if type(retorno_json["return"]) == type(""):
                 retorno_body = retorno_json["return"][8:];
                 retorno_json["return"] = json.loads(base64.b64decode( retorno_body ) );

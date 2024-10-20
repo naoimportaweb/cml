@@ -7,23 +7,23 @@ require_once dirname(dirname(dirname(__DIR__))) . "/api/mysql.php";
 class OrganizationChart
 {
 
-    public function load( $ip, $user, $post_data ) {
-        $mysql = new Mysql("");
+    public function load( $ip, $user, $post_data, $domain ) {
+        $mysql = new Mysql( $domain );
         
         return $buffer_diagram;
     }
 
 
 
-    public function create( $ip, $user, $post_data ) {
-        $mysql = new Mysql("");
+    public function create( $ip, $user, $post_data, $domain ) {
+        $mysql = new Mysql( $domain );
         $sql = "INSERT INTO organization_chart (id, organization_id, text_label, person_id) values(?, ?, ?, ?)";
         $valores = [$post_data["parameters"]["id"], $post_data["parameters"]["organization_id"]  , $post_data["parameters"]["text_label"], $user->id ];
         return $mysql->ExecuteNoQuery($sql, $valores);
     }    
 
-    public function save($ip, $user, $post_data ){
-        $mysql = new Mysql("");
+    public function save($ip, $user, $post_data, $domain ){
+        $mysql = new Mysql( $domain );
         $sqls = array();
         $valuess = array();
 

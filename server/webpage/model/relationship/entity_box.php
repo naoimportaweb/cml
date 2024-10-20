@@ -8,6 +8,7 @@ class EntityBox{
     private $entity_id = null;
     private $etype = null;
     private $mapa = null;
+    private $domain = null;
     private $x = null;
     private $y = null;
     private $h = null;
@@ -22,7 +23,8 @@ class EntityBox{
     private $to_entity = [];
     private $from_entity = [];
 
-    function __construct($mapa) { 
+    function __construct($mapa, $domain) {
+        $this->domain = $domain; 
         $this->mapa = $mapa;
     }
 
@@ -67,12 +69,12 @@ class EntityBox{
     }
 
     public function loadReferences(){
-        $mysql = new Mysql("");
+        $mysql = new Mysql( $this->domain );
         $this->references = $mysql->DataTable("SELECT drer.id, drer.title, drer.link1, drer.link2, drer.link3 FROM diagram_relationship_element_reference AS drer where drer.entity_id = ?", [ $this->entity_id]);
     }
 
     public function loadLinks(){
-        $mysql = new Mysql("");
+        $mysql = new Mysql( $this->domain );
         if( $this->etype == "link" ){
             $buffer_elements_from = $mysql->DataTable("SELECT drl.diagram_relationship_element_id as id FROM diagram_relationship_link AS drl where drl.diagram_relationship_element_id_reference = ? and ltype = 1", [ $this->id ]);
             $buffer_elements_to = $mysql->DataTable("SELECT drl.diagram_relationship_element_id as id FROM diagram_relationship_link AS drl where drl.diagram_relationship_element_id_reference = ? and ltype = 2", [ $this->id ]);

@@ -1,4 +1,11 @@
 {
-    "connection" : { "host" : "127.0.0.1", "user" : "root", "password" : "123456", "name" : "cml", "port" : 3306 },
-     "crypto" : {"path" : "/var/certs/"} 
+    "version" : "1",
+    "domains" : ["producao", "academia"],
+    "default" : "producao",
+    "connections" :
+    {
+        "producao" :  { "host" : "127.0.0.1", "user" : "root", "password" : "123456", "name" : "cml", "port" : 3306 } ,
+        "academia" :  { "host" : "127.0.0.1", "user" : "root", "password" : "123456", "name" : "cml", "port" : 3306 } 
+    },
+    "crypto" : {"path" : "/var/certs/"}
 }

@@ -4,8 +4,8 @@ require_once dirname(dirname(__DIR__)) . "/model/relationship/relationship.php";
 class RelationshipController{
     private $mapa = null;
     private $loaded = false;
-    function __construct($id) { 
-        $this->mapa = new Relationship( $id );
+    function __construct($id, $domain) { 
+        $this->mapa = new Relationship( $id , $domain );
         $this->mapa->recalculateFrame();
     }
 

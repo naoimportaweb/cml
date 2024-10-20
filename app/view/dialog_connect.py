@@ -3,7 +3,7 @@ import os, sys, inspect;
 from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings,
                             QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence
-from PySide6.QtWidgets import (QMessageBox, QApplication, QFileDialog, QMainWindow,
+from PySide6.QtWidgets import (QMessageBox, QApplication, QFileDialog, QMainWindow, QComboBox,
                                QMdiArea, QMessageBox, QTextEdit, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
 
 import os, sys, inspect;
@@ -17,6 +17,7 @@ from view.ui.customvlayout import CustomVLayout;
 from classlib.server import Server;
 from classlib.user import User;
 from classlib.configuration import Configuration;
+from classlib.domain import Domain;
 
 class DialogConnect(QDialog):
     def __init__(self):
@@ -45,10 +46,18 @@ class DialogConnect(QDialog):
         server_url.setProperty("class", "normal")
         layout_server.addWidget(server_url, 1, 0)
         self.txt_server = QLineEdit();
-        self.txt_server.setText( Configuration.instancia().login_server );
+        #self.txt_server.setText( Configuration.instancia().login_server );
         self.txt_server.setMinimumWidth(500);
-        layout_server.addWidget(self.txt_server, 1, 1, 1, 2)
+        #self.txt_server.editingFinished.connect(self.txt_server_finish);
+        btn_domains = QPushButton("Domains")
+        btn_domains.clicked.connect(self.btn_domains_click)
+        layout_server.addWidget(self.txt_server, 1, 1, 1, 1);
+        layout_server.addWidget(btn_domains, 1, 2, 1, 1);
+        self.combo_domains = QComboBox();
+        layout_server.addWidget(self.combo_domains, 2, 1, 1, 2);
         self.layout_principal.addLayout( "server", layout_server );
+        self.txt_server.setText( Configuration.instancia().login_server );
+        #self.txt_server_finish();
 
     def ui_login(self):
         layout_login = QGridLayout()
@@ -114,14 +123,25 @@ class DialogConnect(QDialog):
         layout_register.addWidget(btn_register_entrar, 7, 1)
         self.layout_principal.addLayout( "register", layout_register );
 
+    def btn_domains_click(self):
+        server = Server.instancia();
+        server.ip = self.txt_server.text();
+        domain = Domain();
+        list_domains = domain.list();
+        for buffer in list_domains:
+            self.combo_domains.addItem( buffer );
+        return;
+
     def btn_click_register_navegar(self):
         self.layout_principal.disable("login");
         self.layout_principal.enable("register");
+    
     def btn_click_login_navegar(self):
         self.layout_principal.enable("login");
         self.layout_principal.disable("register");       
+    
     def btn_click_register_entrar(self):
-        server = Server();
+        server = Server.instancia();
         server.ip = self.txt_server.text();
         user = User(self.txt_register_username.text());
         try:
@@ -141,9 +161,11 @@ class DialogConnect(QDialog):
             msgBox = QMessageBox();
             msgBox.setText( str(repr(error)) );
             msgBox.exec();
+    
     def btn_click_login_entrar(self):
-        server = Server();
+        server = Server.instancia();
         server.ip = self.txt_server.text();
+        server.domain = self.combo_domains.currentText();
         user = User(self.txt_login_username.text());
         buffer_public_pem = user.publickey() ;
         if buffer_public_pem != None:

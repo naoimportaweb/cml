@@ -92,7 +92,6 @@ class DialogOrganizationItem(QDialog):
     def table_ele_load(self):
         self.table_ele.setRowCount( len( self.element.entitys ) );
         for i in range(len( self.element.entitys )):
-            print(self.element.entitys[i]["entity"]);
             self.table_ele.setItem( i, 0, QTableWidgetItem( self.element.entitys[i]["entity"].text ) );
             self.table_ele.setItem( i, 1, QTableWidgetItem( self.element.entitys[i]["entity"].etype ) );
         return; 

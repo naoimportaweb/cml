@@ -41,7 +41,6 @@ class OrganizationChart(ConnectObject):
 
     def save(self):
         objeto = self.toJson();
-        print("Salve: ", objeto);
         js = self.__execute__("OrganizationChart", "save", objeto);
         if js["status"]:
             return js["return"];

@@ -15,12 +15,20 @@ class Mysql
     var $action = false;
     
     function __construct($config) {
+        $buffer_json = Json::FromFile_v2(dirname(__DIR__) . "/data/config.json");
         if( $config == "" ) {
-            $config = Json::FromFile(dirname(__DIR__) . "/data/config.json");
+            $config = $buffer_json["connections"]["default"];
+        } else {
+            $config = $buffer_json["connections"][ $config ];
         }
         $this->CONFIG = $config;
     }
 
+    public static function domains(){
+        $buffer_json = Json::FromFile_v2(dirname(__DIR__) . "/data/config.json");
+        return $buffer_json["domains"];
+    }
+    
     function gen_uuid() {
         return sprintf( '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
         mt_rand( 0, 0xffff ), 
@@ -43,7 +51,7 @@ class Mysql
         {
             if($this->con == null){
                 $port = 3306;
-                $this->con = new PDO('mysql:host=' . $this->CONFIG->connection->host . ';port='. $port .';charset=utf8;dbname=' . $this->CONFIG->connection->name, $this->CONFIG->connection->user, $this->CONFIG->connection->password);
+                $this->con = new PDO('mysql:host=' . $this->CONFIG["host"] . ';port='. $port .';charset=utf8;dbname=' . $this->CONFIG["name"], $this->CONFIG["user"], $this->CONFIG["password"]);
                 $this->con->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             }
             return $this->con;
@@ -154,14 +162,11 @@ class Mysql
     public function Datatable($sql, $values){
         try{
             //$this->Connection()->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            //error_log($sql, 0);
-            //error_log(json_encode($values), 0);
             $query = $this->Connection()->prepare($sql);
             $query->execute($values);
             return $query->fetchAll(PDO::FETCH_ASSOC);
 
         }catch(Exception $e){
-            //throw $e;
             throw new Exception('Erro: ' .  $e->getMessage() . " - " . $sql);
         } finally {
             //if($this->action == false) {

@@ -138,6 +138,43 @@ create table diagram_relationship_document(
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
 );
 
+
+create table organization_chart( 
+    id VARCHAR(128) PRIMARY KEY,
+    text_label VARCHAR(255) NOT NULL,
+    organization_id VARCHAR(128) NOT NULL,
+    person_id VARCHAR(128) NOT NULL,
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
+
+create table organization_chart_item( 
+    id VARCHAR(128) PRIMARY KEY,
+    text_label VARCHAR(255) NOT NULL,
+    etype VARCHAR(255) NOT NULL,
+    organization_chart_id VARCHAR(128) NOT NULL,
+    organization_chart_item_parent_id VARCHAR(128) NOT NULL,
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
+
+create table organization_chart_item_entity( 
+    id VARCHAR(128) PRIMARY KEY,
+    organization_chart_item_id VARCHAR(128) NOT NULL,
+    entity_id VARCHAR(128) NOT NULL,
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
+
+create table organization_chart_history (
+    id VARCHAR(128) PRIMARY KEY,
+    person_id VARCHAR(128) NOT NULL,
+    organization_chart_id VARCHAR(128) NOT NULL,
+    json LONGTEXT NOT NULL,
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
+
 ALTER TABLE diagram_relationship_document ADD FOREIGN KEY (document_type_id) REFERENCES document_type(id);
 ALTER TABLE diagram_relationship_document ADD FOREIGN KEY (diagram_relationship_id) REFERENCES diagram_relationship(id);
 ALTER TABLE diagram_relationship_history ADD FOREIGN KEY (diagram_relationship_id) REFERENCES diagram_relationship(id);
@@ -154,6 +191,16 @@ ALTER TABLE diagram_relationship_link ADD FOREIGN KEY (diagram_relationship_elem
 ALTER TABLE diagram_relationship_link ADD FOREIGN KEY (diagram_relationship_element_id_reference) REFERENCES diagram_relationship_element(id);
 ALTER TABLE person ADD CONSTRAINT UniqueUsername UNIQUE (username); 
 ALTER TABLE person ADD CONSTRAINT UniqueEmail UNIQUE (email); 
+ALTER TABLE organization_chart ADD FOREIGN KEY (organization_id) REFERENCES entity(id);
+ALTER TABLE organization_chart ADD FOREIGN KEY (person_id) REFERENCES person(id);
+ALTER TABLE organization_chart_item ADD FOREIGN KEY (organization_chart_id) REFERENCES organization_chart(id);
+ALTER TABLE organization_chart_item ADD FOREIGN KEY (organization_chart_item_parent_id) REFERENCES organization_chart_item(id);
+ALTER TABLE organization_chart_item_entity ADD FOREIGN KEY (organization_chart_item_id) REFERENCES organization_chart_item(id);
+ALTER TABLE organization_chart_item_entity ADD FOREIGN KEY (entity_id) REFERENCES entity(id);
+ALTER TABLE organization_chart_history ADD FOREIGN KEY (organization_chart_id) REFERENCES organization_chart(id);
+ALTER TABLE organization_chart_history ADD FOREIGN KEY (person_id) REFERENCES person(id);
+
+
 
 # --------------------------- LIMPANDO -------------------------
 
@@ -214,54 +261,4 @@ drop table person;
 
 
 # ------------- HOMOLOGAÇAO -------------------------------
-INSERT INTO classification_item(id, classification_id, text_label) values('14', '1', 'Centro');
-
-
-create table organization_chart( 
-    id VARCHAR(128) PRIMARY KEY,
-    text_label VARCHAR(255) NOT NULL,
-    organization_id VARCHAR(128) NOT NULL,
-    person_id VARCHAR(128) NOT NULL,
-    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
-    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
-);
-
-create table organization_chart_item( 
-    id VARCHAR(128) PRIMARY KEY,
-    text_label VARCHAR(255) NOT NULL,
-    etype VARCHAR(255) NOT NULL,
-    organization_chart_id VARCHAR(128) NOT NULL,
-    organization_chart_item_parent_id VARCHAR(128) NOT NULL,
-    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
-    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
-);
-
-create table organization_chart_item_entity( 
-    id VARCHAR(128) PRIMARY KEY,
-    organization_chart_item_id VARCHAR(128) NOT NULL,
-    entity_id VARCHAR(128) NOT NULL,
-    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
-    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
-);
-
-ALTER TABLE organization_chart ADD FOREIGN KEY (organization_id) REFERENCES entity(id);
-ALTER TABLE organization_chart ADD FOREIGN KEY (person_id) REFERENCES person(id);
-ALTER TABLE organization_chart_item ADD FOREIGN KEY (organization_chart_id) REFERENCES organization_chart(id);
-ALTER TABLE organization_chart_item ADD FOREIGN KEY (organization_chart_item_parent_id) REFERENCES organization_chart_item(id);
-ALTER TABLE organization_chart_item_entity ADD FOREIGN KEY (organization_chart_item_id) REFERENCES organization_chart_item(id);
-ALTER TABLE organization_chart_item_entity ADD FOREIGN KEY (entity_id) REFERENCES entity(id);
-
-create table organization_chart_history (
-    id VARCHAR(128) PRIMARY KEY,
-    person_id VARCHAR(128) NOT NULL,
-    organization_chart_id VARCHAR(128) NOT NULL,
-    json LONGTEXT NOT NULL,
-    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
-    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
-);
-
-ALTER TABLE organization_chart_history ADD FOREIGN KEY (organization_chart_id) REFERENCES organization_chart(id);
-ALTER TABLE organization_chart_history ADD FOREIGN KEY (person_id) REFERENCES person(id);
-
-
 

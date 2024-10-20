@@ -82,7 +82,6 @@ class DialogDiagramChoice(QDialog):
     
     def txt_organization_name_finish(self):
         self.entitys = Entity.search("organization", "%" + self.txt_organization_name.text() + "%");
-        print(self.entitys);
         self.table_organization_search.setRowCount( len( self.entitys ) );
         for i in range(len( self.entitys )):
             self.table_organization_search.setItem( i, 0, QTableWidgetItem( self.entitys[i]["text_label"] ) );

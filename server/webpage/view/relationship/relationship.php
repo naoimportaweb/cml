@@ -148,8 +148,8 @@ function callbackMap(js){
   drawMapa(js);
 }
 
-function getMap(id, callback){
-   $.ajax({url : "../../service/relationship_load.php?id=" + id, success: function(result){
+function getMap(id, domain, callback){
+   $.ajax({url : "../../service/relationship_load.php?id=" + id + "&domain=" + domain , success: function(result){
       callback( JSON.parse( result ) );
     }});
 }
@@ -168,7 +168,7 @@ function openRelatinship(evt, element_selected_id, tablinks_id, tabcontents_id) 
   evt.currentTarget.className += " active";
 }
 
-getMap( '<?php echo $_GET["id"]; ?>', callbackMap );
+getMap( '<?php echo $_GET["id"]; ?>,<?php echo $_GET["domain"]; ?>', callbackMap );
 </script>
    
 </body>

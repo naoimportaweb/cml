@@ -24,7 +24,7 @@ $part = explode("/", $_SERVER["REQUEST_URI"]);
 
 $post_data = json_decode(file_get_contents('php://input'), true); 
 //(class, version, method, parameters) // OR //(public_key)
-//error_log("Chegou:" . file_get_contents('php://input'), 0);
+error_log("Chegou:" . file_get_contents('php://input'), 0);
 
 
 $token_request = md5(uniqid(rand(), true));
@@ -41,12 +41,15 @@ try{
 
     $return_metehod = "";
     // chamar os métodos, alguns sao fixos pela logica, os outros são dinamicos pelo uso.
-    if( $post_data["class"] == "Session" && $post_data["method"] == "publickey" ) {
+    if( $post_data["class"] == "Domain" && $post_data["method"] == "list" ) {
         $post_data["parameters"] = json_decode(  substr($post_data["parameters"], 8), true ) ;
-        $return_metehod = $session->publickey($post_data);
+        $return_metehod = array("domains" => Mysql::domains() , "version" => "" );
+    } else if( $post_data["class"] == "Session" && $post_data["method"] == "publickey" ) {
+        $post_data["parameters"] = json_decode(  substr($post_data["parameters"], 8), true ) ;
+        $return_metehod = $session->publickey($post_data, $post_data["domain"]); 
     } else if( $post_data["class"] == "Session" && $post_data["method"] == "login" ) {
         $post_data["parameters"] = json_decode(  substr($post_data["parameters"], 8), true ) ;
-        $return_metehod = $session->login($post_data["parameters"]["username"], $post_data["parameters"]["password"], $post_data["parameters"]["simetric_key"]); 
+        $return_metehod = $session->login($post_data["parameters"]["username"], $post_data["parameters"]["password"], $post_data["parameters"]["simetric_key"], $post_data["domain"]); 
         $return_metehod = $session->encrypt($post_data["parameters"]["simetric_key"], "000", json_encode( $return_metehod )); // aqui mandei para 000 para tirar a criptotgrafia de retorno...
     } else if( $post_data["class"] == "Session" && $post_data["method"] == "register" ) {
         $post_data["parameters"] = json_decode(  substr($post_data["parameters"], 8), true ) ;
@@ -55,16 +58,16 @@ try{
         // -------------------- FORCAR O CARREGAMENTO AQUI ENQUATNO NAO FAÇO SISTEMA DE LOGIN
         $post_data["parameters"] = substr($post_data["parameters"], 8);
         $post_data["parameters"] = json_decode(  $post_data["parameters"], true );
-        $person_session = $session->getKeyDecrypt($post_data["session"]);
+        $person_session = $session->getKeyDecrypt($post_data["session"], $post_data["domain"]);
         $user = new User();
-        $user->load($person_session["person_id"]);
+        $user->load($person_session["person_id"], $post_data["domain"]); 
         //-------------------------------------------------------------------------
         require_once __DIR__ . "/classlib/". $post_data["class"] . "/" . $post_data["version"] . ".php";
         $class = $post_data["class"];
         $method = $post_data["method"];
-        $return_metehod = (new $class)->$method( $ip, $user, $post_data  );        
+        $domain = $post_data["domain"];
+        $return_metehod = (new $class)->$method( $ip, $user, $post_data, $domain  );        
     }
-    //error_log( json_encode($return_metehod), 0);
     $agora = (new \DateTime());
     $post_data["status"] = true;
     $post_data["return"] = $return_metehod;

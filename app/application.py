@@ -24,7 +24,7 @@ from view.dialog_relationship import DialogRelationship;
 from view.dialog_diagram_choice import DialogDiagramChoice;
 from view.dialog_diagram_load import DialogDiagramLoad;
 from view.dialog_relationship_edit import DialogRelationshipEdit
-from view.dialogconnect import DialogConnect;
+from view.dialog_connect import DialogConnect;
 from classlib.server import Server;
 
 class MainWindow(QMainWindow):

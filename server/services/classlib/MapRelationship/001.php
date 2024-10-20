@@ -11,8 +11,8 @@ class MapRelationship
     private $keyword = "";
     private $person_id = "";
 
-    public function load( $ip, $user, $post_data ) {
-        $mysql = new Mysql("");
+    public function load( $ip, $user, $post_data, $domain ) {
+        $mysql = new Mysql( $domain );
         $buffer_diagram =  $mysql->DataTable("SELECT * from diagram_relationship where id = ?", [ $post_data["parameters"]["id"] ])[0];
         $buffer_diagram["elements"] = array();
         $buffer_diagram["lock"] = array();
@@ -34,7 +34,7 @@ class MapRelationship
         $buffer_diagram["lock"] = $mysql->DataTable("SELECT drl.lock_time, per.username FROM diagram_relationship_lock as drl inner join person as per on drl.person_id = per.id where diagram_relationship_id = ? order by lock_time DESC LIMIT 5", [ $post_data["parameters"]["id"] ]);
         
         $buffer_diagram["locked"] = false;
-        $lock = $this->has_lock($post_data["parameters"]["id"]);
+        $lock = $this->has_lock($post_data["parameters"]["id"], $domain);
         if( $lock != null ){
             if( $lock["person_id"] != $user->id ) {
                 $buffer_diagram["locked"] = true;
@@ -53,8 +53,8 @@ class MapRelationship
         $this->date_lock = $datatable["date_lock"];
     }
 
-    public function create( $ip, $user, $post_data ) {
-        $mysql = new Mysql("");
+    public function create( $ip, $user, $post_data, $domain ) {
+        $mysql = new Mysql( $domain );
         $this->id = $post_data["parameters"]["id"];
         $this->name = $post_data["parameters"]["name"];
         $this->keyword = $post_data["parameters"]["keyword"];
@@ -64,8 +64,8 @@ class MapRelationship
         return $mysql->ExecuteNoQuery($sql, $valores);
     }    
 
-    public function has_lock($diagram_relationship_id){
-        $mysql = new Mysql("");
+    public function has_lock($diagram_relationship_id, $domain){
+        $mysql = new Mysql( $domain );
         $buffer_lock = $mysql->DataTable("SELECT per.id as person_id, drl.lock_time as lock_time, per.username FROM diagram_relationship_lock as drl inner join person as per on drl.person_id = per.id where drl.diagram_relationship_id = ? order by lock_time DESC LIMIT 1", [ $diagram_relationship_id ]);
         if( count( $buffer_lock ) > 0 ) {
             $date_lock = DateTime::createFromFormat("Y-m-d H:i:s",$buffer_lock[0]["lock_time"]);
@@ -77,9 +77,9 @@ class MapRelationship
         return null;
     }
 
-    public function lock_map( $ip, $user, $post_data ) {
-        $mysql = new Mysql("");
-        if( $this->has_lock($post_data["parameters"]["diagram_relationship_id"]) != null ){
+    public function lock_map( $ip, $user, $post_data, $domain ) {
+        $mysql = new Mysql( $domain );
+        if( $this->has_lock($post_data["parameters"]["diagram_relationship_id"], $domain) != null ){
             return [];
         }
         $date = new DateTime(); //now
@@ -93,30 +93,24 @@ class MapRelationship
         return $buffer;
     } 
 
-    public function unlock_map( $ip, $user, $post_data ) {
-        $mysql = new Mysql("");
-        #$buffer_diagram_lock =  $mysql->DataTable("SELECT * from diagram_relationship_lock where person_id = ? and diagram_relationship_id = ? order by lock_time DESC", [ $user->id, $post_data["parameters"]["id"] ])[0];
+    public function unlock_map( $ip, $user, $post_data, $domain ) {
+        $mysql = new Mysql( $domain );
         $sql = "delete from diagram_relationship_lock where person_id = ? and diagram_relationship_id = ?";
         $valores = [ $user->id ,$post_data["parameters"]["diagram_relationship_id"] ];
         return count($mysql->DataTable($sql, $valores) ) > 0;
     } 
 
-    public function exists( $ip, $user, $post_data ) {
-        $mysql = new Mysql("");
+    public function exists( $ip, $user, $post_data, $domain ) {
+        $mysql = new Mysql( $domain );
         $sql = "SELECT * FROM diagram_relationship WHERE id <> ? and name = ?";
         $valores = [$post_data["parameters"]["id"], $post_data["parameters"]["name"]];
         return count($mysql->DataTable($sql, $valores) ) > 0;
     } 
 
-    //public function search( $ip, $user, $post_data ) {
-    //    $mysql = new Mysql("");
-    //    $sql = "SELECT dr.*, pe.username FROM diagram_relationship as dr inner join person as pe on pe.id = dr.person_id WHERE LOWER(dr.name) LIKE LOWER( ? ) or LOWER(dr.keyword) LIKE LOWER( ? )";
-    //    $valores = [ $post_data["parameters"]["name"], $post_data["parameters"]["name"]];
-    //    return $mysql->DataTable($sql, $valores);
-    //}
 
-    public function search_entity( $ip, $user, $post_data ) {
-        $mysql = new Mysql("");
+
+    public function search_entity( $ip, $user, $post_data, $domain ) {
+        $mysql = new Mysql( $domain );
         $sql = "SELECT * FROM entity  where etype <> 'link' and LOWER(text_label) LIKE LOWER( ? )";
         $valores = [ $post_data["parameters"]["name"]];
         $entitys = $mysql->DataTable($sql, $valores);
@@ -127,12 +121,12 @@ class MapRelationship
         return $entitys;
     }
     
-    public function save($ip, $user, $post_data ){
-        $mysql = new Mysql("");
+    public function save($ip, $user, $post_data, $domain ){
+        $mysql = new Mysql( $domain );
         $sqls = array();
         $valuess = array();
 
-        $lock = $this->has_lock($post_data["parameters"]["id"]);
+        $lock = $this->has_lock($post_data["parameters"]["id"], $domain);
         if( $lock != null ){
             if( $lock["person_id"] != $user->id ) {
                 return false;

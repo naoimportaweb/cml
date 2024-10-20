@@ -37,20 +37,20 @@ class Session
         }
     }
 
-    public function exists( $username ) {
-        $mysql = new Mysql("");
+    public function exists( $username, $domain ) {
+        $mysql = new Mysql( $domain );
         $buffer = $mysql->DataTable("select * from person where username = ? ", [$username]);
         return count($buffer) > 0;
     }
 
-    //public function exists( $ip, $user, $post_data ) {
+    //public function exists( $ip, $user, $post_data, $domain ) {
     //    return array( "status" => $this->__exists($post_data["parameters"]["username"]) );
     //}
 
-    public function register( $ip, $user, $post_data ) {
-        $mysql = new Mysql("");
+    public function register( $ip, $user, $post_data, $domain ) {
+        $mysql = new Mysql( $domain );
         $person_enter = $mysql->DataTable("select * from person_enter where person_id is null and key_enter = ? ", [$post_data["parameters"]["invitation"]]);
-        if ($this->exists($post_data["parameters"]["username"] )) {
+        if ($this->exists($post_data["parameters"]["username"], $domain )) {
             // usuario já existe
             return array( "status" => false, "mensage" => "Usuário já existe." );
         } else {
@@ -72,15 +72,15 @@ class Session
         }
     }
 
-    function publickey($post_data){
-        $mysql = new Mysql("");
+    function publickey($post_data, $domain){
+        $mysql = new Mysql( $domain );
         $sql = "select salt from person where username=?";
         $salt = $mysql->DataTable($sql, [ $post_data["parameters"]["username"] ]) [0]["salt"];
         return array( "public" => $this->public_key, "salt" => $salt ) ; 
     }
 
-    function login( $username, $password, $simetric_key){
-        $mysql = new Mysql("");
+    function login( $username, $password, $simetric_key, $domain){
+        $mysql = new Mysql( $domain, $domain );
         $sql = "select * from person where username=? and password=?";
 
         $user_databse = $mysql->DataTable( $sql, [ $username, $password ])[0];
@@ -113,9 +113,7 @@ class Session
         }  
         if( $alg == "002") {
             return $encrypted ;
-            //error_log("Decriptar: " . $encrypted, 0);
             //$decrypted = AesHelper::decrypt($encrypted, $token);
-            //error_log("Decriptado final: " . $decrypted, 0);
             //return $decrypted;
         }        
     }
@@ -136,8 +134,8 @@ class Session
 
     
 
-    public function getKeyDecrypt( $session_id ) {
-        $mysql = new Mysql("");
+    public function getKeyDecrypt( $session_id, $domain ) {
+        $mysql = new Mysql( $domain );
         return $mysql->DataTable("select * from person_sesion where id = ? ", [$session_id])[0];
     }
 
