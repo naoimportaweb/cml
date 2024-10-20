@@ -24,7 +24,7 @@ class DialogConnect(QDialog):
         super().__init__()
         self.resize(600, 320);
         config = Configuration.instancia();
-        
+        self.list_domains = [];
         self.setWindowTitle("Connect")
         self.layout_principal = CustomVLayout();
         self.setLayout( self.layout_principal );
@@ -46,14 +46,13 @@ class DialogConnect(QDialog):
         server_url.setProperty("class", "normal")
         layout_server.addWidget(server_url, 1, 0)
         self.txt_server = QLineEdit();
-        #self.txt_server.setText( Configuration.instancia().login_server );
         self.txt_server.setMinimumWidth(500);
-        #self.txt_server.editingFinished.connect(self.txt_server_finish);
         btn_domains = QPushButton("Domains")
         btn_domains.clicked.connect(self.btn_domains_click)
         layout_server.addWidget(self.txt_server, 1, 1, 1, 1);
         layout_server.addWidget(btn_domains, 1, 2, 1, 1);
         self.combo_domains = QComboBox();
+        self.combo_domains.currentIndexChanged.connect(self.combo_domains_changed)
         layout_server.addWidget(self.combo_domains, 2, 1, 1, 2);
         self.layout_principal.addLayout( "server", layout_server );
         self.txt_server.setText( Configuration.instancia().login_server );
@@ -95,12 +94,15 @@ class DialogConnect(QDialog):
         token_register = QLabel("Invitation token")
         token_register.setProperty("class", "normal")
         layout_register.addWidget(token_register, 2, 0)
+        
+        # somente exibir se é obrigatório o token de convite, caso contrário náo inserir.
         self.txt_register_token = QLineEdit()
         self.txt_register_token.setEchoMode(QLineEdit.EchoMode.Password)
         layout_register.addWidget(self.txt_register_token, 2, 1, 1, 2)
         pwd_register = QLabel("Password")
         pwd_register.setProperty("class", "normal")
         layout_register.addWidget(pwd_register, 3, 0)
+
         self.txt_register_password = QLineEdit()
         self.txt_register_password.setEchoMode(QLineEdit.EchoMode.Password)
         layout_register.addWidget(self.txt_register_password, 3, 1, 1, 2)
@@ -123,13 +125,16 @@ class DialogConnect(QDialog):
         layout_register.addWidget(btn_register_entrar, 7, 1)
         self.layout_principal.addLayout( "register", layout_register );
 
+    def combo_domains_changed(self):
+        self.txt_register_token.setEnabled( self.list_domains[ self.combo_domains.currentIndex() ]["restricted"] );
+
     def btn_domains_click(self):
         server = Server.instancia();
         server.ip = self.txt_server.text();
         domain = Domain();
-        list_domains = domain.list();
-        for buffer in list_domains:
-            self.combo_domains.addItem( buffer );
+        self.list_domains = domain.list();
+        for buffer in self.list_domains:
+            self.combo_domains.addItem( buffer["name"] );
         return;
 
     def btn_click_register_navegar(self):
@@ -143,13 +148,16 @@ class DialogConnect(QDialog):
     def btn_click_register_entrar(self):
         server = Server.instancia();
         server.ip = self.txt_server.text();
+        server.domain = self.list_domains[ self.combo_domains.currentIndex() ]["name"];
         user = User(self.txt_register_username.text());
         try:
             if self.txt_register_password.text() != self.txt_register_password_2.text():
                 raise Exception("O password informado não é igual ao teste.");
-            if self.txt_register_token.text().strip() == "" or self.txt_register_password.text().strip() == "" or self.txt_register_username.text().strip() == "" or self.txt_register_mail.text().strip() == "":
-                raise Exception("Informe todos os dados.");  
-            #
+
+            if self.list_domains[ self.combo_domains.currentIndex() ]["restricted"]:
+                if self.txt_register_token.text().strip() == "" or self.txt_register_password.text().strip() == "" or self.txt_register_username.text().strip() == "" or self.txt_register_mail.text().strip() == "":
+                    raise Exception("Informe todos os dados.");  
+
             if user.register( self.txt_register_username.text(), self.txt_register_password.text(), self.txt_register_mail.text(), self.txt_register_token.text() ) == True:
                 self.layout_principal.disable("register");
                 self.layout_principal.enable("login");
@@ -165,7 +173,7 @@ class DialogConnect(QDialog):
     def btn_click_login_entrar(self):
         server = Server.instancia();
         server.ip = self.txt_server.text();
-        server.domain = self.combo_domains.currentText();
+        server.domain = self.list_domains[ self.combo_domains.currentIndex() ]["name"];
         user = User(self.txt_login_username.text());
         buffer_public_pem = user.publickey() ;
         if buffer_public_pem != None:

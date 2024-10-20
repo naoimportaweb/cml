@@ -1,12 +1,9 @@
 import os, sys, inspect;
 
-from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QDate,
-                            QSaveFile, QTextStream, Qt, Slot)
+from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QDate, QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence
-from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QTabWidget, QComboBox, QTableWidgetItem, QHeaderView,
-                               QMdiArea, QMessageBox, QTextEdit, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
+from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QTabWidget, QComboBox, QTableWidgetItem, QHeaderView, QMdiArea, QMessageBox, QTextEdit, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
 
-import os, sys, inspect;
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
 ROOT = os.path.dirname( CURRENTDIR );
 sys.path.append( ROOT );
@@ -71,7 +68,7 @@ class DialogEntityOther(QDialog):
         btn_class_add.clicked.connect(self.btn_class_add_click);
         btn_class_del.clicked.connect(self.btn_class_del_click);
         CustomVLayout.widget_linha(self, self.page_cls, [btn_class_add, btn_class_del] );
-        #self.table_class = CustomVLayout.widget_tabela(self, ["Classification", "Value"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch], double_click=self.table_class_click);
+        
         self.table_class = CustomVLayout.widget_tabela(self, ["Classification", "Value", "Start", "End"], tamanhos=[QHeaderView.Stretch,QHeaderView.Stretch,QHeaderView.Stretch, QHeaderView.Stretch], double_click=self.table_class_click);
         self.page_cls.addWidget(self.table_class);
         self.table_class_load();

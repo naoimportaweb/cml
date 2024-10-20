@@ -6,6 +6,7 @@
 require_once dirname(dirname(__DIR__)) . "/api/mysql.php";
 require_once dirname(dirname(__DIR__)) . "/api/aeshelper.php";
 require_once dirname(dirname(__DIR__)) . "/api/json.php";
+require_once __DIR__ . "/Domain/001.php";
 
 class Session
 {
@@ -49,27 +50,43 @@ class Session
 
     public function register( $ip, $user, $post_data, $domain ) {
         $mysql = new Mysql( $domain );
-        $person_enter = $mysql->DataTable("select * from person_enter where person_id is null and key_enter = ? ", [$post_data["parameters"]["invitation"]]);
+        // CONVITE, AGORA NÁO É MAIS OBRIGATÓRIO, TEM QUE OLHAR NO JSON DE CONFIGURACAO CONFIG.JSON
         if ($this->exists($post_data["parameters"]["username"], $domain )) {
-            // usuario já existe
             return array( "status" => false, "mensage" => "Usuário já existe." );
         } else {
-            if (count($person_enter) > 0) {
-                $user_id = $mysql->gen_uuid();
-                $sql1 = "INSERT INTO person(id, name, username, password, salt, email) values( ?, ?, ?, ?, ?, ?);";
-                $valores1 = [ $user_id , $post_data["parameters"]["username"], $post_data["parameters"]["username"],$post_data["parameters"]["password"],$post_data["parameters"]["salt"],$post_data["parameters"]["email"]];
-                $sql2 = "UPDATE person_enter set person_id= ? where key_enter = ?";
-                $valores2 = [ $user_id,  $post_data["parameters"]["invitation"]];
-                if( $mysql->ExecuteNoQuery( [$sql1, $sql2], [$valores1, $valores2] ) > 0) {
-                    return array( "status" => true, "mensage" => "Realize o Login" );
-                } else {
+            $domain_json = Domain::domain(  $domain );
+            if( $domain_json == null ){
+                return array( "status" => false, "mensage" => "Não foi possível realizar cadastro." );
+            }
+            if( $domain_json["restricted"] ){
+                $person_enter = $mysql->DataTable("select * from person_enter where person_id is null and key_enter = ? ", [$post_data["parameters"]["invitation"]]);
+                if (count($person_enter) == 0) {
                     return array( "status" => false, "mensage" => "Convite inválido" );
                 }
+            }
+
+            $user_id = $mysql->gen_uuid();
+            $sqlss   = [];
+            $valuess = [];
+            
+            $sql1 = "INSERT INTO person(id, name, username, password, salt, email) values( ?, ?, ?, ?, ?, ?);";
+            $valores1 = [ $user_id , $post_data["parameters"]["username"], $post_data["parameters"]["username"],$post_data["parameters"]["password"],$post_data["parameters"]["salt"],$post_data["parameters"]["email"]];
+            array_push($sqlss, $sql1);
+            array_push($valuess, $valores1);
+
+            if( $domain_json["restricted"] ){
+                $sql2 = "UPDATE person_enter set person_id= ? where key_enter = ?";
+                $valores2 = [ $user_id,  $post_data["parameters"]["invitation"]];
+                array_push($sqlss,   $sql2);
+                array_push($valuess, $valores2);
+            }
+            
+            if( $mysql->ExecuteNoQuery( $sqlss, $valuess ) > 0) {
+                return array( "status" => true, "mensage" => "Realize o Login" );
             } else {
-                // infelizmente nao tem convite para engrar
                 return array( "status" => false, "mensage" => "Convite inválido" );
             }
-        }
+        } // else do usuário já existe
     }
 
     function publickey($post_data, $domain){

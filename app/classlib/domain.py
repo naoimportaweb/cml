@@ -13,6 +13,6 @@ class Domain(ConnectObject):
     def list(self):
         js = self.__execute__("Domain", "list", {"id" : self.id});
         if js["status"]:
-            return js["return"]["domains"];
+            return js["return"];
         return False;
 

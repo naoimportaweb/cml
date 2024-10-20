@@ -205,16 +205,6 @@ ALTER TABLE organization_chart_history ADD FOREIGN KEY (person_id) REFERENCES pe
 # --------------------------- LIMPANDO -------------------------
 
 insert into person (id, username, name, password, salt, email) values ('1', 'nao.importa.web', 'nao.importa.web', '7c61be27eec3fa7cef2e0d44d3145ea37648b0842d5574c0163b92c0bed54924', '1111', '');
-INSERT INTO person_enter(id, key_enter) values("c32648a2-a451-4571-810c-de3d6b61941c","c32648a2-a451-4571-810c-de3d6b61941c");
-INSERT INTO person_enter(id, key_enter) values("89bb1f15-9446-409d-8ef0-863f67c23437","89bb1f15-9446-409d-8ef0-863f67c23437");
-INSERT INTO person_enter(id, key_enter) values("38b196aa-c5bc-48be-a5b5-06960c10f82b","38b196aa-c5bc-48be-a5b5-06960c10f82b");
-INSERT INTO person_enter(id, key_enter) values("058641b1-09db-4a8d-b6f0-f33c6090caea","058641b1-09db-4a8d-b6f0-f33c6090caea");
-INSERT INTO person_enter(id, key_enter) values("0ba307ff-8f9a-47a0-a456-6ea5d8df2aa8","0ba307ff-8f9a-47a0-a456-6ea5d8df2aa8");
-INSERT INTO person_enter(id, key_enter) values("3302c9d3-8d7c-4d23-a212-fb0272725a08","3302c9d3-8d7c-4d23-a212-fb0272725a08");
-INSERT INTO person_enter(id, key_enter) values("672ed8cf-0bb4-4955-8de7-0a90abb17051","672ed8cf-0bb4-4955-8de7-0a90abb17051");
-INSERT INTO person_enter(id, key_enter) values("93039e72-db3f-4e74-a7e5-e787fd89b74e","93039e72-db3f-4e74-a7e5-e787fd89b74e");
-INSERT INTO person_enter(id, key_enter) values("a4545eb3-1577-47fc-b01c-9829b1ce4f8d","a4545eb3-1577-47fc-b01c-9829b1ce4f8d");
-INSERT INTO person_enter(id, key_enter) values("0d045974-afc7-4699-b116-91672117d517","0d045974-afc7-4699-b116-91672117d517");
 
 INSERT INTO classification(id, text_label) values('1', "Posicionamento Político");
 INSERT INTO classification_item(id, classification_id, text_label) values('1', '1', 'Extrema esquerda');

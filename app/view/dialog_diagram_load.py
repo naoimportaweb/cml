@@ -1,12 +1,9 @@
 import os, sys, inspect;
 
-from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings,
-                            QSaveFile, QTextStream, Qt, Slot)
+from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence
-from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QHeaderView, QTableWidgetItem,
-                               QMdiArea, QMessageBox, QTextEdit, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
+from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QHeaderView, QTableWidgetItem, QMdiArea, QMessageBox, QTextEdit, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
 
-import os, sys, inspect;
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
 ROOT = os.path.dirname( CURRENTDIR );
 
@@ -24,11 +21,9 @@ from classlib.organization_chart.organization_chart import OrganizationChart
 
 class DialogDiagramLoad(QDialog):
     def __init__(self, form):
-        super().__init__();
-        #self.resize(800, 660);
+        super().__init__(form);
+        
         nWidth = int(form.width() * 0.8); nHeight = int(form.height() * 0.6);
-        #if nWidth > 800:
-        #    nWidth = 800;
         self.setGeometry(form.x() + form.width()/2 - nWidth/2,
             form.y() + form.height()/2 - nHeight/2,
             nWidth, nHeight);

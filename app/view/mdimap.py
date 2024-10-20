@@ -14,7 +14,7 @@ from view.ui.mapa_organization_chart_engine import MapaOrganizationChartEngine;
 from view.dialogentitylink import DialogEntityLink;
 from view.dialogentityorganization import DialogEntityOrganization;
 from view.dialogentityperson import DialogEntityPerson;
-from view.dialogentityother import DialogEntityOther;
+from view.dialog_entity_other import DialogEntityOther;
 from view.dialogchoice import DialogChoiceEntity;
 
 class MdiMap(QWidget):

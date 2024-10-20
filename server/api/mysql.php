@@ -26,7 +26,11 @@ class Mysql
 
     public static function domains(){
         $buffer_json = Json::FromFile_v2(dirname(__DIR__) . "/data/config.json");
-        return $buffer_json["domains"];
+        $array_return = [];
+        for($i = 0; $i < count($buffer_json["domains"] ); $i++) {
+            array_push( $array_return, array( "name" => $buffer_json["domains"][$i], "restricted" => $buffer_json["connections"][$buffer_json["domains"][$i]]["restricted"] ));
+        }
+        return $array_return;
     }
     
     function gen_uuid() {
