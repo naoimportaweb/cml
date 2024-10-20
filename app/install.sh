@@ -23,7 +23,7 @@ fi
 
 apt update -y
 apt install python3-pip -y
-apt install libxcb-*
+apt install libxcb-* -y
 
 # para DEBIAN precisa do --break-system-packages para os outros OSs não
 pip3 install PySide6 --break-system-packages
