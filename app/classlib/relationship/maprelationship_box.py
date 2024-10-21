@@ -52,7 +52,11 @@ class MapRelationshipBox():
             buffer["entity_id"] = self.entity.id;
             objeto["time_slices"].append( buffer );
         return objeto;
-            
+    
+    def merge_to(self, old_entity_id):
+        self.entity.merge_to( old_entity_id);
+    def duplicate(self):
+        return self.entity.duplicate();   
     def setType(self, etype):
         if etype == self.entity.etype:
             return True;

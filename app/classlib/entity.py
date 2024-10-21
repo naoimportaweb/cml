@@ -22,7 +22,7 @@ class Entity(ConnectObject):
         self.wikipedia = "";
         self.classification = [];
         self.small_label = None;
-    
+
     def getText(self):
         return self.text;
     
@@ -56,6 +56,20 @@ class Entity(ConnectObject):
         js = self.__execute__("Entity", "to_type", {"type" : etype, "id" : self.id});
         if js["status"]:
             self.etype = etype;
+            return js["return"];
+        return False;
+
+    def duplicate(self):
+        if self.text == "Person" or self.text == "Organization" or self.text == "Other":
+            return [];
+        js = self.__execute__("Entity", "duplicate", { "etype" : "person", "text_label" : self.text, "id" : self.id});
+        if js["status"]:
+            return js["return"];
+        return False;
+    
+    def merge_to(self, old_entity_id):
+        js = self.__execute__("Entity", "merge_to", { "old_entity_id" : old_entity_id, "new_entity_id" : self.id});
+        if js["status"]:
             return js["return"];
         return False;
 

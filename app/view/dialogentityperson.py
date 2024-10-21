@@ -15,6 +15,7 @@ from view.ui.customvlayout import CustomVLayout;
 from view.dialogreference import DialogReference;
 from view.dialog_classification import DialogClassification;
 from classlib.configuration import Configuration;
+from view.dialog_enityts_merge import DialogEntitysMerge;
 
 class DialogEntityPerson(QDialog):
     def __init__(self, form, person):
@@ -42,7 +43,11 @@ class DialogEntityPerson(QDialog):
         self.txt_text.setFont( Configuration.instancia().getFont() );
         self.txt_text.setText( self.person.entity.text ) ;
         self.txt_text.textChanged.connect(self.txt_text_changed)
-        CustomVLayout.widget_linha(self, self.page_rel, [self.lbl_text, self.txt_text] );
+        self.btn_merge = QPushButton("Merge entity");
+        self.btn_merge.setFont( Configuration.instancia().getFont() );
+        self.btn_merge.clicked.connect(self.btn_merge_click);
+        CustomVLayout.widget_linha(self, self.page_rel, [self.lbl_text, self.txt_text, self.btn_merge] );
+        self.btn_merge.setVisible( len( self.person.duplicate() ) );
 
         self.lbl_text_small = QLabel("Nickname");
         self.txt_text_small = QLineEdit();
@@ -139,9 +144,15 @@ class DialogEntityPerson(QDialog):
 
     def txt_text_small_changed(self):
         self.person.entity.small_label = self.txt_text_small.text();
-        
+    
+    def btn_merge_click(self):
+        f = DialogEntitysMerge(self, self.person);
+        f.exec();
+        return;
+
     def txt_text_changed(self):
         self.person.entity.text = self.txt_text.text();
+        self.btn_merge.setVisible( len( self.person.duplicate() )  );
     
     def txt_wikipedia_changed(self):
         self.person.entity.wikipedia = self.txt_wikipedia.text();

@@ -18,7 +18,7 @@ class Person(MapRelationshipBox):
         super().__init__( mapa, x, y, w, h, text=text, id_=id_, entity_id_=entity_id_ );
         self.entity.etype = "person";
         self.doxxing = "";
-    
+
     def toJson(self):
         objeto = super().toJson();
         objeto["data_extra"] = self.doxxing;

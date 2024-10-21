@@ -63,10 +63,11 @@ class ConnectObject:
         #url = "http://127.0.0.1/cml/services/execute.php";
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'};
         r = requests.post(url, data=json.dumps(envelop), headers=headers);
+        print(r.text.strip());
         try:
             retorno_json = json.loads(r.text.strip());
-            if type(retorno_json["return"]) == None:
-                raise Exception("return None");
+            if retorno_json["status"] == False or type(retorno_json["return"]) == None:
+                raise Exception("Error:");
             if type(retorno_json["return"]) == type(""):
                 retorno_body = retorno_json["return"][8:];
                 retorno_json["return"] = json.loads(base64.b64decode( retorno_body ) );
@@ -75,5 +76,5 @@ class ConnectObject:
             #        retorno_json["return"] = json.loads( aes_decript(server.simetric_key, encriptado) );
             return retorno_json;
         except:
-            print(r.text.strip());
+            print("\033[95m", r.text.strip(), "\033[0m");
             return None;
