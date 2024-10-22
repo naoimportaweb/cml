@@ -42,7 +42,7 @@ class DialogEntityPerson(QDialog):
         self.txt_text = QLineEdit();
         self.txt_text.setFont( Configuration.instancia().getFont() );
         self.txt_text.setText( self.person.entity.text ) ;
-        self.txt_text.textChanged.connect(self.txt_text_changed)
+        self.txt_text.editingFinished.connect(self.txt_text_changed)
         self.btn_merge = QPushButton("Merge entity");
         self.btn_merge.setFont( Configuration.instancia().getFont() );
         self.btn_merge.clicked.connect(self.btn_merge_click);

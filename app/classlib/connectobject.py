@@ -63,7 +63,6 @@ class ConnectObject:
         #url = "http://127.0.0.1/cml/services/execute.php";
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'};
         r = requests.post(url, data=json.dumps(envelop), headers=headers);
-        print(r.text.strip());
         try:
             retorno_json = json.loads(r.text.strip());
             if retorno_json["status"] == False or type(retorno_json["return"]) == None:
