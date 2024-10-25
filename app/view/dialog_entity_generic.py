@@ -69,6 +69,12 @@ class DialogEntityGeneric(QDialog):
         self.txt_wikipedia.setText( self.obj.entity.wikipedia ) ;
         self.txt_wikipedia.textChanged.connect(self.txt_wikipedia_changed)
         CustomVLayout.widget_linha(self, self.page_url, [self.lbl_wikipedia, self.txt_wikipedia] );
+        self.lbl_official = QLabel("Official Website:");
+        self.txt_official = QLineEdit();
+        self.txt_official.setFont( Configuration.instancia().getFont() );
+        self.txt_official.setText( self.obj.entity.default_url ) ;
+        self.txt_official.textChanged.connect(self.txt_official_changed)
+        CustomVLayout.widget_linha(self, self.page_url, [self.lbl_official, self.txt_official] );
     
     def panelDoxxing(self):
         self.page_dox = CustomVLayout.widget_tab( self.tab, "Doxxing");
@@ -149,8 +155,7 @@ class DialogEntityGeneric(QDialog):
     def btn_reference_add_click(self):
         form = DialogReference(self, self.obj, reference=None);
         form.exec();
-        self.table_reference_load()
-
+        self.table_reference_load();
 
     def txt_text_small_changed(self):
         self.obj.entity.small_label = self.txt_text_small.text();
@@ -166,6 +171,9 @@ class DialogEntityGeneric(QDialog):
     
     def txt_wikipedia_changed(self):
         self.obj.entity.wikipedia = self.txt_wikipedia.text();
+
+    def txt_official_changed(self):
+        self.obj.entity.default_url = self.txt_official.text();
 
     def txt_descricao_changed(self):
         self.obj.entity.full_description = self.txt_descricao.toPlainText();
