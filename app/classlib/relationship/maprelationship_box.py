@@ -24,7 +24,10 @@ class MapRelationshipBox():
         self.y = y;
         self.w = w;
         self.h = h;
-    
+        self.start_date = None;
+        self.end_date = None;
+        self.format_date = "yyyy-MM-dd";
+
     def getText(self):
         return self.entity.getText();
     
@@ -40,7 +43,8 @@ class MapRelationshipBox():
         self._dirt = True;
 
     def toJson(self):
-        objeto = { "id" : self.id, "entity_id": self.entity.id , "x" : self.x, "y" : self.y, "w" : self.w, "h" : self.h, "text" : self.entity.text, "full_description" : self.entity.full_description, "etype" : self.entity.etype, "references" : [], "time_slices" : [], "data_extra" : self.entity.data_extra, "wikipedia" : self.entity.wikipedia, "classification" : self.entity.classification, "small_label" : self.entity.small_label  };
+        objeto = { "id" : self.id, "entity_id": self.entity.id , "x" : self.x, "y" : self.y, "w" : self.w, "h" : self.h, "text" : self.entity.text, "full_description" : self.entity.full_description, "etype" : self.entity.etype, "references" : [], "time_slices" : [], "data_extra" : self.entity.data_extra, "wikipedia" : self.entity.wikipedia, "classification" : self.entity.classification, "small_label" : self.entity.small_label, "start_date" : self.start_date, "end_date" : self.end_date, "format_date" : self.format_date,
+            "entity_start_date" : self.entity.start_date, "entity_end_date" : self.entity.end_date, "entity_format_date" : self.entity.format_date, "default_url" : self.entity.default_url  };
         
         for reference in self.entity.references:
             buffer = reference.toJson();
@@ -62,8 +66,8 @@ class MapRelationshipBox():
             return True;
         return self.mapa.switchType(self, etype);
 
-    def addReference(self, title, link1, link2 = "", link3 = "", id_=None):
-        return self.entity.addReference(title, link1, link2, link3, id_);
+    def addReference(self, title, link1, link2 = "", link3 = "", id_=None, descricao=""):
+        return self.entity.addReference(title, link1, link2, link3, id_, descricao=descricao);
 
     def addTimeSlice(self, text_label, date_start=None, date_end=None, id_=None):
         return self.entity.addTimeSlice(text_label, date_start, date_end, id_);

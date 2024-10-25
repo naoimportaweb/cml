@@ -49,7 +49,7 @@ class MapaRelationshipEngine(QWidget):
             buffer.doxxing = entity["data_extra"];
         buffer.entity.full_description = entity["description"];
         for reference in entity["references"]:
-            buffer.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"]);
+            buffer.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"], descricao=reference["descricao"]);
     
     def paintEvent(self, event: QPaintEvent):
         with QPainter(self) as painter:

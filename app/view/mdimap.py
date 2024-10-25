@@ -12,8 +12,8 @@ from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QMdiArea,
 from view.ui.mapa_relationship_engine import MapaRelationshipEngine;
 from view.ui.mapa_organization_chart_engine import MapaOrganizationChartEngine;
 from view.dialogentitylink import DialogEntityLink;
-from view.dialogentityorganization import DialogEntityOrganization;
-from view.dialogentityperson import DialogEntityPerson;
+from view.dialog_entity_organization import DialogEntityOrganization;
+from view.dialog_entity_person import DialogEntityPerson;
 from view.dialog_entity_other import DialogEntityOther;
 from view.dialogchoice import DialogChoiceEntity;
 

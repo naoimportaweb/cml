@@ -62,6 +62,10 @@ create table entity (
     description LONGTEXT,
     data_extra LONGTEXT,
     wikipedia VARCHAR(255),
+    default_url VARCHAR(255),
+    start_date         DATE DEFAULT NULL,
+    end_date           DATE DEFAULT NULL,
+    format_date         VARCHAR(255) DEFAULT 'yyyy-MM-dd',
     etype VARCHAR(255) NOT NULL,
     creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
@@ -97,6 +101,9 @@ create table diagram_relationship_element(
     id VARCHAR(128) PRIMARY KEY,
     diagram_relationship_id VARCHAR(128) NOT NULL,
     entity_id  VARCHAR(128) NOT NULL,
+    start_date         DATE DEFAULT NULL,
+    end_date           DATE DEFAULT NULL,
+    format_date         VARCHAR(255) DEFAULT 'yyyy-MM-dd',
     x INT NOT NULL, y INT NOT NULL, w INT NOT NULL, h INT NOT NULL,
     creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
@@ -105,6 +112,7 @@ create table diagram_relationship_element(
 create table diagram_relationship_element_reference( 
     id VARCHAR(128) PRIMARY KEY,
     entity_id VARCHAR(128) NOT NULL,
+    description TEXT DEFAULT NULL,
     title VARCHAR(255), link1 TEXT, link2 TEXT, link3 TEXT,
     creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
@@ -133,11 +141,11 @@ create table diagram_relationship_document(
     id VARCHAR(128) PRIMARY KEY,
     diagram_relationship_id VARCHAR(128) NOT NULL,
     document_type_id VARCHAR(128) NOT NULL,
+    description TEXT default NULL,
     title VARCHAR(255), link1 TEXT, link2 TEXT, link3 TEXT,
     creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
 );
-
 
 create table organization_chart( 
     id VARCHAR(128) PRIMARY KEY,
@@ -251,5 +259,16 @@ drop table person;
 
 
 # ------------- HOMOLOGAÇAO -------------------------------
+
+ALTER TABLE entity ADD COLUMN default_url  VARCHAR(255);
+ALTER TABLE entity ADD COLUMN start_date   DATE DEFAULT NULL;
+ALTER TABLE entity ADD COLUMN end_date     DATE DEFAULT NULL;
+ALTER TABLE entity ADD COLUMN format_date  VARCHAR(255) DEFAULT 'yyyy-MM-dd';
+ALTER TABLE diagram_relationship_element ADD COLUMN start_date   DATE DEFAULT NULL;
+ALTER TABLE diagram_relationship_element ADD COLUMN end_date     DATE DEFAULT NULL;
+ALTER TABLE diagram_relationship_element ADD COLUMN format_date  VARCHAR(255) DEFAULT 'yyyy-MM-dd';
+ALTER TABLE diagram_relationship_document ADD COLUMN description TEXT DEFAULT NULL;
+ALTER TABLE diagram_relationship_element_reference ADD COLUMN description TEXT DEFAULT NULL;
+
 
 

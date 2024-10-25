@@ -22,6 +22,10 @@ class Entity(ConnectObject):
         self.wikipedia = "";
         self.classification = [];
         self.small_label = None;
+        self.start_date = None;
+        self.end_date = None;
+        self.format_date = "yyyy-MM-dd";
+        self.default_url = None;
 
     def getText(self):
         return self.text;
@@ -30,17 +34,17 @@ class Entity(ConnectObject):
         for buffer in self.classification:
             if buffer["id"] == classification_id + self.id:
                 return False;
-        self.classification.append({ "entity_id" : self.id , "id" : classification_id + self.id, "classification_id" : classification_id, "text_label" : text_label, 
+        self.classification.append({ "start_date" : self.start_date, "end_date" : self.end_date, "format_date" : self.format_date, "default_url" : self.default_url,  "entity_id" : self.id , "id" : classification_id + self.id, "classification_id" : classification_id, "text_label" : text_label, 
             "classification_item_id" : classification_item_id, "text_label_choice" : text_label_choice, "start_date" : start_date,  "end_date" : end_date, "format_date" : format_date });
         return True;
         
     def getDirt(self):
         return self._dirt;
     
-    def addReference(self, title, link1, link2 = "", link3 = "", id_=None):
+    def addReference(self, title, link1, link2 = "", link3 = "", id_=None, descricao = ""):
         if link1 == "":
             return None;
-        self.references.append( Reference( title, link1, link2, link3, id_=id_ ) );
+        self.references.append( Reference( title, descricao, link1, link2, link3, id_=id_ ) );
         return self.references[-1];
 
     def addTimeSlice(self, text_label, date_start=None, date_end=None, id_=None):

@@ -17,11 +17,11 @@ class MapRelationship
         $buffer_diagram["elements"] = array();
         $buffer_diagram["lock"] = array();
 
-        $buffer_elements =  $mysql->DataTable("SELECT ent.small_label as small_label, ent.wikipedia as wikipedia, dre.id as id, ent.id as entity_id, ent.data_extra as data_extra, ent.text_label as text_label, ent.description as full_description, ent.etype, dre.x, dre.y, dre.w, dre.h  FROM entity as ent inner join diagram_relationship_element as dre on ent.id = dre.entity_id where dre.diagram_relationship_id = ? order by dre.creation_time asc", [$post_data["parameters"]["id"]]);
+        $buffer_elements =  $mysql->DataTable("SELECT ent.default_url as default_url, ent.start_date as entity_start_date, ent.end_date as entity_end_date, ent.format_date as entity_format_date, dre.start_date as element_start_date, dre.end_date as element_end_date, dre.format_date as element_format_date,  ent.small_label as small_label, ent.wikipedia as wikipedia, dre.id as id, ent.id as entity_id, ent.data_extra as data_extra, ent.text_label as text_label, ent.description as full_description, ent.etype, dre.x, dre.y, dre.w, dre.h  FROM entity as ent inner join diagram_relationship_element as dre on ent.id = dre.entity_id where dre.diagram_relationship_id = ? order by dre.creation_time asc", [$post_data["parameters"]["id"]]);
 
         for($i = 0; $i < count($buffer_elements); $i++ ) {
             
-            $buffer_elements[$i]["references"] = $mysql->DataTable("SELECT drer.id, drer.title, drer.link1, drer.link2, drer.link3 FROM diagram_relationship_element_reference AS drer where drer.entity_id = ?", [$buffer_elements[$i]["entity_id"]]);
+            $buffer_elements[$i]["references"] = $mysql->DataTable("SELECT drer.id, drer.title, drer.link1, drer.link2, drer.link3, drer.description as descricao FROM diagram_relationship_element_reference AS drer where drer.entity_id = ?", [$buffer_elements[$i]["entity_id"]]);
 
             $buffer_elements[$i]["classification"] = $mysql->DataTable("select eci.format_date as format_date, eci.entity_id as entity_id, eci.start_date as start_date, eci.end_date as end_date, eci.id as id, clsi.text_label as text_label_choice, cls.text_label as text_label, clsi.id as classification_item_id from entity_classification_item as eci inner join classification_item as clsi on eci.classification_item_id = clsi.id inner join classification as cls on clsi.classification_id = cls.id where eci.entity_id = ?", [$buffer_elements[$i]["entity_id"]]);
 
@@ -137,17 +137,17 @@ class MapRelationship
 
         for($i = 0; $i < count($post_data["parameters"]["elements"]); $i++) {
             $element = $post_data["parameters"]["elements"][$i];
-
-            array_push($sqls, "INSERT INTO entity (id, text_label, description, data_extra, etype, wikipedia, small_label) VALUES(?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE text_label = ?, description =?, data_extra = ?, etype =?, wikipedia = ?, small_label = ? ");
-            array_push( $valuess,[ $element["entity_id"], $element["text"], $element["full_description"], $element["data_extra"], $element["etype"], $element["wikipedia"], $element["small_label"], $element["text"], $element["full_description"], $element["data_extra"], $element["etype"], $element["wikipedia"], $element["small_label"] ]);
+//
+            array_push($sqls, "INSERT INTO entity (id, text_label, description, data_extra, etype, wikipedia, small_label, default_url, start_date, end_date, format_date) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE text_label = ?, description =?, data_extra = ?, etype =?, wikipedia = ?, small_label = ?, default_url = ?, start_date = ?, end_date = ?, format_date =?");
+            array_push( $valuess,[ $element["entity_id"], $element["text"], $element["full_description"], $element["data_extra"], $element["etype"], $element["wikipedia"], $element["small_label"], $element["default_url"], $element["entity_start_date"], $element["entity_end_date"], $element["entity_format_date"], $element["text"], $element["full_description"], $element["data_extra"], $element["etype"], $element["wikipedia"], $element["small_label"], $element["default_url"], $element["entity_start_date"], $element["entity_end_date"], $element["entity_format_date"] ]);
             // relacionamento
-            array_push($sqls,  "INSERT INTO diagram_relationship_element (id, diagram_relationship_id, entity_id, x, y, w, h) VALUES(?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE x=?, y=?, w=?, h=?" );
-            array_push( $valuess, [ $element["id"], $post_data["parameters"]["id"], $element["entity_id"], $element["x"], $element["y"], $element["w"], $element["h"], $element["x"], $element["y"], $element["w"], $element["h"]  ] );
+            array_push($sqls,  "INSERT INTO diagram_relationship_element (id, diagram_relationship_id, entity_id, x, y, w, h, start_date, end_date, format_date) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE x=?, y=?, w=?, h=?, start_date = ?, end_date = ?, format_date =?" );
+            array_push( $valuess, [ $element["id"], $post_data["parameters"]["id"], $element["entity_id"], $element["x"], $element["y"], $element["w"], $element["h"], $element["element_start_date"], $element["element_end_date"], $element["element_format_date"], $element["x"], $element["y"], $element["w"], $element["h"], $element["element_start_date"], $element["element_end_date"], $element["element_format_date"]  ] );
             // referencia
             for($j = 0; $j < count($element["references"]); $j++){
                 $reference = $element["references"][$j];
-                array_push($sqls, "INSERT INTO diagram_relationship_element_reference (id, entity_id, title, link1, link2, link3 ) VALUES(?, ?, ?, ?, ?, ? )  ON DUPLICATE KEY UPDATE  title=?, link1=?, link2=?, link3=?");
-                array_push( $valuess, [ $reference["id"], $reference["entity_id"], $reference["title"], $reference["link1"], $reference["link2"], $reference["link3"], $reference["title"], $reference["link1"], $reference["link2"], $reference["link3"] ] );
+                array_push($sqls, "INSERT INTO diagram_relationship_element_reference (id, entity_id, title, link1, link2, link3, description ) VALUES(?, ?, ?, ?, ?, ?, ? )  ON DUPLICATE KEY UPDATE  title=?, link1=?, link2=?, link3=?, description=?");
+                array_push( $valuess, [ $reference["id"], $reference["entity_id"], $reference["title"], $reference["link1"], $reference["link2"], $reference["link3"], $reference["description"], $reference["title"], $reference["link1"], $reference["link2"], $reference["link3"], $reference["description"] ] );
             }
             if( array_key_exists("classification", $element) ) {
                 for($j = 0; $j < count($element["classification"]); $j++){

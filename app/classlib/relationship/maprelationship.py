@@ -120,10 +120,18 @@ class MapRelationship(ConnectObject):
                     if element['etype'] == "person":
                         buffer.doxxing = element["data_extra"];
                     for reference in element["references"]:
-                        buffer.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"]);
-                    buffer.entity.full_description = element["full_description"];
-                    buffer.entity.classification = element["classification"];
-                    buffer.entity.small_label = element["small_label"];
+                        buffer.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"], descricao= reference["descricao"]);
+                    buffer.entity.full_description  = element["full_description"];
+                    buffer.entity.classification    = element["classification"];
+                    buffer.entity.small_label       = element["small_label"];
+                    buffer.start_date               = element["element_start_date"];
+                    buffer.end_date                 = element["element_end_date"];
+                    buffer.format_date              = element["element_format_date"];
+                    buffer.entity.start_date        = element["entity_start_date"];
+                    buffer.entity.end_date          = element["entity_end_date"];
+                    buffer.entity.format_date       = element["entity_format_date"];
+                    buffer.entity.default_url       = element["default_url"];
+                    #ent.default_url as default_url, ent.start_date as entity_start_date, ent.end_date as entity_end_date, ent.format_date as entity_format_date, dre.start_date as element_start_date, dre.end_date as element_end_date, dre.format_date as element_format_date 
             for element in data['elements']:
                 if element["etype"] == "link":
                     x = int(element["x"]); y = int(element["y"]); w = int(element["w"]); h = int(element["h"]);
@@ -133,7 +141,7 @@ class MapRelationship(ConnectObject):
                     for from_ in element["from"]:
                         objeto.addFrom( self.findById( self.elements, from_["id"] ) );
                     for reference in element["references"]:
-                        objeto.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"]);
+                        objeto.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"], descricao= reference["descricao"]);
         return True;
     
     def findById(self, lista, id_):

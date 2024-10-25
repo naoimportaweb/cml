@@ -14,16 +14,14 @@ from classlib.configuration import Configuration;
 from view.dialog_classification import DialogClassification;
 from view.dialog_entity_generic import DialogEntityGeneric;
 
-class DialogEntityOther(DialogEntityGeneric):
-    def __init__(self, form, other):
-        super().__init__(form, other)
+class DialogEntityOrganization(DialogEntityGeneric):
+    def __init__(self, form, organization):
+        super().__init__(form, organization)
         nWidth = int(form.width() * 0.8); nHeight = int(form.height() * 0.6);
         if nWidth > 800:
             nWidth = 800;
-        self.setGeometry(form.x() + form.width()/2 - nWidth/2,
-            form.y() + form.height()/2 - nHeight/2,
-            nWidth, nHeight);
-        self.setWindowTitle("Other")
+        self.setGeometry(form.x() + form.width()/2 - nWidth/2, form.y() + form.height()/2 - nHeight/2, nWidth, nHeight);
+        self.setWindowTitle("Organization")
         self.panelDescricao();
         self.panelUrls();
         self.panelReferences();
@@ -33,15 +31,6 @@ class DialogEntityOther(DialogEntityGeneric):
         layout = QVBoxLayout();
         layout.addWidget( self.tab           );
         self.setLayout(   layout             );
-
-
-
-
-
-
-
-
-
 
 
 
