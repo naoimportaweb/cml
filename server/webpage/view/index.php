@@ -2,7 +2,7 @@
 Listar todos os mapas e dar permissao de busca
 <?php
 require_once dirname(dirname(__DIR__)) . "/controller/relationship/relationship.php";
-$mapac = new RelationshipController( $_GET['id'] );
+$mapac = new RelationshipController( $_GET['id'], $_GET['domain'] );
 ?>
 
 <html>

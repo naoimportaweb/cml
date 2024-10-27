@@ -168,7 +168,7 @@ function openRelatinship(evt, element_selected_id, tablinks_id, tabcontents_id) 
   evt.currentTarget.className += " active";
 }
 
-getMap( '<?php echo $_GET["id"]; ?>,<?php echo $_GET["domain"]; ?>', callbackMap );
+getMap( '<?php echo $_GET["id"]; ?>','<?php echo $_GET["domain"]; ?>', callbackMap );
 </script>
    
 </body>

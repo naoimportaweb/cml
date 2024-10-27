@@ -62,7 +62,7 @@ class DialogRelationshipEdit(QDialog):
         lbl_url = QLabel("URL:")
         lbl_url.setProperty("class", "normal");
         self.txt_url = QTextEdit()
-        self.txt_url.setPlainText( server.ip + "/cml/webpage/view/relationship/relationship.php?id=" + self.map.id);
+        self.txt_url.setPlainText( server.ip + "/cml/webpage/view/relationship/relationship.php?id=" + self.map.id + "&domain=" + server.domain);
         CustomVLayout.widget_linha(self, self.page_info, [lbl_url] );
         CustomVLayout.widget_linha(self, self.page_info, [self.txt_url] );
 

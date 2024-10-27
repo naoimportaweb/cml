@@ -3,6 +3,7 @@
 //error_reporting(E_ALL);
 
 require_once dirname(dirname(dirname(__DIR__))) . "/api/mysql.php";
+require_once dirname(__DIR__) . "/Entity/001.php";
 
 class MapRelationship
 {
@@ -115,8 +116,9 @@ class MapRelationship
         $valores = [ $post_data["parameters"]["name"]];
         $entitys = $mysql->DataTable($sql, $valores);
         for($i = 0; $i < count($entitys); $i++){
-            $sql = "SELECT * FROM entity  where etype <> 'link' and LOWER(text_label) LIKE LOWER( ? )";
-            $entitys[$i]["references"] = $mysql->DataTable("select * from  diagram_relationship_element_reference where entity_id = ?", [ $entitys[$i]["id"] ]);
+            $entitys[$i] = Entity::appendData($entitys[$i], $domain );
+            //$sql = "SELECT * FROM entity  where etype <> 'link' and LOWER(text_label) LIKE LOWER( ? )";
+            //$entitys[$i]["references"] = $mysql->DataTable("select * from  diagram_relationship_element_reference where entity_id = ?", [ $entitys[$i]["id"] ]);
         }
         return $entitys;
     }
@@ -142,7 +144,7 @@ class MapRelationship
             array_push( $valuess,[ $element["entity_id"], $element["text"], $element["full_description"], $element["data_extra"], $element["etype"], $element["wikipedia"], $element["small_label"], $element["default_url"], $element["entity_start_date"], $element["entity_end_date"], $element["entity_format_date"], $element["text"], $element["full_description"], $element["data_extra"], $element["etype"], $element["wikipedia"], $element["small_label"], $element["default_url"], $element["entity_start_date"], $element["entity_end_date"], $element["entity_format_date"] ]);
             // relacionamento
             array_push($sqls,  "INSERT INTO diagram_relationship_element (id, diagram_relationship_id, entity_id, x, y, w, h, start_date, end_date, format_date) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE x=?, y=?, w=?, h=?, start_date = ?, end_date = ?, format_date =?" );
-            array_push( $valuess, [ $element["id"], $post_data["parameters"]["id"], $element["entity_id"], $element["x"], $element["y"], $element["w"], $element["h"], $element["element_start_date"], $element["element_end_date"], $element["element_format_date"], $element["x"], $element["y"], $element["w"], $element["h"], $element["element_start_date"], $element["element_end_date"], $element["element_format_date"]  ] );
+            array_push( $valuess, [ $element["id"], $post_data["parameters"]["id"], $element["entity_id"], $element["x"], $element["y"], $element["w"], $element["h"], $element["start_date"], $element["end_date"], $element["format_date"], $element["x"], $element["y"], $element["w"], $element["h"], $element["start_date"], $element["end_date"], $element["format_date"]  ] );
             // referencia
             for($j = 0; $j < count($element["references"]); $j++){
                 $reference = $element["references"][$j];

@@ -74,7 +74,7 @@ class Relationship{
         $buffer_elements =  $mysql->DataTable("SELECT ent.wikipedia as wikipedia, dre.id as id, ent.id as entity_id, ent.data_extra as data_extra, ent.text_label as text_label, ent.description as full_description, ent.etype, dre.x, dre.y, dre.w, dre.h  FROM entity as ent inner join diagram_relationship_element as dre on ent.id = dre.entity_id where dre.diagram_relationship_id = ? order by dre.creation_time asc", [  $this->id  ]);
         
         for($i = 0; $i < count( $buffer_elements ); $i++) {
-            $buffer = new EntityBox($this);
+            $buffer = new EntityBox($this, $this->domain);
             $buffer->loadData( $buffer_elements[$i] );
             array_push( $this->elements, $buffer );
         }
