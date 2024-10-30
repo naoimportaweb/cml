@@ -4,7 +4,7 @@ from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings,
                             QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QTabWidget,
-                               QMdiArea, QMessageBox, QTextEdit, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
+                               QMdiArea, QMessageBox, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
 
 import os, sys, inspect;
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
@@ -16,7 +16,7 @@ sys.path.append("/opt/cml/app/");
 from view.ui.customvlayout import CustomVLayout;
 from classlib.server import Server;
 from classlib.relationship.maprelationship import MapRelationship;
-
+from view.ui.qeditorplus import QEditorPlus;
 class DialogRelationshipEdit(QDialog):
     def __init__(self, form, mapa):
         super().__init__();
@@ -61,7 +61,7 @@ class DialogRelationshipEdit(QDialog):
         
         lbl_url = QLabel("URL:")
         lbl_url.setProperty("class", "normal");
-        self.txt_url = QTextEdit()
+        self.txt_url = QEditorPlus()
         self.txt_url.setPlainText( server.ip + "/cml/webpage/view/relationship/relationship.php?id=" + self.map.id + "&domain=" + server.domain);
         CustomVLayout.widget_linha(self, self.page_info, [lbl_url] );
         CustomVLayout.widget_linha(self, self.page_info, [self.txt_url] );

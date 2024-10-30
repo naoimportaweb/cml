@@ -28,6 +28,7 @@ apt install libxcb-* -y
 # para DEBIAN precisa do --break-system-packages para os outros OSs não
 pip3 install PySide6 --break-system-packages
 pip3 install pycryptodome --break-system-packages
+pip3 install pyspellchecker --break-system-packages
 
 wget -O /tmp/client.tar.gz $1/cml/webpage/downloads/client.tar.gz
 tar xzvf /tmp/client.tar.gz -C /opt/cml/ --strip-components=1
@@ -40,7 +41,7 @@ fi
 
 cp ./resources/cml.desktop /home/$SUDO_USER/.local/share/applications
 
-cml
+cml &
 
 
 

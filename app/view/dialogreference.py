@@ -4,7 +4,7 @@ from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings,
                             QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow,
-                               QMdiArea, QMessageBox, QTextEdit, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
+                               QMdiArea, QMessageBox, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
 
 import os, sys, inspect;
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
@@ -16,6 +16,7 @@ sys.path.append("/opt/cml/app/");
 from classlib.configuration import Configuration;
 from view.ui.customvlayout import CustomVLayout;
 from classlib.server import Server;
+from view.ui.qeditorplus import QEditorPlus;
 
 class DialogReference(QDialog):
     def __init__(self, form, element, reference):
@@ -40,11 +41,8 @@ class DialogReference(QDialog):
         self.txt_title.setFont( Configuration.instancia().getFont() );
         layout.addWidget(self.txt_title, 1, 1)
 
-        self.txt_descricao = QTextEdit();
-        self.txt_descricao.setFont( Configuration.instancia().getFont() );
-        self.txt_descricao.setLineWrapMode(QTextEdit.NoWrap);
+        self.txt_descricao = QEditorPlus();
         self.txt_descricao.textChanged.connect(self.txt_descricao_changed)
-        self.txt_descricao.setLineWrapMode(QTextEdit.WidgetWidth);  
         layout.addWidget( self.txt_descricao, 2,1 );
 
         lbl_link1 = QLabel("Link:")

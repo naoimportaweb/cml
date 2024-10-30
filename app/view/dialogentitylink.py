@@ -4,7 +4,7 @@ from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QDate,
                             QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QTabWidget, QComboBox, QTableWidgetItem, QHeaderView,
-                               QMdiArea, QMessageBox, QTextEdit, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
+                               QMdiArea, QMessageBox, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
 
 import os, sys, inspect;
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
@@ -15,6 +15,7 @@ from classlib.configuration import Configuration;
 from view.ui.customvlayout import CustomVLayout;
 from view.dialogreference import DialogReference;
 from view.dialog_link_edit import DialogLinkEdit;
+from view.ui.qeditorplus import QEditorPlus;
 
 class DialogEntityLink(QDialog):
     def __init__(self, form, link, mapa):
@@ -51,12 +52,12 @@ class DialogEntityLink(QDialog):
         self.txt_text.textChanged.connect(self.txt_text_changed)
         CustomVLayout.widget_linha(self, self.page_rel, [self.lbl_text, self.txt_text] );
         
-        self.txt_descricao = QTextEdit();
+        self.txt_descricao = QEditorPlus();
         self.txt_descricao.setPlainText( self.link.entity.full_description );
-        self.txt_descricao.setLineWrapMode(QTextEdit.NoWrap);
-        self.txt_descricao.setFont( Configuration.instancia().getFont() );
+        #self.txt_descricao.setLineWrapMode(QTextEdit.NoWrap);
+        #self.txt_descricao.setFont( Configuration.instancia().getFont() );
         self.txt_descricao.textChanged.connect(self.txt_descricao_changed)
-        self.txt_descricao.setLineWrapMode(QTextEdit.WidgetWidth);  
+        #self.txt_descricao.setLineWrapMode(QTextEdit.WidgetWidth);  
         self.page_rel.addWidget( self.txt_descricao );
         #
         btn_remover = QPushButton("Remove");

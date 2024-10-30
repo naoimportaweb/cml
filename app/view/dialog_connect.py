@@ -14,10 +14,12 @@ sys.path.append( ROOT );
 sys.path.append("/opt/cml/app/");
 
 from view.ui.customvlayout import CustomVLayout;
+
 from classlib.server import Server;
 from classlib.user import User;
 from classlib.configuration import Configuration;
 from classlib.domain import Domain;
+
 
 class DialogConnect(QDialog):
     def __init__(self):
@@ -35,7 +37,10 @@ class DialogConnect(QDialog):
         if self.txt_login_username.text().strip() == "":
             self.txt_login_username.setFocus()
         elif self.txt_login_password.text().strip() == "":
-            self.txt_login_password.setFocus()
+            self.txt_login_password.setFocus();
+
+    def buffer_text(self):
+        print("testado.....");
 
     def ui_server(self):
         layout_server = QGridLayout()

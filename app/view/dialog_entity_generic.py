@@ -1,10 +1,10 @@
 import os, sys, inspect;
 
-from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QDate,
-                            QSaveFile, QTextStream, Qt, Slot)
-from PySide6.QtGui import QAction, QIcon, QKeySequence
+from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QDate,  
+                            QSaveFile, QTextStream, Qt, Slot, QRegularExpression)
+from PySide6.QtGui import QAction, QIcon, QKeySequence, QTextCharFormat, QSyntaxHighlighter, QFont
 from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QTabWidget, QComboBox, QTableWidgetItem, QHeaderView,
-                               QMdiArea, QMessageBox, QTextEdit, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
+                               QMdiArea, QMessageBox, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
 
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
 ROOT = os.path.dirname( CURRENTDIR );
@@ -14,7 +14,10 @@ from view.ui.customvlayout import CustomVLayout;
 from view.dialogreference import DialogReference;
 from view.dialog_classification import DialogClassification;
 from classlib.configuration import Configuration;
+from classlib.culture import Culture;
 from view.dialog_enityts_merge import DialogEntitysMerge;
+from view.ui.qeditorplus import QEditorPlus;
+
 
 class DialogEntityGeneric(QDialog):
     def __init__(self, form, obj):
@@ -53,13 +56,18 @@ class DialogEntityGeneric(QDialog):
             self.__panelNickname__("Acronym");
         
         # descricao também é para todso
-        self.txt_descricao = QTextEdit();
-        self.txt_descricao.setFont( Configuration.instancia().getFont() );
+        self.txt_descricao = QEditorPlus();
+        #self.txt_descricao.setFont( Configuration.instancia().getFont() );
         self.txt_descricao.setPlainText( self.obj.entity.full_description );
-        self.txt_descricao.setLineWrapMode(QTextEdit.NoWrap);
+        #self.txt_descricao.setLineWrapMode(QTextEdit.NoWrap);
         self.txt_descricao.textChanged.connect(self.txt_descricao_changed)
-        self.txt_descricao.setLineWrapMode(QTextEdit.WidgetWidth);  
+        #self.txt_descricao.focusOutEvent.connect(self.txt_descricao_finish );
+        #self.txt_descricao.setLineWrapMode(QTextEdit.WidgetWidth);  
         self.page_rel.addWidget( self.txt_descricao );
+        
+    
+    def btn_merge_lixo_click(self):
+        self.txt_descricao_finish();
     
     def panelUrls(self):
         self.page_url = CustomVLayout.widget_tab( self.tab, "URLs");
@@ -78,12 +86,12 @@ class DialogEntityGeneric(QDialog):
     
     def panelDoxxing(self):
         self.page_dox = CustomVLayout.widget_tab( self.tab, "Doxxing");
-        self.txt_doxxing = QTextEdit();
-        self.txt_doxxing.setFont( Configuration.instancia().getFont() );
+        self.txt_doxxing = QEditorPlus();
+        #self.txt_doxxing.setFont( Configuration.instancia().getFont() );
         self.txt_doxxing.setPlainText( self.obj.doxxing );
-        self.txt_doxxing.setLineWrapMode(QTextEdit.NoWrap);
+        #self.txt_doxxing.setLineWrapMode(QTextEdit.NoWrap);
         self.txt_doxxing.textChanged.connect(self.txt_doxxing_changed)
-        self.txt_doxxing.setLineWrapMode(QTextEdit.WidgetWidth);  
+        #self.txt_doxxing.setLineWrapMode(QTextEdit.WidgetWidth);  
         self.page_dox.addWidget( self.txt_doxxing );
     
     def panelReferences(self):
