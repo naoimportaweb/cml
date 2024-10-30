@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=CML
+GenericName=CML
+Comment=CML
+Categories=Other;Network;Security;
+Exec=python3 /opt/cml/application.py
+Icon=/opt/cml/resources/dinheiro.png
+StartupWMClass=CML +

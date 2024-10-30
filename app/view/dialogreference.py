@@ -89,7 +89,7 @@ class DialogReference(QDialog):
 
     def txt_descricao_changed(self):
         if self.reference != None:
-            self.reference.descricao = self.txt_descricao.toPlainText();
+            self.reference.description = self.txt_descricao.toPlainText();
 
     def btn_salvar_click(self):
         if self.reference == None:
@@ -99,6 +99,7 @@ class DialogReference(QDialog):
             self.reference.link1 = self.txt_link1.text();
             self.reference.link2 = self.txt_link2.text();
             self.reference.link3 = self.txt_link3.text();
+            self.reference.description = self.txt_descricao.toPlainText();
 
     def btn_close_click(self):
         self.close();

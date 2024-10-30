@@ -38,6 +38,9 @@ if [ ! -f /bin/cml ] ; then
     ln -s /opt/cml/application.py /bin/cml
 fi
 
+cp ./resources/cml.desktop /home/$SUDO_USER/.local/share/applications
+
 cml
+
 
 
