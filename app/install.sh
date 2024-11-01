@@ -39,7 +39,13 @@ if [ ! -f /bin/cml ] ; then
     ln -s /opt/cml/application.py /bin/cml
 fi
 
-cp ./resources/cml.desktop /home/$SUDO_USER/.local/share/applications
+if [ -d /home/$SUDO_USER/.local/share/applications ] ; then
+    echo "Ok, existe o diretório de aplicativos."
+else
+    mkdir /home/$SUDO_USER/.local/share/applications
+fi
+
+cp /opt/cml/resources/cml.desktop /home/$SUDO_USER/.local/share/applications
 
 cml &
 
