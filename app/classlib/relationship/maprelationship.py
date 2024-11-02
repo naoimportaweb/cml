@@ -23,6 +23,18 @@ class MapRelationship(ConnectObject):
         self.lock_list = [];
         self.locked = False;
     
+    def getErros(self):
+        arr = [];
+        for element in self.elements:
+            element.getErros( arr );
+        return arr;
+
+    def getWarnings(self):
+        arr = [];
+        for element in self.elements:
+            element.getWarnings( arr );
+        return arr;
+    
     def getName(self):
         return self.name;
     

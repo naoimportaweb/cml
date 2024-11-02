@@ -9,6 +9,7 @@ from PySide6.QtGui import (QMouseEvent,QPaintEvent,QFont,QPen,QAction,QPainter,Q
 
 from classlib.configuration import Configuration
 from classlib.entity import Entity
+from classlib.relationship.relationship_info import RelatinshipInfo;
 
 class MapRelationshipBox():
     def __init__(self, mapa, x, y, w, h, text=None, id_=None, entity_id_=None):
@@ -27,6 +28,20 @@ class MapRelationshipBox():
         self.start_date = None;
         self.end_date = None;
         self.format_date = "yyyy-MM-dd";
+
+    def getWarnings(self, arr):
+        if self.entity.full_description == None or self.entity.full_description.strip() == "":
+            if self.entity.etype == "link":
+                arr.append( RelatinshipInfo.linkHasNoDescription( self ) );
+        for reference in self.entity.references:
+            reference.getWarnings(arr);
+
+    def getErros(self, arr):
+        if self.entity.full_description == None or self.entity.full_description.strip() == "":
+            if self.entity.etype != "link":
+                arr.append( RelatinshipInfo.entityHasNoDescription( self ) );
+        for reference in self.entity.references:
+            reference.getErros(arr);
 
     def getText(self):
         return self.entity.getText();

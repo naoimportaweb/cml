@@ -2,28 +2,47 @@
 
 from PySide6.QtWidgets import QVBoxLayout, QWidget, QHBoxLayout, QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView
 from PySide6.QtGui import QPalette;
-from PySide6.QtCore import Qt;
+from PySide6.QtCore import Qt, Signal;
 #from PySide6 import QtWidgets;
 #from PySide6.QtWidgets import QGridLayout,QTextEdit, QTabWidget, QLineEdit, QDialog, QHBoxLayout, QVBoxLayout, QWidget, QPushButton, QTableWidget,
 # QTableWidgetItem, QLabel, QAbstractItemView, QHeaderView;
 
 class Table(QTableWidget):
-    def __init__(self, parent=None):
+    doubleSelect = Signal( object );
+    def __init__(self, parent=None, double_select=None):
         super().__init__(parent);
         self.lista = [];
         self.total_linhas = 0;
+        self.doubleClicked.connect( self.__doubleSelect__ );
+        self.double_select = double_select;
+    
     def cleanList(self):
         self.lista = [];
         self.total_linhas = 0;
         self.setRowCount( 0 );
+
     def add(self, array_colunas, objeto):
         self.setRowCount( self.total_linhas + 1 );
         for i in range(len(array_colunas)):
             self.setItem( self.total_linhas , i, QTableWidgetItem( array_colunas[i] ) );
         self.lista.append( objeto );
         self.total_linhas += 1;
+
+    def populate(self, lista, fields):
+        self.lista = lista;
+        self.total_linhas = len( self.lista );
+        self.setRowCount( len(self.lista) );
+        for i in range(len(self.lista)):
+            for j in range(len(fields)):
+                self.setItem( i , j, QTableWidgetItem( getattr(self.lista[i], fields[j]) ) );
+    
+    def __doubleSelect__(self):
+        if self.double_select != None:
+            self.doubleSelect.emit( self.get() );
+
     def get(self):
         return self.lista[self.currentRow()];
+
     def index(self):
         return self.currentRow();
 

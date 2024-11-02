@@ -85,6 +85,8 @@ class DialogEntityGeneric(QDialog):
         CustomVLayout.widget_linha(self, self.page_url, [self.lbl_official, self.txt_official] );
     
     def panelDoxxing(self):
+        if self.obj.__class__.__name__ != "Person":
+            return;
         self.page_dox = CustomVLayout.widget_tab( self.tab, "Doxxing");
         self.txt_doxxing = QEditorPlus();
         #self.txt_doxxing.setFont( Configuration.instancia().getFont() );

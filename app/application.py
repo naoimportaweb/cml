@@ -17,6 +17,7 @@ import PySide6.QtExampleIcons  # noqa: F401
 
 from view.mdimap import MdiMap;
 from view.dialog_relationship import DialogRelationship;
+from view.dialog_relationship_check import DialogRelationshipCheck;
 from view.dialog_diagram_choice import DialogDiagramChoice;
 from view.dialog_diagram_load import DialogDiagramLoad;
 from view.dialog_relationship_edit import DialogRelationshipEdit
@@ -93,6 +94,13 @@ class MainWindow(QMainWindow):
         buffer = (self.active_mdi_child() and self.active_mdi_child()).mapa;
         if buffer != None:
             f = DialogRelationshipEdit(self, buffer);
+            f.exec();
+
+    @Slot()
+    def map_errors(self):
+        buffer = (self.active_mdi_child() and self.active_mdi_child()).mapa;
+        if buffer != None:
+            f = DialogRelationshipCheck(self, buffer);
             f.exec();
 
     #@Slot()
@@ -203,7 +211,11 @@ class MainWindow(QMainWindow):
                                 shortcut=QKeySequence.Cut,
                                 statusTip="Edit map property",
                                 triggered=self.map_propert)
-
+        icon = QIcon.fromTheme(QIcon.ThemeIcon.ToolsCheckSpelling)
+        self._map_edit_check = QAction(icon, "Check", self,
+                                shortcut=QKeySequence.Cut,
+                                statusTip="Check map",
+                                triggered=self.map_errors)
         #icon = QIcon.fromTheme(QIcon.ThemeIcon.EditCopy)
         #self._copy_act = QAction(icon, "&Copy", self,
         #                         shortcut=QKeySequence.Copy,
@@ -290,7 +302,8 @@ class MainWindow(QMainWindow):
         self._file_tool_bar.addAction(self._open_act)
         self._file_tool_bar.addAction(self._save_act)
         self._map_tool_bar = self.addToolBar("Map")
-        self._map_tool_bar.addAction(self._map_edit_act)
+        self._map_tool_bar.addAction(self._map_edit_act);
+        self._map_tool_bar.addAction(self._map_edit_check);
         #self._edit_tool_bar.addAction(self._copy_act)
         #self._edit_tool_bar.addAction(self._paste_act)
         #self._file_tool_bar.setEnabled(False);

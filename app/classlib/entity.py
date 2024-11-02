@@ -5,6 +5,7 @@ sys.path.append( os.path.dirname(  os.path.dirname( CURRENTDIR ) ) );
 
 from classlib.connectobject import ConnectObject;
 from classlib.relationship.entitys import Reference, TimeSlice
+from classlib.relationship.relationship_info import RelatinshipInfo;
 
 class Entity(ConnectObject):
     def __init__(self, id_=None):
@@ -27,6 +28,22 @@ class Entity(ConnectObject):
         self.format_date = "yyyy-MM-dd";
         self.default_url = None;
 
+    #def getWarnings(self, arr):
+    #    if self.full_description == None or self.full_description.strip() == "":
+    #        if self.etype == "link":
+    #            arr.append( RelatinshipInfo.linkHasNoDescription( self ) );
+    #    for reference in self.references:
+    #        reference.getWarnings(arr);
+    #def getErros(self, arr):
+    #    if self.full_description == None or self.full_description.strip() == "":
+    #        if self.etype != "link":
+    #            arr.append( RelatinshipInfo.entityHasNoDescription( self ) );
+    #    for reference in self.references:
+    #        reference.getErros(arr);
+    
+    def __str__(self):
+        return self.text;
+    
     def getText(self):
         return self.text;
     

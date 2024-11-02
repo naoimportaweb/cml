@@ -7,7 +7,6 @@ from PySide6.QtWidgets import (QStyle,QColorDialog,)
 from PySide6.QtCore import Qt, Slot, QStandardPaths,QRectF
 from PySide6.QtGui import (QMouseEvent,QPaintEvent,QFont,QPen,QAction,QPainter,QColor,QBrush,QPixmap,QIcon,QKeySequence,);
 
-
 from classlib.relationship.maprelationship_box import MapRelationshipBox;
 from classlib.configuration import Configuration
 from classlib.relationship.link_entity import LinkEntity;

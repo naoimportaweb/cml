@@ -9,6 +9,7 @@ CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 sys.path.append( os.path.dirname(  os.path.dirname( CURRENTDIR ) ) );
 
 from classlib.connectobject import ConnectObject;
+from classlib.relationship.relationship_info import RelatinshipInfo;
 
 class TimeSlice():
     def __init__(self, text_label, description, date_start, date_end, id_=None ):
@@ -33,6 +34,18 @@ class Reference():
         self.link1 = link1;
         self.link2 = link2;
         self.link3 = link3;
+    
+    def __str__(self):
+        return self.title;
+    
+    def getErros(self, arr):
+        if self.link1.strip() == "" and self.link2.strip() == "" and self.link3.strip() == "":
+            arr.append( RelatinshipInfo.referenceHasNoLink( self ) );
+
+    def getWarnings(self, arr):
+        if self.description == None or self.description.strip() == "":
+            arr.append( RelatinshipInfo.referenceHasNoDescription( self ) );
+        
     def toJson(self):
         return {"id" : self.id, "description" : self.description, "title" : self.title, "link1" : self.link1, "link2" : self.link2, "link3" : self.link3};
 
