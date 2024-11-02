@@ -9,6 +9,7 @@ ROOT = os.path.dirname( CURRENTDIR );
 
 sys.path.append( ROOT );
 
+from view.dialogentitylink import DialogEntityLink;
 from view.dialog_entity_other import DialogEntityOther;
 from view.dialog_entity_person import DialogEntityPerson;
 from view.dialog_entity_organization import DialogEntityOrganization;
@@ -16,6 +17,7 @@ from view.ui.customvlayout import CustomVLayout;
 from classlib.relationship.maprelationship import MapRelationship;
 from classlib.relationship.relationship_info import RelatinshipInfo;
 from classlib.relationship.maprelationship_box import MapRelationshipBox;
+
 
 class DialogRelationshipCheck(QDialog):
     def __init__(self, form, mapa):
@@ -34,10 +36,14 @@ class DialogRelationshipCheck(QDialog):
         self.layout = QVBoxLayout();
         self.setLayout( self.layout );
         #----- errors -----
-        self.table_error = CustomVLayout.widget_tabela(self, ["Type","Description", "Object"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch,  QHeaderView.Stretch], double_click=self.table_error_double_click);
+        self.layout.addWidget( QLabel("<h2>Errors:</h2>") );
+        self.layout.addWidget( QLabel("What should be fixed") );
+        self.table_error = CustomVLayout.widget_tabela(self, ["Type","Description", "Object"], tamanhos=[QHeaderView.ResizeToContents, QHeaderView.Stretch,  QHeaderView.ResizeToContents], double_click=self.table_error_double_click);
         self.layout.addWidget(self.table_error);
         #----- warning -----
-        self.table_warning = CustomVLayout.widget_tabela(self, ["Type", "Description", "Object"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch,  QHeaderView.Stretch], double_click=self.table_warning_double_click);
+        self.layout.addWidget( QLabel("<h2>Warnings:</h2>") );
+        self.layout.addWidget( QLabel("We recommend improvement") );
+        self.table_warning = CustomVLayout.widget_tabela(self, ["Type", "Description", "Object"], tamanhos=[QHeaderView.ResizeToContents, QHeaderView.Stretch,  QHeaderView.ResizeToContents], double_click=self.table_warning_double_click);
         self.layout.addWidget(self.table_warning);
         self.load_tables();
     def load_tables(self):
@@ -51,8 +57,8 @@ class DialogRelationshipCheck(QDialog):
         table.lista = arr;
         for i in range(len( arr )):
             table.setItem( i, 0, QTableWidgetItem( arr[i].entityType() ) );
-            table.setItem( i, 1, QTableWidgetItem( arr[i].getText() ) );
-            table.setItem( i, 2, QTableWidgetItem( str(arr[i].getObject()) ) );
+            table.setItem( i, 2, QTableWidgetItem( arr[i].getText() ) );
+            table.setItem( i, 1, QTableWidgetItem( str(arr[i].getObject()) ) );
 
     def table_error_double_click(self):
         obj = self.table_error.get();
@@ -60,19 +66,16 @@ class DialogRelationshipCheck(QDialog):
 
     def table_double_click(self, obj):
         if obj.entityType() == "Other" or obj.entityType() == "Person" or obj.entityType() == "Organization":
-            #b = MapRelationshipBox(self.mapa, 0, 0, 0, 0);
-            #b.entity = obj.obj;
             if obj.entityType() == "Other":
                 f = DialogEntityOther(self.parent, obj.obj );
-                f.exec();
             elif obj.entityType() == "Person":
                 f = DialogEntityPerson(self.parent, obj.obj );
-                f.exec();
             elif obj.entityType() == "Organization":
                 f = DialogEntityOrganization(self.parent, obj.obj );
-                f.exec();
+            f.exec();
         if obj.entityType() == "Link":
-            f = DialogEntityLink(   self.form_principal, entity, self.mapa);
+            f = DialogEntityLink(   self.parent, obj.obj, self.mapa);
+            f.exec();
         self.load_tables();
         return;
     

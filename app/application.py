@@ -136,20 +136,6 @@ class MainWindow(QMainWindow):
             if buffer_area.mapa.getLocked() and len(buffer_area.mapa.lock_list) > 0 :
                 title = title + " (ReadOnly at " + buffer_area.mapa.lock_list[-1]["lock_time"] + " ISO DATE)";
             self.setWindowTitle( title )
-        #self._save_act.setEnabled(has_mdi_child)
-        #self._save_as_act.setEnabled(has_mdi_child)
-        #self._paste_act.setEnabled(has_mdi_child)
-        #self._close_act.setEnabled(has_mdi_child)
-        #self._close_all_act.setEnabled(has_mdi_child)
-        #self._tile_act.setEnabled(has_mdi_child)
-        #self._cascade_act.setEnabled(has_mdi_child)
-        #self._next_act.setEnabled(has_mdi_child)
-        #self._previous_act.setEnabled(has_mdi_child)
-        #self._separator_act.setVisible(has_mdi_child)
-        #has_selection = (self.active_mdi_child() is not None
-        #                 and self.active_mdi_child().textCursor().hasSelection())
-        #self._cut_act.setEnabled(has_selection)
-        #self._copy_act.setEnabled(has_selection)
 
     @Slot()
     def update_window_menu(self):
@@ -211,11 +197,14 @@ class MainWindow(QMainWindow):
                                 shortcut=QKeySequence.Cut,
                                 statusTip="Edit map property",
                                 triggered=self.map_propert)
-        icon = QIcon.fromTheme(QIcon.ThemeIcon.ToolsCheckSpelling)
+        #icon = QIcon.fromTheme(QIcon.ThemeIcon.ToolsCheckSpelling)
+        icon = QIcon( CURRENTDIR + "/resources/check.png");
         self._map_edit_check = QAction(icon, "Check", self,
                                 shortcut=QKeySequence.Cut,
                                 statusTip="Check map",
                                 triggered=self.map_errors)
+
+
         #icon = QIcon.fromTheme(QIcon.ThemeIcon.EditCopy)
         #self._copy_act = QAction(icon, "&Copy", self,
         #                         shortcut=QKeySequence.Copy,

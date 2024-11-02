@@ -28,17 +28,22 @@ class MapRelationshipBox():
         self.start_date = None;
         self.end_date = None;
         self.format_date = "yyyy-MM-dd";
-
+    
+    def __str__(self):
+        return self.entity.text;
+    
     def getWarnings(self, arr):
         if self.entity.full_description == None or self.entity.full_description.strip() == "":
             if self.entity.etype == "link":
                 arr.append( RelatinshipInfo.linkHasNoDescription( self ) );
+            elif self.entity.etype == "other":
+                arr.append( RelatinshipInfo.entityHasNoDescription( self ) );
         for reference in self.entity.references:
             reference.getWarnings(arr);
 
     def getErros(self, arr):
         if self.entity.full_description == None or self.entity.full_description.strip() == "":
-            if self.entity.etype != "link":
+            if self.entity.etype != "link" and self.entity.etype != "other":
                 arr.append( RelatinshipInfo.entityHasNoDescription( self ) );
         for reference in self.entity.references:
             reference.getErros(arr);

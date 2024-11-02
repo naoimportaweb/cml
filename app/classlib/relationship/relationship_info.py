@@ -10,12 +10,10 @@ class RelatinshipInfo():
         self.text = text;
     
     def getText(self):
-        return "text";
+        return str(self.obj);
 
     def getObject(self):
         return self;
-
-    
 
     def entityType(self):
         if self.obj.__class__.__name__ == "Entity":
