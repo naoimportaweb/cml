@@ -95,11 +95,15 @@ class Entity(ConnectObject):
         return False;
 
     @staticmethod
-    def search(etype, text_label):
+    def search(etype, text_label, proxy=False):
         obj = ConnectObject();
         js = obj.__execute__("Entity", "search", {"etype" : etype, "text_label" : text_label});
+        out = [];
         if js["status"]:
-            return js["return"];
+            out.push( { "name" : "local",  js["return"]  } );
+        if proxy:
+            js = obj.__proxy__("Entity", "search", {"etype" : etype, "text_label" : text_label});
+            print(js);
         return False;
     
     @staticmethod    

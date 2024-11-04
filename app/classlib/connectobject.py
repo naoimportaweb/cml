@@ -78,3 +78,25 @@ class ConnectObject:
         except:
             print("\033[95m", r.text.strip(), "\033[0m");
             return None;
+    
+    def __proxy__(self, class_name, method_name, parameters, crypto_v="000"):
+        server = Server.instancia();
+        if server.ip == "":
+            return None;
+        envelop = { "version" : "001", "class" : class_name, "method" :  method_name, "token" : "", "domain" : server.domain}
+        envelop["session"] = server.token;
+        url = self.ip +"/cml/services/federation_proxyx.php";
+        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'};
+        r = requests.post(url, data=json.dumps(envelop), headers=headers);
+        print(r.text.strip());
+        try:
+            retorno_json = json.loads(r.text.strip());
+            if retorno_json["status"] == False or type(retorno_json["return"]) == None:
+                raise Exception("Error:");
+            if type(retorno_json["return"]) == type(""):
+                retorno_body = retorno_json["return"][8:];
+                retorno_json["return"] = json.loads(base64.b64decode( retorno_body ) );
+            return retorno_json;
+        except:
+            print("\033[95m", r.text.strip(), "\033[0m");
+            return None;
