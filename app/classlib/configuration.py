@@ -14,7 +14,11 @@ class Configuration(metaclass=SingletonMeta):
         self.path_config = os.path.expanduser('~') + "/.cml.json";
         self.config_ = {};
         if os.path.exists(self.path_config):
-            self.config_ = json.loads( open( self.path_config, "r").read() );
+            try:
+                self.config_ = json.loads( open( self.path_config, "r").read() );
+            except:
+                print("Erro de má formação de Json. Assumindo dados padrões.");
+                self.config_ = {};
         self.font_size =                             self.__getParameter__(self.config_,  "form.font.size", 12);
         self.font_family =                           self.__getParameter__(self.config_,  "form.font.family", "Courier");
         self.relationshihp_font_size =               self.__getParameter__(self.config_,  "relationshihp.font.size", 10);
