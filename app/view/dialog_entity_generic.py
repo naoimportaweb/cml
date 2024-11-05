@@ -22,6 +22,7 @@ from view.ui.qeditorplus import QEditorPlus;
 class DialogEntityGeneric(QDialog):
     def __init__(self, form, obj):
         super().__init__(form);
+        self.doxxing_show = False;
         self.obj = obj;
         self.tab = QTabWidget();  
         self.reclass = [];
@@ -87,14 +88,16 @@ class DialogEntityGeneric(QDialog):
     def panelDoxxing(self):
         if self.obj.__class__.__name__ != "Person":
             return;
-        self.page_dox = CustomVLayout.widget_tab( self.tab, "Doxxing");
+        self.page_dox = CustomVLayout.widget_tab( self.tab, "DX");
         self.txt_doxxing = QEditorPlus();
-        #self.txt_doxxing.setFont( Configuration.instancia().getFont() );
         self.txt_doxxing.setPlainText( self.obj.doxxing );
-        #self.txt_doxxing.setLineWrapMode(QTextEdit.NoWrap);
         self.txt_doxxing.textChanged.connect(self.txt_doxxing_changed)
-        #self.txt_doxxing.setLineWrapMode(QTextEdit.WidgetWidth);  
         self.page_dox.addWidget( self.txt_doxxing );
+        #btn_campo_doxxing = QPushButton("Exibir campo/ocultar campo");
+        #btn_campo_doxxing.setFont( Configuration.instancia().getFont() );
+        #btn_campo_doxxing.clicked.connect(self.btn_campo_doxxing_click);
+        #self.txt_doxxing.setVisible( self.doxxing_show );
+        #self.page_dox.addWidget( btn_campo_doxxing );
     
     def panelReferences(self):
         self.page_ref = CustomVLayout.widget_tab( self.tab, "References");
@@ -223,3 +226,7 @@ class DialogEntityGeneric(QDialog):
             self.table_class.setItem( i, 2, QTableWidgetItem( QDate.fromString(self.obj.entity.classification[i]["start_date"], "yyyy-MM-dd").toString(self.obj.entity.classification[i]["format_date"]) ) );
             self.table_class.setItem( i, 3, QTableWidgetItem( QDate.fromString(self.obj.entity.classification[i]["end_date"], "yyyy-MM-dd").toString(self.obj.entity.classification[i]["format_date"])  ) );
         return;
+
+    #def btn_campo_doxxing_click(self):
+    #    self.doxxing_show = not self.doxxing_show;
+    #    self.txt_doxxing.setVisible( self.doxxing_show );

@@ -4,9 +4,9 @@
     "default" : "producao",
     "connections" :
     {
-        "producao" :  { "host" : "127.0.0.1", "user" : "root", "password" : "123456", "name" : "cml", "port" : 3306, "restricted" : true, "federation" : ["11111111111111111111111111111111"] } ,
-        "academia" :  { "host" : "127.0.0.1", "user" : "root", "password" : "123456", "name" : "academia", "port" : 3306, "restricted" : false, "federation" : []} 
+        "producao" :  { "host" : "127.0.0.1", "user" : "root", "password" : "123456", "name" : "cml", "port" : 3306, "restricted" : true, "federation" : [] } ,
+        "academia" :  { "host" : "127.0.0.1", "user" : "root", "password" : "123456", "name" : "academia", "port" : 3306, "restricted" : false, "federation" : ["11111111111111111111111111111111"]} 
     },
-    "federation" : { "11111111111111111111111111111111" : { "name" : "elite.corrupcao.net" , "url" : "https://corrupcao.net" , "method" : ["Entity.search", "Entity.load"] , "domain" : "producao"}  },
+    "federation" : { "11111111111111111111111111111111" : { "name" : "producao.local" , "url" : "http://localhost" , "method" : ["Entity.search", "Entity.load"] , "domain" : "producao"}  },
     "crypto" : {"path" : "/var/certs/"}
 }

@@ -46,6 +46,16 @@ class QEditorPlus(QWidget):
             self.layout.addWidget( self.btn_spell_check );
             self.setLayout( self.layout );
     
+    def setVisible(self, val):
+        if val == True:
+            print("adicionando");
+            self.layout.addWidget( self.txt );
+            self.layout.addWidget( self.btn_spell_check );
+        else:
+            print("removendo");
+            self.layout.setParent(None)
+            self.layout.setParent(None)
+    
     def btn_spell_check_click(self):
         highlighter = None;
         highlighter = MyHighlighter(self.txt.document(), self );

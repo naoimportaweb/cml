@@ -123,7 +123,6 @@ class Entity(ConnectObject):
     
     @staticmethod    
     def fromJson( js):
-        print("PERSON: " + json.dumps( js ));
         buffer = Entity(id_=js["id"]);
         buffer.id = js["id"];
         buffer.etype = js["etype"];
@@ -139,7 +138,4 @@ class Entity(ConnectObject):
         if js.get("classification") != None:
             for classification in js["classification"]:
                 buffer.addClassification( classification["id"], classification["text_label"], classification["classification_item_id"], classification["text_label_choice"], classification["start_date"], classification["end_date"], classification["format_date"] );
-        #def addClassification(self,  classification_id, text_label, classification_item_id, text_label_choice, start_date, end_date, format_date):
         return buffer;
-
-#        $entity_json["classification"] = $mysql->DataTable("select eci.format_date as format_date, eci.entity_id as entity_id, eci.start_date as start_date, eci.end_date as end_date, eci.id as id, clsi.text_label as text_label_choice, cls.text_label as text_label, clsi.id as classification_item_id from entity_classification_item as eci inner join classification_item as clsi on eci.classification_item_id = clsi.id inner join classification as cls on clsi.classification_id = cls.id where eci.entity_id = ?", [$entity_json["id"]]);
