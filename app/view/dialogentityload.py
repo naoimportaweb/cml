@@ -20,6 +20,7 @@ from classlib.relationship.person import Person
 from classlib.relationship.organization import Organization
 from classlib.relationship.other import Other
 from classlib.relationship.link import Link
+from classlib.entity import Entity;
 
 class DialogEntityLoad(QDialog):
     def __init__(self, form):
@@ -56,18 +57,20 @@ class DialogEntityLoad(QDialog):
 
     def ui_tabela(self):
         layout = QVBoxLayout();
-        self.table_maps = CustomVLayout.widget_tabela(self, ["Entity", "Type"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch], double_click=self.table_maps_double);
+        self.table_maps = CustomVLayout.widget_tabela(self, ["Entity", "Type", "Server"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch, QHeaderView.Stretch], double_click=self.table_maps_double);
         layout.addWidget(self.table_maps);
         self.layout_principal.addLayout( "list", layout );
 
     def txt_name_finish(self):
-        r = MapRelationship();
-        self.entitys = r.search_entity( "%" + self.txt_name.text().strip() + "%");
+        #r = MapRelationship();
+        #self.entitys = r.search_entity( "%" + self.txt_name.text().strip() + "%");
+        self.entitys = Entity.search("person,organization,other", "%" + self.txt_name.text().strip() + "%", proxy=True);
         self.entitys.sort(key=lambda x: x["text_label"])
         self.table_maps.setRowCount( len( self.entitys ) );
         for i in range(len( self.entitys )):
             self.table_maps.setItem( i, 0, QTableWidgetItem( self.entitys[i]["text_label"]) );
             self.table_maps.setItem( i, 1, QTableWidgetItem( self.entitys[i]["etype"]) );
+            self.table_maps.setItem( i, 2, QTableWidgetItem( self.entitys[i]["server"]) );
     
     def table_maps_double(self):
         self.form.entity_selected(self.entitys[ self.table_maps.index() ]);

@@ -12,6 +12,7 @@ from classlib.relationship.person import Person
 from classlib.relationship.organization import Organization
 from classlib.relationship.other import Other
 from classlib.relationship.link import Link
+from classlib.entity import Entity;
 
 class MapaRelationshipEngine(QWidget):
     def __init__(self, parent=None, mapa=None, form=None, max_width=5000 , max_height=3000):
@@ -47,9 +48,9 @@ class MapaRelationshipEngine(QWidget):
         buffer = self.mapa.addEntity( entity["etype"], x, y, text=entity["text_label"], entity_id_=entity["id"], wikipedia=entity["wikipedia"] );
         if entity["etype"] == "person":
             buffer.doxxing = entity["data_extra"];
-        buffer.entity.full_description = entity["description"];
-        for reference in entity["references"]:
-            buffer.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"], descricao=reference["descricao"]);
+        buffer.entity = Entity.fromJson( entity );
+        #for reference in entity["references"]:
+        #    buffer.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"], descricao=reference["descricao"]);
     
     def paintEvent(self, event: QPaintEvent):
         with QPainter(self) as painter:

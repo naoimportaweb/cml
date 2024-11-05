@@ -84,11 +84,12 @@ class ConnectObject:
         if server.ip == "":
             return None;
         envelop = { "version" : "001", "class" : class_name, "method" :  method_name, "token" : "", "domain" : server.domain}
+        envelop["parameters"] = "00000000" + json.dumps(parameters);
         envelop["session"] = server.token;
-        url = self.ip +"/cml/services/federation_proxyx.php";
+        url = self.ip +"/cml/services/federation_proxy.php";
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'};
         r = requests.post(url, data=json.dumps(envelop), headers=headers);
-        print(r.text.strip());
+        #print(r.text.strip());
         try:
             retorno_json = json.loads(r.text.strip());
             if retorno_json["status"] == False or type(retorno_json["return"]) == None:

@@ -45,6 +45,7 @@ class Entity
     }
 
     public function search( $ip, $user, $post_data, $domain ) {
+        //error_log("domain:" . $domain, 0);
         $mysql = new Mysql( $domain );
         $sql = "";
         $valores = [];
@@ -55,7 +56,13 @@ class Entity
             $sql = "SELECT ent.* from entity as ent WHERE  LOWER(ent.text_label) LIKE LOWER( ? )  or LOWER(ent.small_label) LIKE LOWER( ? )  ";
             $valores = [ $post_data["parameters"]["text_label"], $post_data["parameters"]["text_label"]];           
         }
-        return $mysql->DataTable($sql, $valores);
+        //error_log($sql, 0);
+        //error_log(json_encode($valores), 0);
+        $elements = $mysql->DataTable($sql, $valores);
+        for($i = 0; $i < count($elements); $i++) {
+            $elements[$i] = Entity::appendData($elements[$i], $domain);
+        }
+        return $elements;
     }
 
     public function duplicate( $ip, $user, $post_data, $domain ) {

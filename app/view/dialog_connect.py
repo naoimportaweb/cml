@@ -1,4 +1,4 @@
-import os, sys, inspect;
+import os, sys, inspect, json;
 
 from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings,
                             QSaveFile, QTextStream, Qt, Slot)
@@ -19,7 +19,7 @@ from classlib.server import Server;
 from classlib.user import User;
 from classlib.configuration import Configuration;
 from classlib.domain import Domain;
-
+from classlib.entity import Entity;
 
 class DialogConnect(QDialog):
     def __init__(self):

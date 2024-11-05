@@ -26,7 +26,6 @@ class DialogEntitysMerge(QDialog):
         self.setLayout( self.layout_principal );
         self.painel_entitys();
         self.entitys = entity.duplicate();
-        print(self.entitys);
         self.list();
 
     #--------------------------------------------------------------

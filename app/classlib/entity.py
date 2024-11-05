@@ -96,24 +96,50 @@ class Entity(ConnectObject):
 
     @staticmethod
     def search(etype, text_label, proxy=False):
+        filt = None;
+        if etype == "":
+            etype = "person";
+        if etype.find(","):
+            filt = etype.split(",");
+            etype = "";
+        else:
+            filt = [ etype ];
         obj = ConnectObject();
         js = obj.__execute__("Entity", "search", {"etype" : etype, "text_label" : text_label});
         out = [];
         if js["status"]:
-            out.push( { "name" : "local",  js["return"]  } );
+            for element in js["return"]:
+                if element["etype"] in filt:
+                    element["server"] = "local";
+                    out.append( element );
         if proxy:
             js = obj.__proxy__("Entity", "search", {"etype" : etype, "text_label" : text_label});
-            print(js);
-        return False;
+            for arr in js["return"]:
+                for element in arr["return"]:
+                    if element["etype"] in filt:
+                        element["server"] = arr["name"];
+                        out.append( element );
+        return out;
     
     @staticmethod    
     def fromJson( js):
+        print("PERSON: " + json.dumps( js ));
         buffer = Entity(id_=js["id"]);
         buffer.id = js["id"];
         buffer.etype = js["etype"];
         buffer.text = js["text_label"];
-        buffer.full_description = js.get("full_description");
+        buffer.full_description = js["description"];
+        buffer.default_url = js["default_url"];
         buffer.data_extra = js["data_extra"];
         buffer.wikipedia = js["wikipedia"];
         buffer.small_label = js["small_label"];
+        if js.get("references") != None:
+            for reference in js["references"]:
+                buffer.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"], descricao=reference["descricao"]);
+        if js.get("classification") != None:
+            for classification in js["classification"]:
+                buffer.addClassification( classification["id"], classification["text_label"], classification["classification_item_id"], classification["text_label_choice"], classification["start_date"], classification["end_date"], classification["format_date"] );
+        #def addClassification(self,  classification_id, text_label, classification_item_id, text_label_choice, start_date, end_date, format_date):
         return buffer;
+
+#        $entity_json["classification"] = $mysql->DataTable("select eci.format_date as format_date, eci.entity_id as entity_id, eci.start_date as start_date, eci.end_date as end_date, eci.id as id, clsi.text_label as text_label_choice, cls.text_label as text_label, clsi.id as classification_item_id from entity_classification_item as eci inner join classification_item as clsi on eci.classification_item_id = clsi.id inner join classification as cls on clsi.classification_id = cls.id where eci.entity_id = ?", [$entity_json["id"]]);

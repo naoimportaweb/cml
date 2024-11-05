@@ -35,17 +35,18 @@ class DialogEntityFind(QDialog):
         self.txt_name.setMinimumWidth(500);
         self.txt_name.editingFinished.connect(self.txt_name_finish);
         CustomVLayout.widget_linha(self, layout, [lbl_name, self.txt_name] );
-        self.table_search = CustomVLayout.widget_tabela(self, ["Name", "Type"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch], double_click=self.table_double);
+        self.table_search = CustomVLayout.widget_tabela(self, ["Name", "Type", "Server"], tamanhos=[QHeaderView.Stretch, QHeaderView.Stretch, QHeaderView.Stretch], double_click=self.table_double);
         layout.addWidget( self.table_search );
         self.layout_principal.addLayout( "entity", layout );
     
     def txt_name_finish(self):
-        self.entitys = Entity.search("", "%" + self.txt_name.text() + "%");
+        self.entitys = Entity.search("person,organization,other", "%" + self.txt_name.text() + "%", proxy=False);
         self.table_search.setRowCount( len( self.entitys ) );
         self.entity = None;
         for i in range(len( self.entitys )):
             self.table_search.setItem( i, 0, QTableWidgetItem( self.entitys[i]["text_label"] ) );
             self.table_search.setItem( i, 1, QTableWidgetItem( self.entitys[i]["etype"] ) );
+            self.table_search.setItem( i, 2, QTableWidgetItem( self.entitys[i]["server"] ) );
         return;
 
     def table_double(self):

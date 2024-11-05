@@ -21,17 +21,21 @@ if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
 }
 
 function request_federation($url, $data){
+    $url = $url . "/cml/services/federation.php";
     try{
-        $postdata = http_build_query($data);
+        //$postdata = http_build_query($data);
         $opts = array(
           'http' => array(
             'method'  => 'POST',
-            'header'  => 'Content-type: application/x-www-form-urlencoded',
-            'content' => $postdata
+            'header'  => 'Content-type: application/json',
+            'content' => json_encode($data, true)
           )
         );
         $context  = stream_context_create($opts);
-        return json_decode( file_get_contents( $url, false, $context) , true)
+        //error_log($context, 0);
+        $returned = file_get_contents( $url, false, $context);
+        error_log($returned, 0);
+        return json_decode( $returned , true);
     } catch (Exception $e) {
         echo json_encode(array("status" => false, "return" => null, "error" => $e->getMessage() ));
     }
@@ -45,24 +49,29 @@ $token_request = md5(uniqid(rand(), true));
 try{
     $session = new Session();
     $antes = (new \DateTime());
-    $CONFIG = Json::FromFile_v2(__DIR__ . "/data/config.json");
+    $CONFIG = Json::FromFile_v2(dirname(__DIR__) . "/data/config.json");
     
     // -------------------- FORCAR O CARREGAMENTO AQUI ENQUATNO NAO FAÇO SISTEMA DE LOGIN
     // TUDO QUE VAI AQUI É CRIPTOGRAFIA SIMÉTRICA...... QUE NAO FIZ AINDA....
+    //error_log(json_encode($post_data), 0);
     $post_data["parameters"] = substr($post_data["parameters"], 8);
     $post_data["parameters"] = json_decode(  $post_data["parameters"], true );
     $person_session = $session->getKeyDecrypt($post_data["session"], $post_data["domain"]);
     $user = new User();
     $user->load($person_session["person_id"], $post_data["domain"]); 
     //-------------------------------------------------------------------------
-    $end_array = []
+    $end_array = [];
+    //error_log( json_encode( $CONFIG ), 0);
     foreach( $CONFIG["connections"][ $post_data["domain"] ]["federation"] as $federation_id ){
-        foreach( $CONFIG["federation"][ $federation_id ] as $federation ){
+        //error_log( $federation_id , 0);
+        //foreach( $CONFIG["federation"][ $federation_id ] as $federation ){
+            $federation = $CONFIG["federation"][ $federation_id ];
+            //error_log( json_encode($federation["method"] ), 0);
             if( in_array( $post_data["class"] . "." . $post_data["method"], $federation["method"]) ){
-                $post_data["parameters"]["federation_id"] = $federation_id;
-                array_push( $end_array, array( "name" => $federation["name"], "return" => request_federation($federation["url"], $post_data["parameters"])) );
+                $post_data["federation_id"] = $federation_id;
+                array_push( $end_array, array( "name" => $federation["name"], "return" => request_federation($federation["url"], $post_data)) );
             }
-        }
+        //}
     }
     #require_once __DIR__ . "/classlib/". $post_data["class"] . "/" . $post_data["version"] . ".php";
     #$class = $post_data["class"];

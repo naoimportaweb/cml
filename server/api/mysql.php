@@ -231,7 +231,7 @@ class Mysql
                 $query = $this->Connection()->prepare($sql);
                 $query->execute($values);
                 $row_count = $row_count + $query->rowCount();
-                error_log( $row_count, 0);
+                //error_log( $row_count, 0);
             }
 
             if( count( $sqls ) > 1 ){

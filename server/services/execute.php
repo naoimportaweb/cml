@@ -31,7 +31,7 @@ $token_request = md5(uniqid(rand(), true));
 try{
     $session = new Session();
     $antes = (new \DateTime());
-    $CONFIG = Json::FromFile_v2(__DIR__ . "/data/config.json");
+    $CONFIG = Json::FromFile_v2(dirname(__DIR__) . "/data/config.json");
     //https://www.slingacademy.com/article/ways-to-create-an-object-in-php/
     //https://stackoverflow.com/questions/1005857/how-to-call-a-function-from-a-string-stored-in-a-variable
 
