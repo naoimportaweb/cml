@@ -198,7 +198,7 @@ class MainWindow(QMainWindow):
                                 statusTip="Edit map property",
                                 triggered=self.map_propert)
         #icon = QIcon.fromTheme(QIcon.ThemeIcon.ToolsCheckSpelling)
-        icon = QIcon( CURRENTDIR + "/resources/check.png");
+        icon = QIcon( "/opt/cml/resources/check.png");
         self._map_edit_check = QAction(icon, "Check", self,
                                 shortcut=QKeySequence.Cut,
                                 statusTip="Check map",

@@ -22,43 +22,33 @@ class QEditorPlus(QWidget):
         self.id = uuid.uuid4().hex + "_" + uuid.uuid4().hex + "_" + uuid.uuid4().hex;
         self.highlighter = None; #MyHighlighter(self.txt.document(), self.txt );
         if self.type == "editor":
-            self.txt1 = QTextEdit();
-            self.txt1.setFont( Configuration.instancia().getFont() );
-            self.txt1.setLineWrapMode(QTextEdit.NoWrap);
-            self.txt1.setLineWrapMode(QTextEdit.WidgetWidth);  
-            self.txt1.textChanged.connect(self.__txt1_changed__);
+            self.txt = QTextEdit();
+            self.txt.setFont( Configuration.instancia().getFont() );
+            self.txt.setLineWrapMode(QTextEdit.NoWrap);
+            self.txt.setLineWrapMode(QTextEdit.WidgetWidth);  
+            self.txt.textChanged.connect(self.__txt_changed__);
             self.btn_spell_check = QPushButton("Spell Check");
             self.btn_spell_check.setFont( Configuration.instancia().getFont() );
             self.btn_spell_check.clicked.connect(self.btn_spell_check_click);
             self.layout = QVBoxLayout();
-            self.layout.addWidget( self.txt1 );
+            self.layout.addWidget( self.txt );
             self.layout.addWidget( self.btn_spell_check );
             self.setLayout( self.layout );
         else:
-            self.txt1 = QLineEdit();
-            self.txt1.editingFinished.connect(self.__editingFinished__)
+            self.txt = QLineEdit();
+            #self.txt.textChanged.connect(self.__txt_changed__);
+            self.txt.editingFinished.connect(self.__editingFinished__)
             self.btn_spell_check = QPushButton("Spell Check");
             self.btn_spell_check.setFont( Configuration.instancia().getFont() );
             self.btn_spell_check.clicked.connect(self.btn_spell_check_click);
             self.layout = QHBoxLayout();
-            self.layout.addWidget( self.txt1 );
+            self.layout.addWidget( self.txt );
             self.layout.addWidget( self.btn_spell_check );
             self.setLayout( self.layout );
     
-    def setVisible(self, val):
-        return;
-        #if val == True:
-        #    print("adicionando");
-        #    self.layout.addWidget( self.txt );
-        #    self.layout.addWidget( self.btn_spell_check );
-        #else:
-        #    print("removendo");
-        #    self.layout.setParent(None)
-        #    self.layout.setParent(None)
-    
     def btn_spell_check_click(self):
         highlighter = None;
-        highlighter = MyHighlighter(self.txt1.document(), self );
+        highlighter = MyHighlighter(self.txt.document(), self );
         highlighter.finished.connect(self.spell_check_finish)
         return;
     
@@ -67,26 +57,26 @@ class QEditorPlus(QWidget):
 
     def setText(self, text):
         if self.type == "editor":
-            self.txt1.setPlainText( text );
+            self.txt.setPlainText( text );
         else:
-            self.txt1.setText(text);
+            self.txt.setText(text);
 
     def setPlainText(self, text):
-        self.txt1.setPlainText( text );
+        self.txt.setPlainText( text );
 
     def toPlainText(self):
         if self.type == "editor":
-            return self.txt1.toPlainText(); 
+            return self.txt.toPlainText(); 
         else:
-            return self.txt1.getText();
+            return self.txt.getText();
     
     def getText(self):
         if self.type == "editor":
-            return self.txt1.toPlainText(); 
+            return self.txt.toPlainText(); 
         else:
-            return self.txt1.getText();
+            return self.txt.getText();
 
-    def __txt1_changed__(self):
+    def __txt_changed__(self):
         self.textChanged.emit()
     def __editingFinished__(self):
         self.editingFinished.emit();
