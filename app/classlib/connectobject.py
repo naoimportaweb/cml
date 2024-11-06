@@ -60,8 +60,12 @@ class ConnectObject:
         #    envelop["parameters"] = "00000002" + json.dumps(parameters);
         envelop["session"] = server.token;
         url = self.ip +"/cml/services/execute.php";
-        #url = "http://127.0.0.1/cml/services/execute.php";
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'};
+        #proxies = { 
+        #      "http"  : "http://127.0.0.1:9051", 
+        #      "https" : "http://127.0.0.1:9051"
+        #};
+        #r = requests.post(url, data=json.dumps(envelop), headers=headers, proxies=proxies);
         r = requests.post(url, data=json.dumps(envelop), headers=headers);
         #print(r.text.strip());
         try:
