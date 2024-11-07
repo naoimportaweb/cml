@@ -1,0 +1,6 @@
+{
+    "button" : "Load",
+    "path"   : "bot/brazil/wikipedia/search.py",
+    "class"  : "DialogBotWikipedia",
+    "module" : "dialogbotwikipedia"
+}

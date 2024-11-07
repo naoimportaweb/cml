@@ -17,7 +17,7 @@ from classlib.configuration import Configuration;
 from classlib.culture import Culture;
 from view.dialog_enityts_merge import DialogEntitysMerge;
 from view.ui.qeditorplus import QEditorPlus;
-
+from view.ui.qbot import QBot;
 
 class DialogEntityGeneric(QDialog):
     def __init__(self, form, obj):
@@ -79,7 +79,8 @@ class DialogEntityGeneric(QDialog):
         self.txt_wikipedia.setFont( Configuration.instancia().getFont() );
         self.txt_wikipedia.setText( self.obj.entity.wikipedia ) ;
         self.txt_wikipedia.textChanged.connect(self.txt_wikipedia_changed)
-        CustomVLayout.widget_linha(self, self.page_url, [self.lbl_wikipedia, self.txt_wikipedia] );
+        qb = QBot(self, self.obj.entity, "bot/brazil/wikipedia/config.json");
+        CustomVLayout.widget_linha(self, self.page_url, [self.lbl_wikipedia, self.txt_wikipedia, qb] );
         self.lbl_official = QLabel("Official Website:");
         self.txt_official = QLineEdit();
         self.txt_official.setFont( Configuration.instancia().getFont() );

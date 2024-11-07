@@ -26,9 +26,14 @@ apt install python3-pip -y
 apt install libxcb-* -y
 
 # para DEBIAN precisa do --break-system-packages para os outros OSs não
-pip3 install PySide6 --break-system-packages
-pip3 install pycryptodome --break-system-packages
-pip3 install pyspellchecker --break-system-packages
+touch /etc/pip.conf
+echo '[global]' > /etc/pip.conf
+echo 'break-system-packages = true' >> /etc/pip.conf
+pip3 install requests
+pip3 install PySide6
+pip3 install pycryptodome
+pip3 install pyspellchecker
+pip3 install beautifulsoup4
 
 wget -O /tmp/client.tar.gz $1/cml/webpage/downloads/client.tar.gz
 tar xzvf /tmp/client.tar.gz -C /opt/cml/ --strip-components=1
