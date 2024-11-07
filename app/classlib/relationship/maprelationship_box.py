@@ -95,7 +95,7 @@ class MapRelationshipBox():
     def recalc(self, painter):
         painter.setFont(QFont(Configuration.instancia().relationshihp_font_family, Configuration.instancia().relationshihp_font_size))
         buffer_text_for_calc = self.entity.text;
-        if self.entity.etype == "person":
+        if self.entity.etype == "person" or self.entity.etype == "other":
             if self.entity.small_label != None and self.entity.small_label.strip() != "":
                 buffer_text_for_calc = self.entity.small_label;
         elif self.entity.etype == "organization":

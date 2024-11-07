@@ -53,6 +53,8 @@ class DialogEntityGeneric(QDialog):
         #alguns campos especiais para cada tipo de entidade
         if self.obj.entity.etype == "person":
             self.__panelNickname__("Nickname");
+        elif self.obj.entity.etype == "other":
+            self.__panelNickname__("Short name");
         elif self.obj.entity.etype == "organization":
             self.__panelNickname__("Acronym");
         

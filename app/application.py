@@ -198,7 +198,7 @@ class MainWindow(QMainWindow):
                                 statusTip="Edit map property",
                                 triggered=self.map_propert)
         #icon = QIcon.fromTheme(QIcon.ThemeIcon.ToolsCheckSpelling)
-        icon = QIcon( "/opt/cml/resources/check.png");
+        icon = QIcon( CURRENTDIR + "/resources/check.png");
         self._map_edit_check = QAction(icon, "Check", self,
                                 shortcut=QKeySequence.Cut,
                                 statusTip="Check map",
@@ -338,7 +338,7 @@ class MainWindow(QMainWindow):
 
 
 if __name__ == '__main__':
-    argument_parser = ArgumentParser(description='MDI Example',
+    argument_parser = ArgumentParser(description='CML',
                                      formatter_class=RawTextHelpFormatter)
     argument_parser.add_argument("files", help="Files",
                                  nargs='*', type=str)

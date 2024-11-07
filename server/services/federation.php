@@ -34,7 +34,7 @@ try{
 //                       "method" : ["Entity.search", "Entity.load"], "domain" : aaaa }
     $CONFIG = Json::FromFile_v2(dirname(__DIR__) . "/data/config.json");
     //error_log(json_encode( $CONFIG ), 0);
-    $post_data["federation_id"] = "11111111111111111111111111111111";
+    //$post_data["federation_id"] = "11111111111111111111111111111111";
     //error_log($post_data["federation_id"], 0);
     $federation_element = $CONFIG["federation"][ $post_data["federation_id"] ];
     if( $federation_element == null){

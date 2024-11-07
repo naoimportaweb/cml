@@ -23,4 +23,7 @@ class Other(MapRelationshipBox):
         painter.setPen(penRectangle)
         painter.fillRect( self.x, self.y, self.w, self.h, QBrush(Qt.yellow));
         if self.entity.text != None:
-            painter.drawText(QRectF(self.x , self.y, self.w, self.h), Qt.AlignCenter | Qt.AlignTop, self.entity.text)
+            texto = self.entity.text;
+            if self.entity.small_label != None and self.entity.small_label.strip() != "":
+                texto = self.entity.small_label;
+            painter.drawText(QRectF(self.x , self.y, self.w, self.h), Qt.AlignCenter | Qt.AlignTop, texto)
