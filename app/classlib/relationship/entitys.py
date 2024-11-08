@@ -45,8 +45,32 @@ class Reference():
     def getWarnings(self, arr):
         if self.description == None or self.description.strip() == "":
             arr.append( RelatinshipInfo.referenceHasNoDescription( self ) );
+        if not self.hasWaybackMachine():
+            arr.append( RelatinshipInfo.referenceHasWaybackMachine( self ) );
         
     def toJson(self):
         return {"id" : self.id, "description" : self.description, "title" : self.title, "link1" : self.link1, "link2" : self.link2, "link3" : self.link3};
 
+    def hasWaybackMachine(self):
+        if self.link1.find("web.archive.org") > 0:
+            return True;
+        if self.link2.find("web.archive.org") > 0:
+            return True;
+        if self.link3.find("web.archive.org") > 0:
+            return True;
+        return False;
 
+    def getUrl(self):
+        if self.link1.find("web.archive.org") > 0:
+            return self.link1;
+        if self.link2.find("web.archive.org") > 0:
+            return self.link2;
+        if self.link3.find("web.archive.org") > 0:
+            return self.link3;
+        if self.link1.strip() != "":
+            return self.link1;
+        if self.link2.strip() != "":
+            return self.link2;
+        if self.link3.strip() != "":
+            return self.link3;
+        return "";

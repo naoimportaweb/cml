@@ -26,9 +26,11 @@ apt install python3-pip -y
 apt install libxcb-* -y
 
 # para DEBIAN precisa do --break-system-packages para os outros OSs não
-touch /etc/pip.conf
-echo '[global]' > /etc/pip.conf
-echo 'break-system-packages = true' >> /etc/pip.conf
+if [ ! -f /etc/pip.conf ] ; then
+    touch /etc/pip.conf
+    echo '[global]' > /etc/pip.conf
+    echo 'break-system-packages = true' >> /etc/pip.conf
+fi
 pip3 install requests
 pip3 install PySide6
 pip3 install pycryptodome

@@ -38,3 +38,7 @@ class RelatinshipInfo():
     @staticmethod
     def linkHasNoDescription(entity):
         return RelatinshipInfo("error", "The relatinship has no description", entity);
+    
+    @staticmethod
+    def referenceHasWaybackMachine(reference):
+        return RelatinshipInfo("information", "You must have at least one link saved in the Wayback Machine.", reference);

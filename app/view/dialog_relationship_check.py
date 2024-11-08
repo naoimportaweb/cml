@@ -17,7 +17,7 @@ from view.ui.customvlayout import CustomVLayout;
 from classlib.relationship.maprelationship import MapRelationship;
 from classlib.relationship.relationship_info import RelatinshipInfo;
 from classlib.relationship.maprelationship_box import MapRelationshipBox;
-
+from view.dialogreference import DialogReference;
 
 class DialogRelationshipCheck(QDialog):
     def __init__(self, form, mapa):
@@ -75,6 +75,9 @@ class DialogRelationshipCheck(QDialog):
             f.exec();
         if obj.entityType() == "Link":
             f = DialogEntityLink(   self.parent, obj.obj, self.mapa);
+            f.exec();
+        if obj.entityType() == "Reference":
+            f = DialogReference(self, None, obj.obj);
             f.exec();
         self.load_tables();
         return;
