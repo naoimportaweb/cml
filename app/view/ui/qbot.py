@@ -27,7 +27,7 @@ class QBot(QWidget):
     
     def btn_check(self):
         f = self.instance( self.js["module"] , ROOT + "/" + self.js["path"] , self.js["class"], self.obj );
-        f.exec();
+        f.show();
 
     def instance(self, module_name, path_module, class_name, obj_parameter):
         spec = importlib.util.spec_from_file_location(module_name, path_module);

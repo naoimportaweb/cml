@@ -17,6 +17,7 @@ from classlib.configuration import Configuration;
 from view.ui.customvlayout import CustomVLayout;
 from classlib.server import Server;
 from view.ui.qeditorplus import QEditorPlus;
+from view.ui.qbot import QBot;
 
 class DialogReference(QDialog):
     def __init__(self, form, element, reference):
@@ -69,13 +70,13 @@ class DialogReference(QDialog):
         self.txt_link3.setFont( Configuration.instancia().getFont() );
         layout.addWidget(self.txt_link3, 5, 1)
 
+        if self.reference != None:
+            qb = QBot(self, self.reference, "bot/brazil/wayback/config.json");
+            layout.addWidget(qb, 6, 1)
+
         btn_salvar = QPushButton("Save")
         btn_salvar.clicked.connect(self.btn_salvar_click)
-        layout.addWidget(btn_salvar, 6, 1)
-
-        #btn_close = QPushButton("Close")
-        #btn_close.clicked.connect(self.btn_close_click)
-        #layout.addWidget(btn_close, 6, 1)
+        layout.addWidget(btn_salvar, 7, 1)
 
         if reference != None:
             self.txt_descricao.setPlainText( self.reference.description );

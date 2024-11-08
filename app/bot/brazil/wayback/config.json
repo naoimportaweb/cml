@@ -1,0 +1,6 @@
+{
+    "button" : "Save in Wayback Machine",
+    "path"   : "bot/brazil/wayback/save.py",
+    "class"  : "DialogWayback",
+    "module" : "dialogwayback"
+}

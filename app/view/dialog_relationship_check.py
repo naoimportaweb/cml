@@ -57,7 +57,7 @@ class DialogRelationshipCheck(QDialog):
         table.lista = arr;
         for i in range(len( arr )):
             table.setItem( i, 0, QTableWidgetItem( arr[i].entityType() ) );
-            table.setItem( i, 2, QTableWidgetItem( arr[i].getText() ) );
+            table.setItem( i, 2, QTableWidgetItem( arr[i].getText()[:50] ) );
             table.setItem( i, 1, QTableWidgetItem( str(arr[i].getObject()) ) );
 
     def table_error_double_click(self):
