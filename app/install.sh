@@ -36,6 +36,7 @@ pip3 install PySide6
 pip3 install pycryptodome
 pip3 install pyspellchecker
 pip3 install beautifulsoup4
+pip3 install waybackpy
 
 wget -O /tmp/client.tar.gz $1/cml/webpage/downloads/client.tar.gz
 tar xzvf /tmp/client.tar.gz -C /opt/cml/ --strip-components=1

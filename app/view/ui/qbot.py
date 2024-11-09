@@ -26,6 +26,7 @@ class QBot(QWidget):
         self.setLayout( self.layout );
     
     def btn_check(self):
+        print( ROOT + "/" + self.js["path"] );
         f = self.instance( self.js["module"] , ROOT + "/" + self.js["path"] , self.js["class"], self.obj );
         f.show();
 

@@ -63,10 +63,10 @@ class MapRelationship(ConnectObject):
         for k in range(len(self.elements)):
             if self.elements[k].entity.etype == "link":
                 for buffer_ref in self.elements[k].to_entity:
-                    if buffer_ref.id == element.id:
+                    if buffer_ref.entity.id == element.entity.id:
                        raise Exception("O elemento existe em um relacionamento, exclua o relacionamento."); 
                 for buffer_ref in self.elements[k].from_entity:
-                    if buffer_ref.id == element.id:
+                    if buffer_ref.entity.id == element.entity.id:
                        raise Exception("O elemento existe em um relacionamento, exclua o relacionamento."); 
 
         for i in range(len(self.elements)):
