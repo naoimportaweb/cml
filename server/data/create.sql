@@ -160,6 +160,7 @@ create table organization_chart_item(
     id VARCHAR(128) PRIMARY KEY,
     text_label VARCHAR(255) NOT NULL,
     etype VARCHAR(255) NOT NULL,
+    x int DEFAULT 0,
     organization_chart_id VARCHAR(128) NOT NULL,
     organization_chart_item_parent_id VARCHAR(128) DEFAULT NULL,
     creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
@@ -274,3 +275,4 @@ ALTER TABLE diagram_relationship_element_reference ADD COLUMN description TEXT D
 ALTER TABLE organization_chart_item MODIFY COLUMN organization_chart_item_parent_id VARCHAR(128) DEFAULT NULL;
 ALTER TABLE organization_chart_item_entity MODIFY COLUMN id VARCHAR(256) NOT NULL;
 ALTER TABLE organization_chart_item ADD COLUMN sequencia int not NULL;
+ALTER TABLE organization_chart_item ADD COLUMN x int DEFAULT 0;

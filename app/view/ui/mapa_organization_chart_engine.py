@@ -30,11 +30,8 @@ class MapaOrganizationChartEngine(QWidget):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.emptySpaceMenu)
 
-    #def getElement(self, x, y):
-    #    for element in reversed(self.mapa.elements):
-    #        if element.x < x and element.x + element.w > x and element.y < y and element.y + element.h > y:
-    #            return element;
-    #    return None;
+    def getElement(self, x, y):
+        return self.mapa.findByXY( x, y);
 
     #def addEntity(self, ptype, x, y):
     #    return self.mapa.addEntity( ptype, x, y);
@@ -55,14 +52,12 @@ class MapaOrganizationChartEngine(QWidget):
             painter.drawPixmap(0, 0, self.pixmap)
 
     def mousePressEvent(self, event: QMouseEvent):
-        self.last_pos = event.position().toPoint();
-        return;
-        #self.previous_pos = event.position().toPoint();
-        #QWidget.mousePressEvent(self, event);
-        #current_pos = event.position().toPoint();
-        #self.selected_element = self.getElement(current_pos.x(), current_pos.y());
-        #if self.selected_element != None:
-        #    self.diff = [current_pos.x() - self.selected_element.x, current_pos.y() - self.selected_element.y];
+        self.previous_pos = event.position().toPoint();
+        QWidget.mousePressEvent(self, event);
+        current_pos = event.position().toPoint();
+        self.selected_element = self.getElement(current_pos.x(), current_pos.y());
+        if self.selected_element != None:
+            self.diff = [current_pos.x() - self.selected_element.x];
 
     def redraw(self):
         self.painter.begin(self.pixmap);
@@ -100,24 +95,22 @@ class MapaOrganizationChartEngine(QWidget):
         #    self.redraw();
 
     def mouseMoveEvent(self, event: QMouseEvent):
-        return;
-        #current_pos = event.position().toPoint()
-        #QWidget.mouseMoveEvent(self, event);
+        current_pos = event.position().toPoint()
+        QWidget.mouseMoveEvent(self, event);
         #if self.mapa.getLocked():
         #    return;
-        #if self.selected_element != None and (current_pos.y() % 2) == 0:
-        #    self.selected_element.setX( current_pos.x() - self.diff[0] );
-        #    self.selected_element.setY( current_pos.y() - self.diff[1] );
-        #    self.redraw();
+        if self.selected_element != None:
+            self.selected_element.x =  current_pos.x() - self.diff[0] ;
+            self.redraw();
     def emptySpaceMenu(self):
         menu = QMenu()
         item = menu.addAction('Configure');
         item.triggered.connect(self.item_configure_click)
-        #self.last_pos = QCursor.pos();
+        #self.previous_pos = QCursor.pos();
         menu.exec_(QCursor.pos())
 
     def item_configure_click(self):
-        current_pos = self.last_pos;
+        current_pos = self.previous_pos;
         print(current_pos);
         returned = self.mapa.findByXY(current_pos.x(), current_pos.y());
         print(returned);

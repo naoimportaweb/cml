@@ -24,8 +24,8 @@ class OrganizationChart
         for($i = 0; $i < count($post_data["parameters"]["elements"]); $i++) {
             $element = $post_data["parameters"]["elements"][$i];
 
-            array_push($sqls, "INSERT INTO organization_chart_item(id, text_label, etype, organization_chart_id, organization_chart_item_parent_id, sequencia) values(?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE text_label = ?,  sequencia=?");
-            array_push( $valuess,[ $element["id"], $element["text_label"], $element["etype"], $post_data["parameters"]["id"], $element["organization_chart_item_parent_id"], $i, $element["text_label"], $i  ]);
+            array_push($sqls, "INSERT INTO organization_chart_item(id, text_label, etype, organization_chart_id, organization_chart_item_parent_id, sequencia, x) values(?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE text_label = ?,  sequencia=?, x=?");
+            array_push( $valuess,[ $element["id"], $element["text_label"], $element["etype"], $post_data["parameters"]["id"], $element["organization_chart_item_parent_id"], $i, $element["x"], $element["text_label"], $i , $element["x"] ]);
 
             for($j = 0; $j < count($element["entitys"]); $j++){
                 $entity = $element["entitys"][$j];

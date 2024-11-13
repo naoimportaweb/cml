@@ -46,6 +46,7 @@ class OrganizationChart(ConnectObject):
             for element in data['elements']:
                 item = self.addChartItem(element["text_label"], element["organization_chart_id"], 
                     organization_chart_item_parent_id=element["organization_chart_item_parent_id"], _id=element["id"] );
+                item.x = element["x"];
                 for entity in element["entitys"]:
                     item.addEntity( Entity.fromJson( entity ) );
 
@@ -138,7 +139,7 @@ class OrganizationChartItem(ConnectObject):
         self.text_label = text_label;
         self.organization_chart_id = organization_chart_id;
         self.organization_chart_item_parent_id = organization_chart_item_parent_id;
-        self.x = None; self.y = None; self.w = None; self.h = None;
+        self.x = 0; self.y = None; self.w = None; self.h = None;
         self.elements = [];
         self.buffer_lines_text  =[];
 
@@ -175,14 +176,13 @@ class OrganizationChartItem(ConnectObject):
         if len(buffer_string) > 0:
             self.buffer_lines_text.append(buffer_string);
         
-        self.w = self.__size_text__( self.text_label, painter)["w"];
+        self.w = self.__size_text__( self.text_label, painter)["w"] + 10;
         for line in self.buffer_lines_text:
             buffer_size_line = self.__size_text__( line, painter);
             if buffer_size_line["w"] > self.w:
                 self.w = buffer_size_line["w"];
         self.h = 25;
-        self.x = posicao_x;
-        self.y = (self.level * 50);
+        self.y = (self.level * 75);
         posicao = posicao_x;
         for element in self.elements:
             posicao += element.recalc( painter, posicao );
@@ -192,17 +192,21 @@ class OrganizationChartItem(ConnectObject):
         penRectangle = QPen(Qt.black)
         penRectangle.setWidth(1)
         painter.setPen(penRectangle)
+        
+        for element in self.elements:
+            painter.drawLine( self.x + int( self.w / 2 ) , self.y  + int( self.h / 2 ) , element.x + int( element.w / 2), element.y + int( element.h / 2 ) );
+
         painter.fillRect( self.x, self.y, self.w, self.h + (15 * len(self.buffer_lines_text)) , QBrush(Qt.white));
         painter.drawRect( self.x, self.y, self.w, self.h + (15 * len(self.buffer_lines_text)));
         painter.drawText(QRectF(self.x, self.y, self.w, self.h), Qt.AlignCenter | Qt.AlignTop, self.text_label);
         for i in range(len( self.buffer_lines_text )):
-            painter.drawText(QRectF(self.x, self.y + 15 + (12 * i) , self.w, self.h), Qt.AlignCenter | Qt.AlignTop, self.buffer_lines_text[i]);
+            painter.drawText(QRectF(self.x + 5, self.y + 15 + (12 * i) , self.w, self.h), Qt.AlignCenter | Qt.AlignTop, self.buffer_lines_text[i]);
         for element in self.elements:
             element.draw( painter );
     
     def toJson(self, array):
         self.sequencia = len(array);
-        buffer = {"id" : self.id, "etype" : self.etype, "text_label" : self.text_label, "organization_chart_id" : self.organization_chart_id, "organization_chart_item_parent_id" : self.organization_chart_item_parent_id, "entitys" : [], "sequencia" : self.sequencia };
+        buffer = {"id" : self.id, "x" : self.x, "etype" : self.etype, "text_label" : self.text_label, "organization_chart_id" : self.organization_chart_id, "organization_chart_item_parent_id" : self.organization_chart_item_parent_id, "entitys" : [], "sequencia" : self.sequencia };
         for entity in self.entitys:
             buffer["entitys"].append( entity["entity"].toJson() );
         array.append( buffer );
