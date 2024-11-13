@@ -82,6 +82,7 @@ class OrganizationChart(ConnectObject):
 
     def __addItem__(self, item ):
         # tentar adicionar um RAIZ, SO PODE TER 1 RAIZ NO CHART
+        print( item.text_label );
         if item.organization_chart_item_parent_id == None and self.root == None:
             self.root = item;
             return item;
@@ -93,6 +94,8 @@ class OrganizationChart(ConnectObject):
 
     def __findItem__(self, element, id):
         # Node que estamos procurando
+        if element == None:
+            return None;
         if element.id == id:
             return element;
         for buffer in element.elements:
@@ -129,6 +132,7 @@ class OrganizationChartItem(ConnectObject):
         if _id != None:
             self.id = _id;
         self.level = 0;
+        self.sequencia = 0; # usado no banco de dados para ordenar a sequencia de carregamento.
         self.entitys = [];
         self.etype = etype;
         self.text_label = text_label;
@@ -197,9 +201,11 @@ class OrganizationChartItem(ConnectObject):
             element.draw( painter );
     
     def toJson(self, array):
-        buffer = {"id" : self.id, "etype" : self.etype, "text_label" : self.text_label, "organization_chart_id" : self.organization_chart_id, "organization_chart_item_parent_id" : self.organization_chart_item_parent_id, "entitys" : [] };
+        self.sequencia = len(array);
+        buffer = {"id" : self.id, "etype" : self.etype, "text_label" : self.text_label, "organization_chart_id" : self.organization_chart_id, "organization_chart_item_parent_id" : self.organization_chart_item_parent_id, "entitys" : [], "sequencia" : self.sequencia };
         for entity in self.entitys:
             buffer["entitys"].append( entity["entity"].toJson() );
+        array.append( buffer );
         for element in self.elements:
             element.toJson(array);
-        array.append( buffer );
+        

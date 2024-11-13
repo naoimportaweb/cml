@@ -1,8 +1,8 @@
 # CADA MAPA POSSUI UMA FORMA DE DESENHAR, CLICAR, SELECIONAR, ISSO FICA AQUI
 
-from PySide6.QtWidgets import (QWidget,QMainWindow,QApplication,QFileDialog,QStyle,QColorDialog,)
+from PySide6.QtWidgets import (QMenu, QWidget,QMainWindow,QApplication,QFileDialog,QStyle,QColorDialog,)
 from PySide6.QtCore import Qt, Slot, QStandardPaths,QRectF
-from PySide6.QtGui import (QMouseEvent,QPaintEvent,QPen,QAction,QPainter,QColor,QBrush,QPixmap,QIcon,QKeySequence,);
+from PySide6.QtGui import (QCursor, QMouseEvent,QPaintEvent,QPen,QAction,QPainter,QColor,QBrush,QPixmap,QIcon,QKeySequence,);
 
 import os, sys, inspect, json, uuid;
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
@@ -27,6 +27,8 @@ class MapaOrganizationChartEngine(QWidget):
         self.pen.setJoinStyle(Qt.RoundJoin);
         self.selected_element = None;
         self.diff = [0 , 0];
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.emptySpaceMenu)
 
     #def getElement(self, x, y):
     #    for element in reversed(self.mapa.elements):
@@ -53,6 +55,7 @@ class MapaOrganizationChartEngine(QWidget):
             painter.drawPixmap(0, 0, self.pixmap)
 
     def mousePressEvent(self, event: QMouseEvent):
+        self.last_pos = event.position().toPoint();
         return;
         #self.previous_pos = event.position().toPoint();
         #QWidget.mousePressEvent(self, event);
@@ -106,8 +109,26 @@ class MapaOrganizationChartEngine(QWidget):
         #    self.selected_element.setX( current_pos.x() - self.diff[0] );
         #    self.selected_element.setY( current_pos.y() - self.diff[1] );
         #    self.redraw();
-    
+    def emptySpaceMenu(self):
+        menu = QMenu()
+        item = menu.addAction('Configure');
+        item.triggered.connect(self.item_configure_click)
+        #self.last_pos = QCursor.pos();
+        menu.exec_(QCursor.pos())
+
+    def item_configure_click(self):
+        current_pos = self.last_pos;
+        print(current_pos);
+        returned = self.mapa.findByXY(current_pos.x(), current_pos.y());
+        print(returned);
+        if returned != None:
+            f = DialogOrganizationItem( self.form, returned, self.mapa );
+            f.exec();
+        self.redraw();
+        return;
+
     def mouseReleaseEvent(self, event: QMouseEvent):
+
         return;
         #self.previous_pos = None
         #QWidget.mouseReleaseEvent(self, event);
