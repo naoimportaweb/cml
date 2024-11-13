@@ -9,6 +9,7 @@ from classlib.connectobject import ConnectObject;
 from classlib.relationship.person import Person
 from classlib.relationship.organization import Organization
 from classlib.configuration import Configuration
+from classlib.entity import Entity
 
 from PySide6.QtWidgets import (QWidget,QMainWindow,QApplication,QFileDialog,QStyle,QColorDialog,)
 from PySide6.QtCore import Qt, Slot, QStandardPaths,QRectF
@@ -35,9 +36,23 @@ class OrganizationChart(ConnectObject):
     
     def getName(self):
         return self.text_label;
+    
+    def load_data(self, data):
+        self.id = data["id"];
+        self.organization_id = data["organization_id"];
+        self.text_label = data["text_label"];
+        self.organization = Entity.fromJson(data["organization"]);
+        if data.get("elements") != None:
+            for element in data['elements']:
+                item = self.addChartItem(element["text_label"], element["organization_chart_id"], 
+                    organization_chart_item_parent_id=element["organization_chart_item_parent_id"], _id=element["id"] );
+                for entity in element["entitys"]:
+                    item.addEntity( Entity.fromJson( entity ) );
 
-    def load(self, id):
         return True;
+    def load(self, id):
+        js = self.__execute__("OrganizationChart", "load", {"id" : id });
+        return self.load_data(js["return"]);
 
     def save(self):
         objeto = self.toJson();
@@ -74,7 +89,7 @@ class OrganizationChart(ConnectObject):
         if parent != None:
             parent.addItem( item );
             return item;
-        return False;
+        return item;
 
     def __findItem__(self, element, id):
         # Node que estamos procurando
