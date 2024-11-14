@@ -1,12 +1,9 @@
 import os, sys, inspect, json;
 
-from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings,
-                            QSaveFile, QTextStream, Qt, Slot)
+from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence
-from PySide6.QtWidgets import (QMessageBox, QApplication, QFileDialog, QMainWindow, QComboBox,
-                               QMdiArea, QMessageBox, QTextEdit, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
+from PySide6.QtWidgets import (QMessageBox, QApplication, QFileDialog, QMainWindow, QComboBox, QMdiArea, QMessageBox, QTextEdit, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
 
-import os, sys, inspect;
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
 ROOT = os.path.dirname( CURRENTDIR );
 
@@ -14,7 +11,6 @@ sys.path.append( ROOT );
 sys.path.append("/opt/cml/app/");
 
 from view.ui.customvlayout import CustomVLayout;
-
 from classlib.server import Server;
 from classlib.user import User;
 from classlib.configuration import Configuration;

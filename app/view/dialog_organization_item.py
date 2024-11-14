@@ -1,12 +1,9 @@
 import os, sys, inspect;
 
-from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QDate,
-                            QSaveFile, QTextStream, Qt, Slot)
+from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QDate, QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence
-from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QTabWidget, QComboBox, QTableWidgetItem, QHeaderView,
-                               QMdiArea, QMessageBox, QTextEdit, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
+from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QTabWidget, QComboBox, QTableWidgetItem, QHeaderView, QMdiArea, QMessageBox, QTextEdit, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
 
-import os, sys, inspect;
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
 ROOT = os.path.dirname( CURRENTDIR );
 sys.path.append( ROOT );
@@ -20,7 +17,7 @@ class DialogOrganizationItem(QDialog):
         super().__init__(form)
         nWidth = 800;
         nHeight = 600;
-        print(form.width());
+
         self.setGeometry(form.x() + form.width()/2 - nWidth/2, form.y() + form.height()/2 - nHeight/2, nWidth, nHeight);
         self.element = element;
         self.graphic = graphic;
@@ -89,6 +86,6 @@ class DialogOrganizationItem(QDialog):
     def table_ele_load(self):
         self.table_ele.setRowCount( len( self.element.entitys ) );
         for i in range(len( self.element.entitys )):
-            self.table_ele.setItem( i, 0, QTableWidgetItem( self.element.entitys[i]["entity"].text ) );
-            self.table_ele.setItem( i, 1, QTableWidgetItem( self.element.entitys[i]["entity"].etype ) );
+            self.table_ele.setItem( i, 0, QTableWidgetItem( self.element.entitys[i].getText() ) );
+            self.table_ele.setItem( i, 1, QTableWidgetItem( self.element.entitys[i].entity.etype ) );
         return; 

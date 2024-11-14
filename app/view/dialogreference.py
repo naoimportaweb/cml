@@ -1,15 +1,11 @@
 import os, sys, inspect;
 
-from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings,
-                            QSaveFile, QTextStream, Qt, Slot)
+from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence
-from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow,
-                               QMdiArea, QMessageBox, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
+from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QMdiArea, QMessageBox, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
 
-import os, sys, inspect;
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
 ROOT = os.path.dirname( CURRENTDIR );
-
 sys.path.append( ROOT );
 sys.path.append("/opt/cml/app/");
 

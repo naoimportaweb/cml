@@ -171,6 +171,9 @@ create table organization_chart_item_entity(
     id VARCHAR(128) PRIMARY KEY,
     organization_chart_item_id VARCHAR(128) NOT NULL,
     entity_id VARCHAR(128) NOT NULL,
+    start_date         DATE DEFAULT NULL,
+    end_date           DATE DEFAULT NULL,
+    format_date         VARCHAR(255) DEFAULT 'yyyy-MM-dd',
     creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
 );
@@ -276,3 +279,7 @@ ALTER TABLE organization_chart_item MODIFY COLUMN organization_chart_item_parent
 ALTER TABLE organization_chart_item_entity MODIFY COLUMN id VARCHAR(256) NOT NULL;
 ALTER TABLE organization_chart_item ADD COLUMN sequencia int not NULL;
 ALTER TABLE organization_chart_item ADD COLUMN x int DEFAULT 0;
+
+ALTER TABLE organization_chart_item_entity ADD COLUMN  start_date         DATE DEFAULT NULL;
+ALTER TABLE organization_chart_item_entity ADD COLUMN  end_date           DATE DEFAULT NULL;
+ALTER TABLE organization_chart_item_entity ADD COLUMN  format_date         VARCHAR(255) DEFAULT 'yyyy-MM-dd';

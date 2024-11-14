@@ -6,7 +6,6 @@ from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QHBoxLayo
 
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
 ROOT = os.path.dirname( CURRENTDIR );
-
 sys.path.append( ROOT );
 
 from view.dialogentitylink import DialogEntityLink;

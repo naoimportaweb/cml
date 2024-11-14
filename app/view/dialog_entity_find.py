@@ -1,16 +1,12 @@
 #dialog_entity_find.p
 import os, sys, inspect;
 
-from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings,
-                            QSaveFile, QTextStream, Qt, Slot)
+from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence
-from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QHeaderView, QTableWidgetItem,
-                               QMdiArea, QMessageBox, QTextEdit, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
+from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QHeaderView, QTableWidgetItem, QMdiArea, QMessageBox, QTextEdit, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
 
-import os, sys, inspect;
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
 ROOT = os.path.dirname( CURRENTDIR );
-
 sys.path.append( ROOT );
 
 from classlib.entity import Entity;
@@ -19,6 +15,7 @@ from view.ui.customvlayout import CustomVLayout;
 class DialogEntityFind(QDialog):
     def __init__(self, form):
         super().__init__(form)
+        self.resize(600, 500);
         self.entitys = None;
         self.entity = None;
         self.setWindowTitle("Find entity")

@@ -1,10 +1,8 @@
 import os, sys, inspect;
 
-from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QDate,  
-                            QSaveFile, QTextStream, Qt, Slot, QRegularExpression)
+from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QDate,  QSaveFile, QTextStream, Qt, Slot, QRegularExpression)
 from PySide6.QtGui import QAction, QIcon, QKeySequence, QTextCharFormat, QSyntaxHighlighter, QFont
-from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QTabWidget, QComboBox, QTableWidgetItem, QHeaderView,
-                               QMdiArea, QMessageBox, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
+from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QTabWidget, QComboBox, QTableWidgetItem, QHeaderView, QMdiArea, QMessageBox, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
 
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
 ROOT = os.path.dirname( CURRENTDIR );

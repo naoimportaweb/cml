@@ -29,8 +29,8 @@ class OrganizationChart
 
             for($j = 0; $j < count($element["entitys"]); $j++){
                 $entity = $element["entitys"][$j];
-                array_push($sqls, "INSERT INTO organization_chart_item_entity(id, organization_chart_item_id, entity_id) values(?, ?, ?) ON DUPLICATE KEY UPDATE  entity_id=?");
-                array_push( $valuess,[ substr( $element["id"] , 0, 20)  . $entity["id"], $element["id"], $entity["id"], $entity["id"]  ]);
+                array_push($sqls, "INSERT INTO organization_chart_item_entity(id, organization_chart_item_id, entity_id, start_date, end_date, format_date) values(?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE  start_date=?, end_date=?, format_date=?");
+                array_push( $valuess,[ $entity["id"], $element["id"], $entity["entity_id"], $entity["start_date"], $entity["end_date"], $entity["format_date"], $entity["start_date"], $entity["end_date"], $entity["format_date"]  ]);
             }
         }
 
@@ -48,8 +48,17 @@ class OrganizationChart
         $buffer_diagram =  $mysql->DataTable("SELECT * from organization_chart where id = ?", [ $post_data["parameters"]["id"] ])[0];
         $buffer_diagram["elements"] =  $mysql->DataTable("select * from organization_chart_item where organization_chart_id = ? order by sequencia asc", [ $post_data["parameters"]["id"] ]);
         
+        
         for($i = 0; $i < count($buffer_diagram["elements"]); $i++) {
-            $buffer_diagram["elements"][$i]["entitys"] = $mysql->DataTable("SELECT et.* FROM organization_chart_item_entity as ci inner join entity as et on ci.entity_id = et.id where ci.organization_chart_item_id = ?", [$buffer_diagram["elements"][$i]["id"]]);
+            $buffer_item_entity = $mysql->DataTable("SELECT * FROM organization_chart_item_entity  where organization_chart_item_id = ?", [$buffer_diagram["elements"][$i]["id"]]);
+            $buffer_diagram["elements"][$i]["entitys"] = [];
+            for($j = 0; $j < count($buffer_item_entity); $j++) {
+                $item_entity = $buffer_item_entity[$j];
+                $item_entity["entity"] = $mysql->DataTable("SELECT * FROM entity WHERE id= ?", [$item_entity["entity_id"]])[0];
+                array_push( $buffer_diagram["elements"][$i]["entitys"] , $item_entity);
+            }
+
+            //
         }
 
         $buffer_diagram["organization"] = $mysql->DataTable("select * from entity where id= ?", [$buffer_diagram["organization_id"]])[0];
