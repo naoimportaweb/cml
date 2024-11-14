@@ -1,8 +1,8 @@
 import os, sys, inspect;
 
-from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QDate, QSaveFile, QTextStream, Qt, Slot)
-from PySide6.QtGui import QAction, QIcon, QKeySequence
-from PySide6.QtWidgets import (QComboBox, QApplication, QFileDialog, QMainWindow, QHeaderView, QTableWidgetItem, QComboBox, QDateEdit, QMdiArea, QMessageBox, QTextEdit, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
+from PySide6.QtCore import ( QDate, Qt, Slot)
+#from PySide6.QtGui import QAction, QIcon, QKeySequence
+from PySide6.QtWidgets import (QComboBox, QHeaderView, QTableWidgetItem, QDateEdit, QDialog, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
 
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
 ROOT = os.path.dirname( CURRENTDIR );
