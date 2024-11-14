@@ -22,7 +22,7 @@ class MdiMap(QWidget):
         super().__init__();
         self.form_principal = form;
         if mapa.__class__.__name__ == "OrganizationChart":
-            self.painter_widget = MapaOrganizationChartEngine(parent=None, mapa=mapa, form=self);
+            self.painter_widget = MapaOrganizationChartEngine(parent=form, mapa=mapa, form=self);
         else:
             self.painter_widget = MapaRelationshipEngine(parent=None, mapa=mapa, form=self);
         self.mapa = mapa;

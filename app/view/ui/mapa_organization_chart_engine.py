@@ -16,6 +16,7 @@ class MapaOrganizationChartEngine(QWidget):
         super().__init__(parent)
         self.setFixedSize(max_width, max_height);
         self.form = form;
+        self.parent = parent;
         self.mapa = mapa; # class.map
         self.pixmap = QPixmap(self.size());
         self.pixmap.fill(Qt.white);
@@ -63,36 +64,12 @@ class MapaOrganizationChartEngine(QWidget):
         self.painter.begin(self.pixmap);
         self.pixmap.fill(Qt.white);
         self.mapa.draw(self.painter);
-        #for elemento in self.mapa.elements:
-        #    elemento.recalc(self.painter);
-        #for elemento in self.mapa.elements:
-        #    elemento.draw( self.painter );
         self.painter.end();
         self.update();
 
     def mouseDoubleClickEvent(self, event):
-        current_pos = event.position().toPoint();
-        returned = self.mapa.findByXY(current_pos.x(), current_pos.y());
-        if returned == None:
-            element = self.mapa.addEntityItem("New Item");
-            if element != False:
-                f = DialogOrganizationItem( self.form, element, self.mapa );
-                f.exec();
-        else:
-            element = self.mapa.addEntityItem("New Item", organization_chart_item_parent_id=returned.id);
-            if element != False:
-                f = DialogOrganizationItem( self.form, element, self.mapa );
-                f.exec();
-        self.redraw();
         return;
-        #
-        #buffer = self.getElement(current_pos.x(), current_pos.y());
-        #if self.form != None:
-        #    if buffer == None:
-        #        self.form.map_double_click( self, current_pos.x(), current_pos.y() );
-        #    else:
-        #        self.form.entity_double_click( buffer );
-        #    self.redraw();
+        
 
     def mouseMoveEvent(self, event: QMouseEvent):
         current_pos = event.position().toPoint()
@@ -102,26 +79,56 @@ class MapaOrganizationChartEngine(QWidget):
         if self.selected_element != None:
             self.selected_element.x =  current_pos.x() - self.diff[0] ;
             self.redraw();
+    
     def emptySpaceMenu(self):
         menu = QMenu()
-        item = menu.addAction('Configure');
-        item.triggered.connect(self.item_configure_click)
-        #self.previous_pos = QCursor.pos();
+        returned = self.mapa.findByXY(self.previous_pos.x(), self.previous_pos.y());
+        if returned != None:
+            item3 = menu.addAction('New Children');
+            item3.triggered.connect(self.item_add_click)
+            item1 = menu.addAction('Configure');
+            item1.triggered.connect(self.item_configure_click)
+            item2 = menu.addAction('Remove');
+            item2.triggered.connect(self.item_remove_click)
+        else:
+            if self.mapa.root == None:
+                item1 = menu.addAction('New');
+                item1.triggered.connect(self.item_new_click)
         menu.exec_(QCursor.pos())
 
+    def item_new_click(self):
+        current_pos = self.previous_pos;
+        element = self.mapa.addEntityItem("New Item");
+        if element != False:
+            f = DialogOrganizationItem( self.parent, element, self.mapa );
+            f.exec();
+            self.redraw();
+        return;
+    
+    def item_add_click(self):
+        current_pos = self.previous_pos;
+        returned = self.mapa.findByXY(current_pos.x(), current_pos.y());
+        element = self.mapa.addEntityItem("New Item", organization_chart_item_parent_id=returned.id);
+        if element != False:
+            f = DialogOrganizationItem( self.parent, element, self.mapa );
+            f.exec();
+            element.x = returned.x;
+            self.redraw();
+        return;
+    
+    def item_remove_click(self):
+        current_pos = self.previous_pos;
+    
     def item_configure_click(self):
         current_pos = self.previous_pos;
-        print(current_pos);
         returned = self.mapa.findByXY(current_pos.x(), current_pos.y());
-        print(returned);
         if returned != None:
-            f = DialogOrganizationItem( self.form, returned, self.mapa );
+            f = DialogOrganizationItem( self.parent, returned, self.mapa );
             f.exec();
-        self.redraw();
+            self.redraw();
         return;
 
     def mouseReleaseEvent(self, event: QMouseEvent):
-
         return;
         #self.previous_pos = None
         #QWidget.mouseReleaseEvent(self, event);

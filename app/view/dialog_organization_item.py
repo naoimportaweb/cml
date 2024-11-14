@@ -18,13 +18,10 @@ from view.dialog_entity_find import DialogEntityFind;
 class DialogOrganizationItem(QDialog):
     def __init__(self, form, element, graphic):
         super().__init__(form)
-        nWidth = int(form.width() * 0.8); nHeight = int(form.height() * 0.6);
-        if nWidth > 800:
-            nWidth = 800;
-        self.setGeometry(form.x() + form.width()/2 - nWidth/2,
-            form.y() + form.height()/2 - nHeight/2, 600, 500);
-        #if element == None:
-        #    element = graphic.addEntityItem("New Item");
+        nWidth = 800;
+        nHeight = 600;
+        print(form.width());
+        self.setGeometry(form.x() + form.width()/2 - nWidth/2, form.y() + form.height()/2 - nHeight/2, nWidth, nHeight);
         self.element = element;
         self.graphic = graphic;
         self.setWindowTitle("Organization")
