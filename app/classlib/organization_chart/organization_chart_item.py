@@ -41,6 +41,12 @@ class OrganizationChartItem(ConnectObject):
     def addEntity(self, entity, _id=None, start_date=None, end_date=None, format_date=None):
         self.entitys.append( OrganizationChartItemEntity( entity, self.id, start_date=start_date, end_date=end_date, format_date=format_date, _id=_id)  );
     
+    def setX(self, x):
+        if x == None:
+            self.x = x;
+        else:
+            self.x = int(x); # O banco de dados está retornando string, mesmo sendo int no banco de dados, naó sei a merda que deu.
+    
     def findByXY(self, x, y):
         if self.x < x and self.x + self.w > x and self.y < y and self.y + self.h > y:
             return self;

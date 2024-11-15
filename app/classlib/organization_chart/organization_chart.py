@@ -47,7 +47,7 @@ class OrganizationChart(ConnectObject):
             for element in data['elements']:
                 item = self.addChartItem(element["text_label"], element["organization_chart_id"], 
                     organization_chart_item_parent_id=element["organization_chart_item_parent_id"], _id=element["id"] );
-                item.x = element["x"];
+                item.setX( element["x"] );
                 for buffer in element["entitys"]:
                     item.addEntity( Entity.fromJson( buffer["entity"]), _id=buffer["id"] , start_date=buffer["start_date"], end_date=buffer["end_date"], format_date=buffer["format_date"]   );
 
