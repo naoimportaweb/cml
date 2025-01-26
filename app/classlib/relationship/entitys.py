@@ -74,3 +74,6 @@ class Reference():
         if self.link3.strip() != "":
             return self.link3;
         return "";
+
+    def citation(self):
+        return "[] " + self.title + ". URL: " + self.getUrl();
