@@ -22,6 +22,7 @@ from view.dialog_diagram_choice import DialogDiagramChoice;
 from view.dialog_diagram_load import DialogDiagramLoad;
 from view.dialog_relationship_edit import DialogRelationshipEdit
 from view.dialog_connect import DialogConnect;
+from view.dialog_import import DialogImport;
 from classlib.server import Server;
 
 class MainWindow(QMainWindow):
@@ -102,6 +103,10 @@ class MainWindow(QMainWindow):
         if buffer != None:
             f = DialogRelationshipCheck(self, buffer);
             f.exec();
+    @Slot()
+    def import_data(self):
+        f = DialogImport(self);
+        f.exec();
 
     #@Slot()
     #def save_as(self):
@@ -204,6 +209,12 @@ class MainWindow(QMainWindow):
                                 statusTip="Check map",
                                 triggered=self.map_errors)
 
+        icon = QIcon( CURRENTDIR + "/resources/upload.png");
+        self._import_data = QAction(icon, "Import", self,
+                                shortcut=QKeySequence.Cut,
+                                statusTip="Import",
+                                triggered=self.import_data)
+
 
         #icon = QIcon.fromTheme(QIcon.ThemeIcon.EditCopy)
         #self._copy_act = QAction(icon, "&Copy", self,
@@ -293,6 +304,7 @@ class MainWindow(QMainWindow):
         self._map_tool_bar = self.addToolBar("Map")
         self._map_tool_bar.addAction(self._map_edit_act);
         self._map_tool_bar.addAction(self._map_edit_check);
+        self._map_tool_bar.addAction(self._import_data);
         #self._edit_tool_bar.addAction(self._copy_act)
         #self._edit_tool_bar.addAction(self._paste_act)
         #self._file_tool_bar.setEnabled(False);

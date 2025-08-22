@@ -27,6 +27,7 @@ class Entity(ConnectObject):
         self.end_date = None;
         self.format_date = "yyyy-MM-dd";
         self.default_url = None;
+        self.icon = None;
 
     #def getWarnings(self, arr):
     #    if self.full_description == None or self.full_description.strip() == "":
@@ -71,7 +72,7 @@ class Entity(ConnectObject):
         return self.time_slices[-1];
         
     def toJson(self):
-        return { "id" : self.id, "etype" : self.etype, "name" : self.text, "data_extra" : self.data_extra, "full_description" : self.full_description, "wikipedia" : self.wikipedia, "classification" : self.classification, "small_label" : self.small_label}
+        return { "id" : self.id, "icon" : self.icon, "etype" : self.etype, "name" : self.text, "data_extra" : self.data_extra, "full_description" : self.full_description, "wikipedia" : self.wikipedia, "classification" : self.classification, "small_label" : self.small_label}
 
     def toType(self, etype):
         js = self.__execute__("Entity", "to_type", {"type" : etype, "id" : self.id});
@@ -127,6 +128,7 @@ class Entity(ConnectObject):
         buffer.id = js["id"];
         buffer.etype = js["etype"];
         buffer.text = js["text_label"];
+        buffer.icon = js.get("icon");
         buffer.full_description = js["description"];
         buffer.default_url = js["default_url"];
         buffer.data_extra = js["data_extra"];

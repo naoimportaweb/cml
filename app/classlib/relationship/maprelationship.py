@@ -22,6 +22,7 @@ class MapRelationship(ConnectObject):
         self.elements = [];
         self.lock_list = [];
         self.locked = False;
+        self.default_reference = None;
     
     def getErros(self):
         arr = [];
@@ -88,7 +89,7 @@ class MapRelationship(ConnectObject):
         return buffer;
     
     def toJson(self):
-        return { "id" : self.id,  "name" : self.name, "keyword" : self.keyword, "elements" : []}
+        return { "id" : self.id,  "name" : self.name, "keyword" : self.keyword, "elements" : [], "default_reference" : self.default_reference}
     
     def lock_map(self):
         js = self.__execute__("MapRelationship", "lock_map", {"diagram_relationship_id" : self.id });
@@ -111,7 +112,6 @@ class MapRelationship(ConnectObject):
         objeto = self.toJson();
         for element in self.elements:
             objeto["elements"].append( element.toJson() );
-        
         js = self.__execute__("MapRelationship", "save", objeto);
         if js["status"]:
             return js["return"];
@@ -123,6 +123,7 @@ class MapRelationship(ConnectObject):
         self.keyword = data["keyword"];
         self.person_id = data["person_id"];
         self.lock_list = data["lock"];
+        self.default_reference = data.get("default_reference");
         self.locked = data["locked"];
         if data.get("elements") != None:
             for element in data['elements']:

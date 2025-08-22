@@ -134,8 +134,8 @@ class MapRelationship
                 return false;
             }
         }
-        array_push($sqls,  "INSERT INTO diagram_relationship (id, name, keyword, person_id) VALUES( ?,?,?,? ) ON DUPLICATE KEY UPDATE name = ?, keyword = ?" );
-        array_push( $valuess, [ $post_data["parameters"]["id"], $post_data["parameters"]["name"], $post_data["parameters"]["keyword"], $user->id, $post_data["parameters"]["name"], $post_data["parameters"]["keyword"] ] );
+        array_push($sqls,  "INSERT INTO diagram_relationship (id, name, keyword, person_id, default_reference) VALUES( ?,?,?,?,? ) ON DUPLICATE KEY UPDATE name = ?, keyword = ?, default_reference=?" );
+        array_push( $valuess, [ $post_data["parameters"]["id"], $post_data["parameters"]["name"], $post_data["parameters"]["keyword"], $user->id, $post_data["parameters"]["default_reference"], $post_data["parameters"]["name"], $post_data["parameters"]["keyword"], $post_data["parameters"]["default_reference"] ] );
 
         for($i = 0; $i < count($post_data["parameters"]["elements"]); $i++) {
             $element = $post_data["parameters"]["elements"][$i];

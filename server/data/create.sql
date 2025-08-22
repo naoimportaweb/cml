@@ -1,3 +1,39 @@
+
+create table entity_aka(
+    id VARCHAR(128) PRIMARY KEY,
+    entity_id VARCHAR(128) NOT NULL,
+    name varchar(255) NOT NULL
+);
+
+
+create table entity_simple_association (
+    id VARCHAR(128) PRIMARY KEY,
+    entity_from_id VARCHAR(128) NOT NULL,
+    entity_to_id VARCHAR(128) NOT NULL
+);
+
+create table sub_etype (
+    id VARCHAR(128) PRIMARY KEY,
+    icon varchar(255),
+    name varchar(255) NOT NULL
+);
+
+create table entity_image (
+    id VARCHAR(128) PRIMARY KEY,
+    entity_id VARCHAR(128) NOT NULL,
+    path varchar(255) NOT NULL
+);
+
+ALTER TABLE entity ADD COLUMN sub_etype_id varchar(128);
+ALTER TABLE entity ADD COLUMN icon varchar(255);
+ALTER TABLE diagram_relationship ADD COLUMN default_reference VARCHAR(255);
+
+ALTER TABLE entity_aka ADD FOREIGN KEY (entity_id) REFERENCES entity(id);
+ALTER TABLE entity_image ADD FOREIGN KEY (entity_id) REFERENCES entity(id);
+ALTER TABLE entity_simple_association ADD FOREIGN KEY (entity_from_id) REFERENCES entity(id);
+ALTER TABLE entity_simple_association ADD FOREIGN KEY (entity_to_id)   REFERENCES entity(id);
+ALTER TABLE entity ADD FOREIGN KEY (sub_etype_id)   REFERENCES sub_etype(id);
+
 # --------------- INSTALAÇAO -------------------------------------
 
 create table person(
@@ -67,9 +103,39 @@ create table entity (
     end_date           DATE DEFAULT NULL,
     format_date         VARCHAR(255) DEFAULT 'yyyy-MM-dd',
     etype VARCHAR(255) NOT NULL,
+    sub_etype_id VARCHAR(255) NOT NULL,
+    icon varchar(255),
     creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
 );
+
+create table entity_aka(
+    id VARCHAR(128) PRIMARY KEY,
+    entity_id VARCHAR(128) NOT NULL,
+    name varchar(255) NOT NULL
+);
+
+
+create table entity_simple_association (
+    id VARCHAR(128) PRIMARY KEY,
+    entity_from_id VARCHAR(128) NOT NULL,
+    entity_to_id VARCHAR(128) NOT NULL
+);
+
+create table sub_etype (
+    id VARCHAR(128) PRIMARY KEY,
+    icon varchar(255),
+    name varchar(255) NOT NULL
+);
+
+create table entity_image (
+    id VARCHAR(128) PRIMARY KEY,
+    entity_id VARCHAR(128) NOT NULL,
+    path varchar(255) NOT NULL
+);
+
+
+
 
 create table classification(
     id VARCHAR(128) PRIMARY KEY,
@@ -143,6 +209,7 @@ create table diagram_relationship_document(
     document_type_id VARCHAR(128) NOT NULL,
     description TEXT default NULL,
     title VARCHAR(255), link1 TEXT, link2 TEXT, link3 TEXT,
+    default_reference VARCHAR(255),
     creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
 );
@@ -186,6 +253,13 @@ create table organization_chart_history (
     creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
 );
+
+
+ALTER TABLE entity_aka ADD FOREIGN KEY (entity_id) REFERENCES entity(id);
+ALTER TABLE entity_image ADD FOREIGN KEY (entity_id) REFERENCES entity(id);
+ALTER TABLE entity_simple_association ADD FOREIGN KEY (entity_from_id) REFERENCES entity(id);
+ALTER TABLE entity_simple_association ADD FOREIGN KEY (entity_to_id)   REFERENCES entity(id);
+ALTER TABLE entity ADD FOREIGN KEY (sub_etype_id)   REFERENCES sub_etype(id);
 
 ALTER TABLE diagram_relationship_document ADD FOREIGN KEY (document_type_id) REFERENCES document_type(id);
 ALTER TABLE diagram_relationship_document ADD FOREIGN KEY (diagram_relationship_id) REFERENCES diagram_relationship(id);

@@ -36,6 +36,7 @@ class DialogRelationshipEdit(QDialog):
         self.setLayout(   layout   );
         self.ui_relationship();
         self.ui_lock();
+        self.ui_reference();
         self.ui_buttons();
         
     def ui_relationship(self):
@@ -74,6 +75,15 @@ class DialogRelationshipEdit(QDialog):
         btn_unlock.clicked.connect(self.btn_unlock_click)
         CustomVLayout.widget_linha(self, self.page_perm, [btn_unlock,btn_lock] );
 
+    def ui_reference(self):
+        lbl = QLabel("URL:")
+        lbl.setProperty("class", "normal");
+        self.txt_default_reference = QLineEdit()
+        self.txt_default_reference.setMinimumWidth(500);
+        self.txt_default_reference.editingFinished.connect(self.txt_default_reference_finish);
+        self.txt_default_reference.setText( self.map.default_reference );
+        CustomVLayout.widget_linha(self, self.page_docs, [lbl, self.txt_default_reference] );
+
     def ui_buttons(self):
         btn_entrar = QPushButton("Save Diagram")
         btn_entrar.clicked.connect(self.btn_save_click)
@@ -90,10 +100,13 @@ class DialogRelationshipEdit(QDialog):
     def btn_save_click(self):
         self.map.name = self.txt_name.text();
         self.map.keyword = self.txt_key.text();
+        self.map.default_reference = self.txt_default_reference.text();
         if self.validar():
             if self.map.save():
                 self.close();
     
+    def txt_default_reference_finish(self):
+        pass;
     def txt_name_finish(self):
         self.validar();
     def txt_key_finish(self):

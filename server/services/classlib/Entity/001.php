@@ -1,4 +1,9 @@
+
 <?php
+
+//ini_set('display_errors', 1);
+//ini_set('display_startup_errors', 1);
+//error_reporting(E_ALL);
 
 require_once dirname(dirname(dirname(__DIR__))) . "/api/mysql.php";
 
@@ -6,6 +11,36 @@ class Entity
 {
     private $id = null;
     private $name = "";
+
+    public function import_all($ip, $user, $post_data, $domain){
+        $mysql = new Mysql( $domain );
+        $entitys = $post_data["parameters"]["entitys"];
+        $sqls = [];
+        $values = [];
+        $date = new DateTime(); //now
+
+        for( $i = 0; $i < count($entitys); $i++ ){
+            $existe = $mysql->DataTable("SELECT id FROM entity WHERE text_label= ?", [ $entitys[$i]["text_label"] ]);
+            if( count( $existe) > 0 ){
+                continue;
+            }
+            $existe = $mysql->DataTable("SELECT id FROM sub_etype WHERE name= ?", [ $entitys[$i]["sub_etype"] ]);
+            if( $entitys[$i]["sub_etype"] != "" && count( $existe) == 0 ){
+                $sqls2 = [];
+                $values2 = [];
+                array_push($sqls2, "INSERT INTO sub_etype(id, name ) values (?,?)");
+                array_push($values2, [ md5($entitys[$i]["sub_etype"]) , $entitys[$i]["sub_etype"] ]);
+                $mysql->ExecuteNoQuery($sqls2, $values2);
+            }
+            array_push($sqls, "INSERT INTO entity(id, text_label, small_label, description, etype, sub_etype_id, wikipedia, creation_time, modification_time, default_url, icon ) values (?,?,?,?,?,?,?,?,?,?,?)");
+            array_push($values, [ $mysql->gen_uuid(), $entitys[$i]["text_label"], $entitys[$i]["small_label"], $entitys[$i]["description"], $entitys[$i]["etype"], md5($entitys[$i]["sub_etype"]), $entitys[$i]["wikipedia"], $date->format('Y-m-d H:i:s'), $date->format('Y-m-d H:i:s'), $entitys[$i]["default_url"], $entitys[$i]["icon"] ]);
+        }
+        //print_r($sqls);
+        //print_r($values);
+        $retorno = $mysql->ExecuteNoQuery($sqls, $values);
+        //print_r($retorno);
+        return $retorno;
+    }
 
     public function merge_to( $ip, $user, $post_data, $domain) {
         $mysql = new Mysql( $domain );

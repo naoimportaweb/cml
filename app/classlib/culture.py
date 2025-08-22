@@ -1,4 +1,4 @@
-from spellchecker import SpellChecker
+#from spellchecker import SpellChecker
 
 class Culture:
     def __init__(self, label):

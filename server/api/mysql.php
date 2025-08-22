@@ -6,6 +6,10 @@
 //GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost';
 //FLUSH PRIVILEGES;
 
+//ini_set('display_errors', '1');
+//ini_set('display_startup_errors', '1');
+//error_reporting(E_ALL);
+
 
 require_once __DIR__ . '/json.php';
 
@@ -13,7 +17,7 @@ class Mysql
 {
     var $con = null;
     var $action = false;
-    
+    var $CONFIG  = null;
     function __construct($config) {
         $buffer_json = Json::FromFile_v2(dirname(__DIR__) . "/data/config.json");
         if( $config == "" ) {
@@ -42,7 +46,7 @@ class Mysql
         mt_rand( 0, 0x3fff ) | 0x8000,
         mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff ), mt_rand( 0, 0xffff )
     );
-}
+    }
     
     public function __destruct() { 
         //$this->con->query('KILL CONNECTION_ID()');
@@ -171,6 +175,7 @@ class Mysql
             return $query->fetchAll(PDO::FETCH_ASSOC);
 
         }catch(Exception $e){
+            print_r($e);
             throw new Exception('Erro: ' .  $e->getMessage() . " - " . $sql);
         } finally {
             //if($this->action == false) {
@@ -220,7 +225,7 @@ class Mysql
                 $sqls = [$sqls];
                 $valuess = [$valuess];
             }
-            //$this->Connection()->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $this->Connection()->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             if( count( $sqls ) > 1 ){
                 $this->Connection()->beginTransaction();
             }
@@ -241,6 +246,7 @@ class Mysql
             return $row_count; 
             
         }catch(Exception $e){
+            print_r($e);
             $this->Connection()->rollback();
             error_log("Falha de sql", 0);
             error_log($e, 0);
