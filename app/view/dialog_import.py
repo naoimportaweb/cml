@@ -41,21 +41,29 @@ class DialogImport(QDialog):
 
     def btn_import_click(self):
         i = ImportLib();
-        retorno = i.import_entitys(self.txt_file.text());
-        if retorno != 0:
-            self.close();
-        else:
-            msgBox = QMessageBox()
-            msgBox.setText("Foi adicionado: " + str(retorno) + " elementos (talvez já tenha sido adicionado).")
-            msgBox.exec()
+        paths = self.txt_file.text().split(",");
+        #total = 0;
+        #for path in paths:
+        #    total = total + i.import_entitys(path);
+        total = i.import_entitys(paths)
+        msgBox = QMessageBox()
+        msgBox.setText("Foi adicionado: " + str(total) + " elementos.")
+        msgBox.exec()
     def btn_search_file_click(self):
         dialog = QFileDialog(self)
         dialog.setFileMode(QFileDialog.FileMode.AnyFile);
         dialog.setNameFilter("JSON (*.json)");
         if dialog.exec_():
-            self.txt_file.setText( dialog.selectedFiles()[0] );
+            self.txt_file.setText( ",".join(dialog.selectedFiles()) );
             return self.txt_file.text();
         return None;
 #[
-#    {"text_label" : "0Trusted", "small_label": "", "description" : "Hacker", "etype" : "person", "sub_etype" : "hacker", "wikipedia" : "",  "default_url" : "", "icon" : ""}
+#    {"text_label" : "0Trusted", "small_label": "", "description" : "Hacker", "etype" : "person", "sub_etype" : "hacker", "wikipedia" : "",
+#          "default_url" : "", "icon" : "", "aka" : "a, b, c, d",
+#          "references" : [
+#                               {"description" : "", "entity_id" : "", "link1" : "", "link2" : "", "link3" : "", "title" : ""}
+#                         ]
+#     }
 #]
+
+#creation_time, , , id, , , , modification_time, 

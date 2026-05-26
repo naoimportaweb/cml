@@ -13,7 +13,7 @@ from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings,
 from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow,
                                QMdiArea, QMessageBox, QTextEdit)
-import PySide6.QtExampleIcons  # noqa: F401
+#import PySide6.QtExampleIcons  # noqa: F401
 
 from view.mdimap import MdiMap;
 from view.dialog_relationship import DialogRelationship;

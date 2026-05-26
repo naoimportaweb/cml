@@ -8,15 +8,17 @@ from classlib.connectobject import ConnectObject;
 class ImportLib(ConnectObject):
     def __init__(self, id_=None):
         super().__init__();
-    def import_entitys(self, path):
+    def import_entitys(self, paths):
         columns = ["text_label", "small_label", "description", "etype", "sub_etype", "wikipedia",  "default_url", "icon"];
         try:
-            elements = json.loads(open(path, "r").read());
-            for element in elements:
+            lista_envio = [];
+            for path in paths:
+                element = json.loads(open(path.strip(), "r").read());
                 for column in columns:
                     if element.get(column) == None:
                         raise ValueError("Falta a coluna: " + column);
-            js = self.__execute__("Entity", "import_all", { "entitys" : elements });
+                lista_envio.append(element);
+            js = self.__execute__("Entity", "import_all", { "entitys" : lista_envio });
             if js["status"]:
                 return js["return"];
         except:

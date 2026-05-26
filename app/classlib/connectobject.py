@@ -60,14 +60,15 @@ class ConnectObject:
         #    envelop["parameters"] = "00000002" + json.dumps(parameters);
         envelop["session"] = server.token;
         url = self.ip +"/cml/services/execute.php";
-        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'};
+        headers = {'Content-type': 'application/json', 'Accept': 'text/plain', 'x-Transfer-Encoding': 'chunked'};
         #proxies = { 
         #      "http"  : "http://127.0.0.1:9051", 
         #      "https" : "http://127.0.0.1:9051"
         #};
         #r = requests.post(url, data=json.dumps(envelop), headers=headers, proxies=proxies);
+        print(envelop);
         r = requests.post(url, data=json.dumps(envelop), headers=headers);
-        #print(r.text.strip());
+        print(r.text.strip());
         try:
             retorno_json = json.loads(r.text.strip());
             if retorno_json["status"] == False or type(retorno_json["return"]) == None:

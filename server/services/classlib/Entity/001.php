@@ -1,8 +1,7 @@
 
 <?php
-
-//ini_set('display_errors', 1);
-//ini_set('display_startup_errors', 1);
+//ini_set('display_errors', '1');
+//ini_set('display_startup_errors', '1');
 //error_reporting(E_ALL);
 
 require_once dirname(dirname(dirname(__DIR__))) . "/api/mysql.php";
@@ -18,28 +17,45 @@ class Entity
         $sqls = [];
         $values = [];
         $date = new DateTime(); //now
-
+        $sub_etype_adicionado = [];
+        $aka_adicionado = [];
         for( $i = 0; $i < count($entitys); $i++ ){
+            $entity_id = $mysql->gen_uuid();
             $existe = $mysql->DataTable("SELECT id FROM entity WHERE text_label= ?", [ $entitys[$i]["text_label"] ]);
             if( count( $existe) > 0 ){
-                continue;
+                $entity_id = $existe[0]["id"];
             }
             $existe = $mysql->DataTable("SELECT id FROM sub_etype WHERE name= ?", [ $entitys[$i]["sub_etype"] ]);
-            if( $entitys[$i]["sub_etype"] != "" && count( $existe) == 0 ){
-                $sqls2 = [];
-                $values2 = [];
-                array_push($sqls2, "INSERT INTO sub_etype(id, name ) values (?,?)");
-                array_push($values2, [ md5($entitys[$i]["sub_etype"]) , $entitys[$i]["sub_etype"] ]);
-                $mysql->ExecuteNoQuery($sqls2, $values2);
+            if( $entitys[$i]["sub_etype"] != "" && count( $existe) == 0 && ! in_array($entitys[$i]["sub_etype"] , $sub_etype_adicionado)){
+                array_push($sqls,                 "INSERT INTO sub_etype(id, name ) values (?,?) ON DUPLICATE KEY UPDATE name= ?");
+                array_push($values,               [ md5($entitys[$i]["sub_etype"]) , $entitys[$i]["sub_etype"], $entitys[$i]["sub_etype"] ]);
+                array_push($sub_etype_adicionado, $entitys[$i]["sub_etype"]);
             }
-            array_push($sqls, "INSERT INTO entity(id, text_label, small_label, description, etype, sub_etype_id, wikipedia, creation_time, modification_time, default_url, icon ) values (?,?,?,?,?,?,?,?,?,?,?)");
-            array_push($values, [ $mysql->gen_uuid(), $entitys[$i]["text_label"], $entitys[$i]["small_label"], $entitys[$i]["description"], $entitys[$i]["etype"], md5($entitys[$i]["sub_etype"]), $entitys[$i]["wikipedia"], $date->format('Y-m-d H:i:s'), $date->format('Y-m-d H:i:s'), $entitys[$i]["default_url"], $entitys[$i]["icon"] ]);
+            
+            array_push($sqls, "INSERT INTO entity(id, text_label, small_label, description, etype, sub_etype_id, wikipedia, creation_time, modification_time, default_url, icon ) values (?,?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE description=?");
+            array_push($values, [ $entity_id , $entitys[$i]["text_label"], $entitys[$i]["small_label"], $entitys[$i]["description"], $entitys[$i]["etype"], md5($entitys[$i]["sub_etype"]), $entitys[$i]["wikipedia"], $date->format('Y-m-d H:i:s'), $date->format('Y-m-d H:i:s'), $entitys[$i]["default_url"], $entitys[$i]["icon"], $entitys[$i]["description"] ]);
+
+            $akas = $entitys[$i]["aka"];
+            if ($akas != ""){
+                $akas = explode(",", $akas);
+                for($j = 0; $j < count($akas); $j++){
+                    $akas[$j] = trim($akas[$j]);
+                    if ( ! in_array($akas[$j] , $aka_adicionado) ) {
+                        array_push($sqls,           "INSERT INTO entity_aka (id, entity_id, name) values(?, ?, ?) ON DUPLICATE KEY UPDATE entity_id = ?");
+                        array_push($values,         [ md5($akas[$j]) ,$entity_id, $akas[$j],$entity_id]);
+                        array_push($aka_adicionado, $akas[$j]);
+                    }
+                }
+            }
+
+            $references = $entitys[$i]["references"];
+            for($j = 0; $j < count($references); $j++){
+                array_push($sqls,           "INSERT INTO diagram_relationship_element_reference (id, entity_id, title, link1, about) values(?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE title = ?, description=?, about=?");
+                array_push($values,         [ md5($references[$j]["title"]), $entity_id ,$references[$j]["title"], $references[$j]["link1"],$references[$j]["about"], $references[$j]["title"],$references[$j]["description"],$references[$j]["about"]]);
+            }
+
         }
-        //print_r($sqls);
-        //print_r($values);
-        $retorno = $mysql->ExecuteNoQuery($sqls, $values);
-        //print_r($retorno);
-        return $retorno;
+        return $mysql->ExecuteNoQuery($sqls, $values) ;
     }
 
     public function merge_to( $ip, $user, $post_data, $domain) {
