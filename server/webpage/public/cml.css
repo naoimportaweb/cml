@@ -1,0 +1,99 @@
+/* Tokens e base compartilhados pelas telas do webpage.
+   A paleta categorica foi validada com o validate_palette.js do guia de dataviz: 3 slots
+   (person/organization/other), --pairs all, nos dois modos. Light: pior CVD 13.0 / normal
+   27.5, com o magenta em 2.62 de contraste — a regra de relief exige rotulo visivel, e
+   todo no do mapa desenha o nome dentro. Dark: pior CVD 13.0 / normal 26.5, tudo >= 3:1.
+   Os vinculos NAO consomem slot categorico: direcao vira seta, nao cor.
+
+   Este arquivo existe para a paleta nao divergir entre as telas — se cada view tivesse a
+   sua copia, uma corrigida e outra nao, a mesma entidade mudaria de cor conforme a pagina. */
+:root {
+  color-scheme: light;
+  --surface-1:      #fcfcfb;
+  --plane:          #f9f9f7;
+  --text-primary:   #0b0b0b;
+  --text-secondary: #52514e;
+  --muted:          #898781;
+  --gridline:       #e1e0d9;
+  --border:         rgba(11,11,11,0.10);
+  --hover:          rgba(11,11,11,0.04);
+  --person:         #2a78d6;
+  --organization:   #008300;
+  --other:          #e87ba4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --plane:          #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --muted:          #898781;
+    --gridline:       #2c2c2a;
+    --border:         rgba(255,255,255,0.10);
+    --hover:          rgba(255,255,255,0.06);
+    --person:         #3987e5;
+    --organization:   #008300;
+    --other:          #d55181;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-1:      #1a1a19;
+  --plane:          #0d0d0d;
+  --text-primary:   #ffffff;
+  --text-secondary: #c3c2b7;
+  --muted:          #898781;
+  --gridline:       #2c2c2a;
+  --border:         rgba(255,255,255,0.10);
+  --hover:          rgba(255,255,255,0.06);
+  --person:         #3987e5;
+  --organization:   #008300;
+  --other:          #d55181;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 24px;
+  background: var(--plane);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.wrap { max-width: 1400px; margin: 0 auto; }
+
+header { margin-bottom: 16px; }
+h1 { font-size: 19px; font-weight: 600; margin: 0 0 8px 0; letter-spacing: -0.01em; }
+
+/* volta para a lista: fica acima do titulo, discreto, sem competir com ele */
+.voltar {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--text-secondary); text-decoration: none;
+  margin-bottom: 6px;
+}
+.voltar:hover { color: var(--person); }
+.voltar .seta { font-size: 15px; line-height: 1; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  font-size: 12px; color: var(--text-secondary);
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: 999px; padding: 2px 10px;
+}
+
+.aviso { color: var(--muted); font-style: italic; padding: 16px 0; }
+
+/* controle de texto: uma linha de filtro acima do que ela escopa */
+input[type="search"], select {
+  font: inherit; padding: 8px 12px;
+  background: var(--surface-1); color: var(--text-primary);
+  border: 1px solid var(--border); border-radius: 6px;
+}
+input[type="search"]:focus, select:focus { outline: 2px solid var(--person); outline-offset: -1px; }
+
+.dot { width: 8px; height: 8px; border-radius: 2px; flex: none; display: inline-block; }
+.dot-person       { background: var(--person); }
+.dot-organization { background: var(--organization); }
+.dot-other        { background: var(--other); }

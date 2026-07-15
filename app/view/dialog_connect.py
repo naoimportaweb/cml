@@ -209,7 +209,9 @@ class DialogConnect(QDialog):
         server.public_key = buffer_public_pem;
         if user.login( self.txt_login_password.text() ):
             Configuration.instancia().login_username = self.txt_login_username.text();
-            Configuration.instancia().login_server = self.txt_server.text();
+            # server.ip e nao txt_server.text(): o Server ja normalizou a barra final, e
+            # assim ela nao volta do ~/.cml.json na proxima sessao.
+            Configuration.instancia().login_server = server.ip;
             Configuration.instancia().save();
             server.status = True;
             self.close();

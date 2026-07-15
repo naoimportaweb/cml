@@ -255,7 +255,14 @@ class Mysql
             return $row_count; 
             
         }catch(Exception $e){
-            $this->Connection()->rollback();
+            // O rollback so vale se houver transacao aberta — e ela so e aberta quando ha
+            // mais de um SQL. Chamado sem transacao ativa, o proprio rollback lanca "There
+            // is no active transaction" e SUBSTITUI a excecao real: o chamador perde o erro
+            // do banco (o 1062 de uma UNIQUE, por exemplo) e recebe uma mensagem que nao
+            // tem nada a ver com a causa.
+            if( $this->con != null && $this->con->inTransaction() ){
+                $this->con->rollback();
+            }
             error_log("Falha de sql", 0);
             error_log($e, 0);
             throw $e;

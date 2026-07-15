@@ -1,6 +1,12 @@
 # DEPLOY.md
 
-Procedimento de publicação do CML numa hospedagem compartilhada (Hostinger, LiteSpeed, PHP 7.4).
+Procedimento de publicação do CML numa hospedagem compartilhada (Hostinger, LiteSpeed).
+
+> **Cuidado com a versão do PHP: o CLI e o servidor web são diferentes.** No host atual o
+> `php` da linha de comando é **7.4**, mas quem atende as requisições é o **PHP 8.5 via
+> LiteSpeed**. Testar com `php -r` no SSH exercita um runtime que não é o de produção. Para
+> saber a versão real, publique um arquivo com `phpversion() . php_sapi_name()` e acesse por
+> HTTP — foi assim que a diferença apareceu.
 
 > **Este arquivo é versionado e o repositório é público.** Nenhum valor concreto mora aqui:
 > nem senha, nem host, nem caminho de servidor, nem o nome do arquivo de flag. Tudo vem do

@@ -23,6 +23,7 @@ from view.dialog_diagram_load import DialogDiagramLoad;
 from view.dialog_relationship_edit import DialogRelationshipEdit
 from view.dialog_connect import DialogConnect;
 from view.dialog_import import DialogImport;
+from view.dialog_document import DialogDocument;
 from classlib.server import Server;
 
 class MainWindow(QMainWindow):
@@ -90,16 +91,25 @@ class MainWindow(QMainWindow):
         #if self.active_mdi_child() and self.active_mdi_child().save():
         #    self.statusBar().showMessage("File saved", 2000)
 
+    def __mapa_ativo__(self):
+        # "(x and x).mapa" estoura quando nao ha janela ativa: (None and None) e None, e
+        # .mapa em None da AttributeError antes do teste != None adiantar alguma coisa.
+        child = self.active_mdi_child();
+        if child == None or getattr(child, "mapa", None) == None:
+            QMessageBox.information(self, "Mapa", "Abra um mapa antes.");
+            return None;
+        return child.mapa;
+
     @Slot()
     def map_propert(self):
-        buffer = (self.active_mdi_child() and self.active_mdi_child()).mapa;
+        buffer = self.__mapa_ativo__();
         if buffer != None:
             f = DialogRelationshipEdit(self, buffer);
             f.exec();
 
     @Slot()
     def map_errors(self):
-        buffer = (self.active_mdi_child() and self.active_mdi_child()).mapa;
+        buffer = self.__mapa_ativo__();
         if buffer != None:
             f = DialogRelationshipCheck(self, buffer);
             f.exec();
@@ -107,6 +117,13 @@ class MainWindow(QMainWindow):
     def import_data(self):
         f = DialogImport(self);
         f.exec();
+
+    @Slot()
+    def map_documents(self):
+        buffer = self.__mapa_ativo__();
+        if buffer != None:
+            f = DialogDocument(self, buffer);
+            f.exec();
 
     #@Slot()
     #def save_as(self):
@@ -215,6 +232,11 @@ class MainWindow(QMainWindow):
                                 statusTip="Import",
                                 triggered=self.import_data)
 
+        icon = QIcon.fromTheme(QIcon.ThemeIcon.DocumentPrint);
+        self._map_documents = QAction(icon, "Documents", self,
+                                statusTip="Documentos (PDF) do mapa",
+                                triggered=self.map_documents)
+
 
         #icon = QIcon.fromTheme(QIcon.ThemeIcon.EditCopy)
         #self._copy_act = QAction(icon, "&Copy", self,
@@ -305,6 +327,7 @@ class MainWindow(QMainWindow):
         self._map_tool_bar.addAction(self._map_edit_act);
         self._map_tool_bar.addAction(self._map_edit_check);
         self._map_tool_bar.addAction(self._import_data);
+        self._map_tool_bar.addAction(self._map_documents);
         #self._edit_tool_bar.addAction(self._copy_act)
         #self._edit_tool_bar.addAction(self._paste_act)
         #self._file_tool_bar.setEnabled(False);
