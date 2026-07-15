@@ -52,6 +52,14 @@ class MdiMap(QWidget):
             if form.search_entity != None:
                 map.addExistEntity(form.search_entity, x, y);
 
+    def redesenhar(self):
+        """Refaz o pixmap a partir do modelo. Quem mexe no mapa por fora de um evento de
+        mouse (os bots, por exemplo) precisa chamar isto: o redraw() so acontece na
+        construcao do MdiMap e no mouseReleaseEvent do engine — sem ele, a entidade entra
+        no modelo e a tela nao mostra nada."""
+        self.painter_widget.redraw();
+        self.painter_widget.update();
+
     def new_map(self):
         return;
 

@@ -1,0 +1,6 @@
+{
+    "button" : "Procurar referências",
+    "path"   : "bot/brazil/referencias/buscar.py",
+    "class"  : "DialogBuscarReferencias",
+    "module" : "dialogbuscarreferencias"
+}

@@ -204,6 +204,7 @@ class MainWindow(QMainWindow):
         buffer = self.__mapa_ativo__();
         if buffer == None:
             return;
+        janela = self.active_mdi_child();   # quem sabe redesenhar e o MdiMap, nao o mapa
         # Carrega pelo config.json, como o QBot faz: o bot continua plugavel — trocar o
         # modulo ou a classe e editar o JSON, sem tocar aqui.
         try:
@@ -216,6 +217,10 @@ class MainWindow(QMainWindow):
             cls = getattr( modulo, cfg["class"] );
             f = cls(self, buffer);
             f.exec();
+            # O bot mexe no modelo sem passar por evento de mouse: sem redesenhar, as
+            # caixas novas so aparecem quando algo mais forcar o repaint.
+            if janela != None:
+                janela.redesenhar();
         except Exception as e:
             import traceback; traceback.print_exc();
             QMessageBox.information(self, "Extrair de URL", str(e));

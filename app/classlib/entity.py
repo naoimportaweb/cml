@@ -82,9 +82,15 @@ class Entity(ConnectObject):
         return False;
 
     def duplicate(self):
+        # "Person"/"Organization"/"Other" sao os rotulos que uma caixa recem-criada carrega
+        # antes de ser nomeada: procurar duplicata deles acharia todas as caixas em branco.
         if self.text == "Person" or self.text == "Organization" or self.text == "Other":
             return [];
-        js = self.__execute__("Entity", "duplicate", { "etype" : "person", "text_label" : self.text, "id" : self.id});
+        # O etype era fixo em "person" e o servidor filtra por ele (WHERE ent.etype = ?):
+        # uma Organization duplicada nunca era encontrada, porque a busca procurava uma
+        # PESSOA com aquele nome. A tela de merge abria vazia para tudo que nao fosse
+        # pessoa — ou seja, para quase toda a base.
+        js = self.__execute__("Entity", "duplicate", { "etype" : self.etype, "text_label" : self.text, "id" : self.id});
         if js["status"]:
             return js["return"];
         return False;

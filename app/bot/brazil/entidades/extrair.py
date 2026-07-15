@@ -209,6 +209,20 @@ class DialogExtrairEntidades(QDialog):
             # Grade simples: o CML nao tem layout automatico, e sobrepor tudo na mesma
             # coordenada deixaria o mapa ilegivel. O analista arrasta depois.
             criadas = {};
+            reusadas = 0;
+
+            # O que JA esta no mapa, por nome. Sem isto, extrair um segundo artigo que cita
+            # a mesma entidade cria uma caixa nova E uma entity_id nova no banco: viram dois
+            # objetos distintos, cada um com suas referencias, e so o Entity.merge_to
+            # conserta depois. Reusar aqui e o que impede o estrago.
+            existentes = {};
+            for el in self.mapa.elements:
+                if el.entity.etype == "link":
+                    continue;
+                chave = str(el.entity.text or "").strip().lower();
+                if chave != "":
+                    existentes[chave] = el;
+
             x, y = 40, 40;
             for i in range(self.tab_ent.rowCount()):
                 if not self.checks_ent[i].isChecked():
@@ -216,15 +230,43 @@ class DialogExtrairEntidades(QDialog):
                 nome = self.tab_ent.item(i, 1).text().strip();
                 if nome == "":
                     continue;
+                chave = nome.lower();
+
+                if chave in existentes:
+                    # Ja esta no mapa: aproveita a caixa. A descricao do artigo novo so
+                    # entra se a entidade ainda nao tiver uma — sobrescrever apagaria o que
+                    # o analista escreveu.
+                    caixa = existentes[chave];
+                    desc = self.tab_ent.item(i, 3).text().strip();
+                    if desc != "" and not str(caixa.entity.full_description or "").strip():
+                        caixa.entity.full_description = desc;
+                    criadas[chave] = caixa;
+                    reusadas = reusadas + 1;
+                    continue;
+
                 tipo = self.combos_ent[i].currentData();
                 desc = self.tab_ent.item(i, 3).text().strip();
                 caixa = self.mapa.addEntity(tipo, x, y, text=nome);
                 caixa.entity.full_description = desc;
-                criadas[nome.lower()] = caixa;
+                criadas[chave] = caixa;
+                existentes[chave] = caixa;
                 x = x + 260;
                 if x > 1000: x = 40; y = y + 120;
 
-            n_vin = 0;
+            # Vinculos que o mapa ja tem, como (origem, relacao, destino) em minusculas: o
+            # mesmo par de artigos costuma repetir a mesma afirmacao.
+            vinc_existentes = set();
+            for el in self.mapa.elements:
+                if el.entity.etype != "link":
+                    continue;
+                rel_atual = str(el.entity.text or "").strip().lower();
+                for a in el.from_entity:
+                    for b in el.to_entity:
+                        vinc_existentes.add(( str(a.entity.getText() or "").strip().lower(),
+                                              rel_atual,
+                                              str(b.entity.getText() or "").strip().lower() ));
+
+            n_vin = 0; vin_reusados = 0;
             yv = y + 140;
             for i in range(self.tab_vin.rowCount()):
                 if not self.checks_vin[i].isChecked():
@@ -232,19 +274,29 @@ class DialogExtrairEntidades(QDialog):
                 o = self.tab_vin.item(i, 1).text().strip().lower();
                 d = self.tab_vin.item(i, 3).text().strip().lower();
                 rel = self.tab_vin.item(i, 2).text().strip();
-                # So liga o que existe: o modelo cita nomes que nao estao em "entidades",
-                # ou que o analista desmarcou. Criar a caixa por conta propria traria de
-                # volta justamente o que ele recusou.
-                if o not in criadas or d not in criadas or rel == "":
+                # Procura em 'existentes', nao em 'criadas': a ponta pode ja estar no mapa
+                # de uma extracao anterior — um artigo novo costuma citar entidade que ja
+                # esta la. Mas so o que EXISTE: o modelo cita nomes fora da lista, e o
+                # analista desmarca outros; criar a caixa aqui traria de volta o que ele
+                # recusou.
+                if o not in existentes or d not in existentes or rel == "":
+                    continue;
+                if (o, rel.lower(), d) in vinc_existentes:
+                    vin_reusados = vin_reusados + 1;
                     continue;
                 link = self.mapa.addEntity("link", 40 + (n_vin * 300), yv, text=rel);
-                link.addFrom( criadas[o] );
-                link.addTo( criadas[d] );
+                link.addFrom( existentes[o] );
+                link.addTo( existentes[d] );
+                vinc_existentes.add((o, rel.lower(), d));
                 n_vin = n_vin + 1;
 
-            self.__msg__("Adicionados ao mapa: %d sujeito(s) e %d vínculo(s).\n\n"
-                         "Eles entraram numa grade; arraste para posicionar. "
-                         "Salve o mapa para gravar." % (len(criadas), n_vin));
+            novas = len(criadas) - reusadas;
+            msg = "Adicionados ao mapa: %d sujeito(s) novo(s) e %d vínculo(s) novo(s)." % (novas, n_vin);
+            if reusadas or vin_reusados:
+                msg = msg + ("\n\nJá existiam no mapa e foram reaproveitados: %d sujeito(s) e "
+                             "%d vínculo(s) — não foram duplicados." % (reusadas, vin_reusados));
+            msg = msg + "\n\nOs novos entraram numa grade; arraste para posicionar. Salve o mapa para gravar.";
+            self.__msg__(msg);
             self.accept();
         except Exception as e:
             traceback.print_exc();

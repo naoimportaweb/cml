@@ -79,6 +79,10 @@ class DialogEntityGeneric(QDialog):
         self.txt_wikipedia.textChanged.connect(self.txt_wikipedia_changed)
         qb = QBot(self, self.obj.entity, "bot/brazil/wikipedia/config.json");
         CustomVLayout.widget_linha(self, self.page_url, [self.lbl_wikipedia, self.txt_wikipedia, qb] );
+        # Procura referencias para esta entidade: base (confiavel) + web (a revisar).
+        self.lbl_buscaref = QLabel("Referências");
+        qb_ref = QBot(self, self.obj.entity, "bot/brazil/referencias/config.json");
+        CustomVLayout.widget_linha(self, self.page_url, [self.lbl_buscaref, qb_ref] );
         self.lbl_official = QLabel("Official Website:");
         self.txt_official = QLineEdit();
         self.txt_official.setFont( Configuration.instancia().getFont() );
@@ -231,3 +235,15 @@ class DialogEntityGeneric(QDialog):
     #def btn_campo_doxxing_click(self):
     #    self.doxxing_show = not self.doxxing_show;
     #    self.txt_doxxing.setVisible( self.doxxing_show );
+
+    def closeEvent(self, event):
+        # Editar a entidade muda o que a caixa desenha (rotulo, descricao, tipo). O engine
+        # so redesenha em evento de mouse, entao um merge ou uma troca de nome feita aqui
+        # nao apareceria ate o proximo clique no canvas.
+        try:
+            janela = self.parent() and self.parent().active_mdi_child();
+            if janela != None and hasattr(janela, "redesenhar"):
+                janela.redesenhar();
+        except Exception:
+            pass;
+        super().closeEvent(event);

@@ -34,9 +34,11 @@ class DialogEntitysMerge(QDialog):
     def list(self):
         self.table_search.setRowCount( len( self.entitys ) );
         for i in range(len( self.entitys )):
-            self.table_search.setItem( i, 0, QTableWidgetItem( self.entitys[i]["text_label"] ) );
-            self.table_search.setItem( i, 1, QTableWidgetItem( self.entitys[i]["small_label"] ) );
-            self.table_search.setItem( i, 1, QTableWidgetItem( self.entitys[i]["etype"] ) );
+            # As colunas sao Name/Small/Type: o small_label e o etype iam os DOIS para a
+            # coluna 1, entao o etype apagava o small e a coluna Type ficava sempre vazia.
+            self.table_search.setItem( i, 0, QTableWidgetItem( str(self.entitys[i]["text_label"] or "") ) );
+            self.table_search.setItem( i, 1, QTableWidgetItem( str(self.entitys[i]["small_label"] or "") ) );
+            self.table_search.setItem( i, 2, QTableWidgetItem( str(self.entitys[i]["etype"] or "") ) );
         return;
 
     def table_double(self):
