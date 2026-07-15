@@ -97,10 +97,20 @@ class Session
     }
 
     function login( $username, $password, $simetric_key, $domain){
-        $mysql = new Mysql( $domain, $domain );
+        $mysql = new Mysql( $domain );
         $sql = "select * from person where username=? and password=?";
 
-        $user_databse = $mysql->DataTable( $sql, [ $username, $password ])[0];
+        // A recusa devolve id/token nulos, e nao array(): o json_encode manda array()
+        // vazio como [] — uma lista — e o cliente indexa o retorno por "id".
+        $recusado = array( "id" => null, "token" => null );
+
+        $buffer = $mysql->DataTable( $sql, [ $username, $password ]);
+        if( count( $buffer ) == 0 ) {
+            // Sem esta guarda o [0] de um resultado vazio vira null e a comparacao
+            // abaixo acessa indice de null.
+            return $recusado;
+        }
+        $user_databse = $buffer[0];
         if( $user_databse["username"] == $username && $user_databse["password"] == $password ) {
             //$token = Session::getToken(32 );
             $id    = Session::getToken(128);
@@ -112,7 +122,7 @@ class Session
             $retorno = array( "id" => $user_databse["id"], "token" => $id );
             return $retorno;
         }
-        return array();
+        return $recusado;
     }
     
     public function decrypt( $token, $data) {

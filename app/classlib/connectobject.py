@@ -43,11 +43,18 @@ class ConnectObject:
         self.ip = server.ip;
         self.port = server.port;
         self.protocol = server.protocol;
-    
+
+    def __error__(self, mensagem):
+        # Todo chamador faz js["status"] logo depois da chamada, entao a falha tem que
+        # devolver um envelope com o mesmo formato do sucesso. Devolver None aqui
+        # estoura TypeError no chamador e esconde a causa real.
+        print("\033[95m", mensagem, "\033[0m");
+        return { "status" : False, "return" : None, "error" : mensagem };
+
     def __execute__(self, class_name, method_name, parameters, crypto_v="000"):
         server = Server.instancia();
         if server.ip == "":
-            return None;
+            return self.__error__("Servidor não configurado.");
         envelop = { "version" : "001", "class" : class_name, "method" :  method_name, "token" : "", "domain" : server.domain}
         if crypto_v == "000":
             envelop["parameters"] = "00000000" + json.dumps(parameters);
@@ -67,7 +74,12 @@ class ConnectObject:
         #};
         #r = requests.post(url, data=json.dumps(envelop), headers=headers, proxies=proxies);
         print(envelop);
-        r = requests.post(url, data=json.dumps(envelop), headers=headers);
+        # allow_redirects=False: seguir um 301 converte o POST em GET e o envelope se
+        # perde. O servidor recebe corpo vazio e responde um erro de banco sem relacao
+        # com a causa real (tipicamente http:// contra um host que so fala https).
+        r = requests.post(url, data=json.dumps(envelop), headers=headers, allow_redirects=False);
+        if r.is_redirect:
+            return self.__error__("O servidor redirecionou " + url + " para " + r.headers.get("Location", "?") + ". Corrija a URL do servidor (verifique http/https).");
         print(r.text.strip());
         try:
             retorno_json = json.loads(r.text.strip());
@@ -81,19 +93,20 @@ class ConnectObject:
             #        retorno_json["return"] = json.loads( aes_decript(server.simetric_key, encriptado) );
             return retorno_json;
         except:
-            print("\033[95m", r.text.strip(), "\033[0m");
-            return None;
+            return self.__error__( r.text.strip() );
     
     def __proxy__(self, class_name, method_name, parameters, crypto_v="000"):
         server = Server.instancia();
         if server.ip == "":
-            return None;
+            return self.__error__("Servidor não configurado.");
         envelop = { "version" : "001", "class" : class_name, "method" :  method_name, "token" : "", "domain" : server.domain}
         envelop["parameters"] = "00000000" + json.dumps(parameters);
         envelop["session"] = server.token;
         url = self.ip +"/cml/services/federation_proxy.php";
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'};
-        r = requests.post(url, data=json.dumps(envelop), headers=headers);
+        r = requests.post(url, data=json.dumps(envelop), headers=headers, allow_redirects=False);
+        if r.is_redirect:
+            return self.__error__("O servidor redirecionou " + url + " para " + r.headers.get("Location", "?") + ". Corrija a URL do servidor (verifique http/https).");
         #print(r.text.strip());
         try:
             retorno_json = json.loads(r.text.strip());
@@ -104,5 +117,4 @@ class ConnectObject:
                 retorno_json["return"] = json.loads(base64.b64decode( retorno_body ) );
             return retorno_json;
         except:
-            print("\033[95m", r.text.strip(), "\033[0m");
-            return None;
+            return self.__error__( r.text.strip() );

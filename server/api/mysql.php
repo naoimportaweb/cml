@@ -20,12 +20,21 @@ class Mysql
     var $CONFIG  = null;
     function __construct($config) {
         $buffer_json = Json::FromFile_v2(dirname(__DIR__) . "/data/config.json");
-        if( $config == "" ) {
-            $config = $buffer_json["connections"]["default"];
-        } else {
-            $config = $buffer_json["connections"][ $config ];
+        if( $buffer_json == null ) {
+            throw new Exception("Não foi possível ler o data/config.json.");
         }
-        $this->CONFIG = $config;
+        if( $config == "" ) {
+            // O "default" fica na raiz do config.json e nomeia um domain; não existe
+            // uma conexão chamada "default" dentro de "connections".
+            $config = $buffer_json["default"];
+        }
+        if( ! isset( $buffer_json["connections"][ $config ] ) ) {
+            // Sem isto o CONFIG fica null e o PDO tenta conectar com usuário vazio,
+            // devolvendo "Access denied for ''@'localhost'" — erro que aponta para o
+            // lugar errado.
+            throw new Exception("Domain inválido: '" . $config . "'.");
+        }
+        $this->CONFIG = $buffer_json["connections"][ $config ];
     }
 
     public static function domains(){
@@ -175,7 +184,7 @@ class Mysql
             return $query->fetchAll(PDO::FETCH_ASSOC);
 
         }catch(Exception $e){
-            print_r($e);
+            error_log('Error: ' . $e->getMessage() . ' in ' . $sql . ' parms ' . json_encode($values), 0);
             throw new Exception('Erro: ' .  $e->getMessage() . " - " . $sql);
         } finally {
             //if($this->action == false) {
@@ -246,7 +255,6 @@ class Mysql
             return $row_count; 
             
         }catch(Exception $e){
-            print_r($e);
             $this->Connection()->rollback();
             error_log("Falha de sql", 0);
             error_log($e, 0);

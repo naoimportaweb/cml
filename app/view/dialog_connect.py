@@ -133,7 +133,14 @@ class DialogConnect(QDialog):
         server = Server.instancia();
         server.ip = self.txt_server.text();
         domain = Domain();
-        self.list_domains = domain.list();
+        buffer_domains = domain.list();
+        if not buffer_domains:
+            msgBox = QMessageBox();
+            msgBox.setText( "Não foi possível obter a lista de domains de " + server.ip + ".\nVerifique a URL do servidor (o esquema http/https precisa ser o final, sem redirecionamento) e a conexão." );
+            msgBox.exec();
+            return;
+        self.list_domains = buffer_domains;
+        self.combo_domains.clear(); # sem isto cada clique reempilha os domains no combo
         for buffer in self.list_domains:
             self.combo_domains.addItem( buffer["name"] );
         return;
@@ -146,16 +153,30 @@ class DialogConnect(QDialog):
         self.layout_principal.enable("login");
         self.layout_principal.disable("register");       
     
+    def __domain_selecionado__(self):
+        # O combo só é populado pelo botão Domains. Sem clicar nele antes, list_domains
+        # fica vazio e indexar aqui estoura IndexError sem nada aparecer na tela.
+        indice = self.combo_domains.currentIndex();
+        if indice < 0 or indice >= len( self.list_domains ):
+            msgBox = QMessageBox();
+            msgBox.setText( "Informe o servidor e clique em Domains antes de continuar." );
+            msgBox.exec();
+            return None;
+        return self.list_domains[ indice ];
+
     def btn_click_register_entrar(self):
         server = Server.instancia();
         server.ip = self.txt_server.text();
-        server.domain = self.list_domains[ self.combo_domains.currentIndex() ]["name"];
+        domain_selecionado = self.__domain_selecionado__();
+        if domain_selecionado == None:
+            return;
+        server.domain = domain_selecionado["name"];
         user = User(self.txt_register_username.text());
         try:
             if self.txt_register_password.text() != self.txt_register_password_2.text():
                 raise Exception("O password informado não é igual ao teste.");
 
-            if self.list_domains[ self.combo_domains.currentIndex() ]["restricted"]:
+            if domain_selecionado["restricted"]:
                 if self.txt_register_token.text().strip() == "" or self.txt_register_password.text().strip() == "" or self.txt_register_username.text().strip() == "" or self.txt_register_mail.text().strip() == "":
                     raise Exception("Informe todos os dados.");  
 
@@ -174,14 +195,25 @@ class DialogConnect(QDialog):
     def btn_click_login_entrar(self):
         server = Server.instancia();
         server.ip = self.txt_server.text();
-        server.domain = self.list_domains[ self.combo_domains.currentIndex() ]["name"];
+        domain_selecionado = self.__domain_selecionado__();
+        if domain_selecionado == None:
+            return;
+        server.domain = domain_selecionado["name"];
         user = User(self.txt_login_username.text());
         buffer_public_pem = user.publickey() ;
-        if buffer_public_pem != None:
-            server.public_key = buffer_public_pem;
-            if user.login( self.txt_login_password.text() ):
-                Configuration.instancia().login_username = self.txt_login_username.text();
-                Configuration.instancia().login_server = self.txt_server.text();
-                Configuration.instancia().save();
-                server.status = True;
-                self.close();
+        if buffer_public_pem == None:
+            msgBox = QMessageBox();
+            msgBox.setText( "Não foi possível obter a chave pública de " + server.ip + ".\nVerifique a URL do servidor e o domain selecionado." );
+            msgBox.exec();
+            return;
+        server.public_key = buffer_public_pem;
+        if user.login( self.txt_login_password.text() ):
+            Configuration.instancia().login_username = self.txt_login_username.text();
+            Configuration.instancia().login_server = self.txt_server.text();
+            Configuration.instancia().save();
+            server.status = True;
+            self.close();
+        else:
+            msgBox = QMessageBox();
+            msgBox.setText( "Usuário ou senha inválidos." );
+            msgBox.exec();

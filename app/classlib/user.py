@@ -50,12 +50,23 @@ class User (ConnectObject):
 
     def login(self, password):
         server = Server();
+        if self.salt == None:
+            # publickey() devolve salt nulo quando o usuário não existe. Concatenar
+            # aqui estouraria TypeError; tratar como credencial inválida também evita
+            # revelar se o usuário existe ou não.
+            return False;
         password = hashlib.sha256( (password + self.salt).encode() ).hexdigest();
         server.simetric_key = str(uuid.uuid4())[:32]
         js = self.__execute__("Session", "login", {"username" : self.username, "password" : password, "simetric_key" : server.simetric_key }, crypto_v="000");
         if js["status"]:
-            self.user_id = js["return"]["id"];
+            # A autenticação recusada volta com status true (o transporte funcionou) e
+            # return vazio. Do PHP, array() vira [] no json_encode — uma lista, e
+            # indexar por "id" estoura TypeError em vez de sinalizar senha inválida.
+            retorno = js["return"];
+            if type(retorno) != type({}) or retorno.get("id") == None:
+                return False;
+            self.user_id = retorno["id"];
             if server.token == "":
-                server.token = js["return"]["token"];
+                server.token = retorno["token"];
             return True;
         return False;
