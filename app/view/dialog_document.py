@@ -14,28 +14,7 @@ sys.path.append( ROOT );
 from classlib.configuration import Configuration;
 from classlib.document import Document;
 from classlib import report;
-
-
-class GeradorReport(QObject):
-    """Roda a geracao fora da thread da GUI: ler 50 links e esperar o ollama leva minutos,
-    e na thread da interface a janela congelaria."""
-    progresso = Signal(str);
-    terminou  = Signal(object);
-    falhou    = Signal(str);
-
-    def __init__(self, mapa, caminho):
-        super().__init__();
-        self.mapa = mapa;
-        self.caminho = caminho;
-
-    @Slot()
-    def executar(self):
-        try:
-            resumo = report.gerar(self.mapa, self.caminho, progresso=lambda m: self.progresso.emit(m));
-            self.terminou.emit(resumo);
-        except Exception as e:
-            traceback.print_exc();
-            self.falhou.emit(str(e));
+from view.ui.report_manager import ReportManager;
 
 
 class DialogDocument(QDialog):
@@ -61,6 +40,12 @@ class DialogDocument(QDialog):
         self.lbl = QLabel("");
         principal.addWidget( self.lbl );
 
+        # Linha de estado do report: fica visivel enquanto gera, mesmo se a geracao tiver
+        # sido disparada de outro mapa.
+        self.lbl_report = QLabel("");
+        self.lbl_report.setStyleSheet("color: #666;");
+        principal.addWidget( self.lbl_report );
+
         botoes = QHBoxLayout();
         self.btn_anexar = QPushButton("Anexar PDF…");
         self.btn_anexar.clicked.connect(self.btn_anexar_click);
@@ -81,7 +66,54 @@ class DialogDocument(QDialog):
         botoes.addStretch();
         principal.addLayout(botoes);
 
+        # O dialogo escuta o gerente: se um report ja estiver rodando (disparado daqui ou
+        # de outro mapa, antes desta janela existir), o botao ja nasce desabilitado. Estado
+        # tem que ser visivel, nao descoberto errando.
+        gerente = ReportManager.instancia();
+        gerente.progresso.connect(self.__estado_report__);
+        gerente.mudou.connect(self.__estado_report__);
+        gerente.concluiu.connect(self.__report_terminou__);
+        gerente.falhou.connect(self.__report_terminou__);
+
         self.carregar();
+        self.__estado_report__();
+
+    def __estado_report__(self, *args):
+        gerente = ReportManager.instancia();
+        if gerente.ocupado():
+            self.btn_gerar.setEnabled(False);
+            self.btn_gerar.setText("Gerando report…");
+            alvo = str(gerente.mapa_nome or "");
+            if gerente.mapa_id != self.mapa.id:
+                self.btn_gerar.setToolTip("Um report de “" + alvo + "” está em andamento. O rolhama atende um por vez.");
+                self.lbl_report.setText("⏳ Gerando report de “" + alvo + "” — " + str(gerente.ultimo));
+            else:
+                self.btn_gerar.setToolTip("Gerando o report deste mapa.");
+                self.lbl_report.setText("⏳ " + str(gerente.ultimo));
+        else:
+            self.btn_gerar.setEnabled(True);
+            self.btn_gerar.setText("Gerar report (rolhama)");
+            self.btn_gerar.setToolTip("");
+            self.lbl_report.setText("");
+
+    def __report_terminou__(self, *args):
+        self.__estado_report__();
+        self.carregar();   # o PDF novo entra na lista sem o usuario reabrir a janela
+
+    def closeEvent(self, event):
+        # Desliga do gerente ao fechar. Sem isto o dialogo morto continua escutando: quando
+        # um report termina, ele chama carregar() e recarrega a lista do SEU mapa, que pode
+        # nao ser o do report — gastando requisicao e atualizando a janela errada.
+        gerente = ReportManager.instancia();
+        for sinal, slot in ((gerente.progresso, self.__estado_report__),
+                            (gerente.mudou,     self.__estado_report__),
+                            (gerente.concluiu,  self.__report_terminou__),
+                            (gerente.falhou,    self.__report_terminou__)):
+            try:
+                sinal.disconnect(slot);
+            except (RuntimeError, TypeError):
+                pass;   # ja desconectado
+        super().closeEvent(event);
 
     def __erro__(self, e):
         msg = QMessageBox(self);
@@ -179,6 +211,12 @@ class DialogDocument(QDialog):
             self.__erro__(e);
 
     def btn_gerar_click(self):
+        gerente = ReportManager.instancia();
+        if gerente.ocupado():
+            self.__erro__("Já existe um report sendo gerado: “" + str(gerente.mapa_nome or "") + "”.\n\n"
+                          "O rolhama atende um pedido por vez. Espere terminar.");
+            return;
+
         total = len( report.coletar_referencias(self.mapa) );
         if total == 0:
             self.__erro__("Este mapa não tem referências com link; não há o que ler para gerar o report.");
@@ -189,54 +227,17 @@ class DialogDocument(QDialog):
                  "Serão lidas: " + str(lidas) + " (limite " + str(report.MAX_REFERENCIAS) + ")");
         if total > report.MAX_REFERENCIAS:
             aviso = aviso + "\nAs outras " + str(total - report.MAX_REFERENCIAS) + " entram na lista “Demais referências”.";
-        aviso = aviso + ("\n\nO worker do rolhama atende um pedido por vez, para todos os projetos: "
-                         "isso pode levar minutos e segura a fila dos outros enquanto roda.");
+        aviso = aviso + ("\n\nRoda em segundo plano: pode fechar esta janela e continuar trabalhando. "
+                         "O aviso aparece quando terminar.\n\n"
+                         "O worker do rolhama atende um pedido por vez, para todos os projetos.");
         if QMessageBox.question(self, "Gerar report", aviso) != QMessageBox.Yes:
             return;
 
-        self.caminho_tmp = os.path.join(tempfile.gettempdir(), "cml_report_" + str(self.mapa.id)[:16] + ".pdf");
-
-        self.prog = QProgressDialog("Preparando…", "Cancelar", 0, 0, self);
-        self.prog.setWindowTitle("Gerando report");
-        self.prog.setWindowModality(Qt.WindowModal);
-        self.prog.setMinimumWidth(460);
-        self.prog.show();
-
-        self.thread = QThread();
-        self.worker = GeradorReport(self.mapa, self.caminho_tmp);
-        self.worker.moveToThread(self.thread);
-        self.thread.started.connect(self.worker.executar);
-        self.worker.progresso.connect(lambda m: self.prog.setLabelText(m));
-        self.worker.terminou.connect(self.__report_pronto__);
-        self.worker.falhou.connect(self.__report_falhou__);
-        self.btn_gerar.setEnabled(False);
-        self.thread.start();
-
-    def __encerrar__(self):
-        self.prog.close();
-        self.thread.quit();
-        self.thread.wait();
-        self.btn_gerar.setEnabled(True);
-
-    def __report_pronto__(self, resumo):
-        self.__encerrar__();
         try:
-            titulo = "Report — " + str(self.mapa.getName());
-            desc = ("Gerado pelo rolhama (canal " + str(resumo["canal"]) + "). " +
-                    str(resumo["lidas"]) + " de " + str(resumo["total"]) + " referências lidas.");
-            r = Document().upload_file( self.caminho_tmp, self.mapa.id, title=titulo, description=desc, origem="rolhama" );
-            if r == False:
-                raise Exception("O report foi gerado mas o servidor recusou o upload: " + self.caminho_tmp);
-            self.carregar();
-            msg = ("Report gerado e anexado.\n\n"
-                   "Referências lidas: " + str(resumo["lidas"]) + "\n"
-                   "Não puderam ser lidas: " + str(resumo["falhas"]) + "\n"
-                   "Em “Demais referências”: " + str(resumo["demais"]) + "\n"
-                   "Canal do rolhama: " + str(resumo["canal"]));
-            self.__erro__(msg);
+            gerente.iniciar( self.mapa );
         except Exception as e:
             self.__erro__(e);
-
-    def __report_falhou__(self, msg):
-        self.__encerrar__();
-        self.__erro__("Falha ao gerar o report:\n\n" + msg);
+            return;
+        # Fecha e devolve a ferramenta: quem acompanha o progresso e a barra de status da
+        # janela principal, e o gerente sobrevive a este dialogo.
+        self.accept();

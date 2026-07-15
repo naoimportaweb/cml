@@ -12,7 +12,7 @@ from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings,
                             QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow,
-                               QMdiArea, QMessageBox, QTextEdit)
+                               QMdiArea, QMessageBox, QSystemTrayIcon, QTextEdit)
 #import PySide6.QtExampleIcons  # noqa: F401
 
 from view.mdimap import MdiMap;
@@ -24,6 +24,7 @@ from view.dialog_relationship_edit import DialogRelationshipEdit
 from view.dialog_connect import DialogConnect;
 from view.dialog_import import DialogImport;
 from view.dialog_document import DialogDocument;
+from view.ui.report_manager import ReportManager;
 from classlib.server import Server;
 
 class MainWindow(QMainWindow):
@@ -41,6 +42,86 @@ class MainWindow(QMainWindow):
         self.update_menus()
         self.read_settings()
         self.setWindowTitle("MDI")
+        self.criar_bandeja()
+        self.ligar_report()
+
+    def criar_bandeja(self):
+        # Nem todo desktop tem bandeja; sem ela o aviso cai na janela nao-modal.
+        self._tray = None;
+        try:
+            if QSystemTrayIcon.isSystemTrayAvailable():
+                self._tray = QSystemTrayIcon(QIcon(CURRENTDIR + "/resources/check.png"), self);
+                self._tray.setToolTip("CML");
+                self._tray.show();
+        except Exception:
+            self._tray = None;
+
+    def ligar_report(self):
+        """A geracao roda no ReportManager, que vive fora dos dialogos. A janela principal
+        so escuta: mostra o andamento na barra de status e avisa no fim — sem modal, para
+        nao prender a ferramenta."""
+        gerente = ReportManager.instancia();
+        gerente.progresso.connect(self.report_progresso);
+        gerente.concluiu.connect(self.report_concluiu);
+        gerente.falhou.connect(self.report_falhou);
+        gerente.mudou.connect(self.report_marca);
+        self.report_marca();
+
+    @Slot(str)
+    def report_progresso(self, msg):
+        self.statusBar().showMessage("Report: " + msg);
+
+    def report_marca(self):
+        gerente = ReportManager.instancia();
+        if gerente.ocupado():
+            self._map_documents.setText("Documents ⏳");
+        elif gerente.pendente != None:
+            # O "*" fica ate o usuario abrir os documentos: e o aviso persistente, para
+            # quem estava longe da tela na hora do popup.
+            self._map_documents.setText("Documents *");
+        else:
+            self._map_documents.setText("Documents");
+
+    @Slot(object)
+    def report_concluiu(self, resumo):
+        mapa = str(resumo.get("mapa_nome") or "(sem nome)");
+        self.statusBar().showMessage("Report concluído: " + mapa, 15000);
+        # O nome do mapa vai no RESUMO, nao so no corpo: a bandeja mostra pouca coisa, e um
+        # aviso que nao diz em qual mapa o report entrou manda o usuario procurar no lugar
+        # errado — foi o que aconteceu.
+        self.avisar("Report concluído — " + mapa,
+                    "Anexado em “" + mapa + "”.",
+                    ("Report gerado e anexado.\n\n"
+                     "Mapa: " + mapa + "\n"
+                     "Referências lidas: " + str(resumo.get("lidas")) + "\n"
+                     "Não puderam ser lidas: " + str(resumo.get("falhas")) + "\n"
+                     "Em “Demais referências”: " + str(resumo.get("demais")) + "\n"
+                     "Canal do rolhama: " + str(resumo.get("canal"))));
+
+    @Slot(str)
+    def report_falhou(self, msg):
+        gerente = ReportManager.instancia();
+        mapa = str((gerente.pendente or {}).get("mapa_nome") or "");
+        self.statusBar().showMessage("Report falhou: " + mapa, 15000);
+        self.avisar("Report falhou — " + mapa,
+                    "Falhou em “" + mapa + "”.",
+                    "Falha ao gerar o report de “" + mapa + "”:\n\n" + msg);
+
+    def avisar(self, titulo, resumo, texto):
+        """Notificacao do sistema quando houver bandeja; senao, uma janela nao-modal — o
+        ponto e nunca bloquear o que o usuario esta fazendo. 'resumo' e a linha curta da
+        bandeja; 'texto' e o detalhe da janela."""
+        try:
+            if self._tray != None and QSystemTrayIcon.supportsMessages():
+                self._tray.showMessage(titulo, resumo, QSystemTrayIcon.Information, 10000);
+                return;
+        except Exception:
+            pass;
+        box = QMessageBox(self);
+        box.setWindowTitle(titulo);
+        box.setText(texto);
+        box.setWindowModality(Qt.NonModal);   # nao prende a janela principal
+        box.show();
 
     def closeEvent(self, event):
         self._mdi_area.closeAllSubWindows()
@@ -122,6 +203,9 @@ class MainWindow(QMainWindow):
     def map_documents(self):
         buffer = self.__mapa_ativo__();
         if buffer != None:
+            # Abrir os documentos e o "eu vi": limpa a marca, senao o "*" ficaria para
+            # sempre depois do primeiro report.
+            ReportManager.instancia().marcar_visto();
             f = DialogDocument(self, buffer);
             f.exec();
 
@@ -324,6 +408,9 @@ class MainWindow(QMainWindow):
         self._file_tool_bar.addAction(self._open_act)
         self._file_tool_bar.addAction(self._save_act)
         self._map_tool_bar = self.addToolBar("Map")
+        # Sem isto o QToolBar desenha SO o icone e o texto da acao — que e onde a marca de
+        # "gerando" e "terminou" aparece — fica invisivel.
+        self._map_tool_bar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon);
         self._map_tool_bar.addAction(self._map_edit_act);
         self._map_tool_bar.addAction(self._map_edit_check);
         self._map_tool_bar.addAction(self._import_data);

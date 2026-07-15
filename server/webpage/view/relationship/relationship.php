@@ -75,6 +75,36 @@ $domain = isset($_GET["domain"]) ? $_GET["domain"] : "";
 #dica .m { font-size: 12px; color: var(--muted); }
 #dica .d { font-size: 12px; color: var(--text-secondary); margin-top: 5px; }
 
+/* relacoes em texto: o mesmo que o canvas mostra, legivel e copiavel */
+.relacoes { margin-top: 20px; }
+.relacoes h2 { font-size: 14px; font-weight: 600; margin: 0 0 4px 0; }
+.relacoes .nota { color: var(--muted); font-size: 12px; margin: 0 0 10px 0; }
+.relacoes ol { margin: 0; padding-left: 22px; }
+.relacoes li { margin-bottom: 7px; line-height: 1.6; }
+.relacoes .ent { font-weight: 600; }
+.relacoes .dot { margin-right: 5px; vertical-align: 1px; }
+.relacoes .seta { color: var(--muted); margin: 0 5px; }
+.relacoes .vinc { color: var(--text-secondary); font-style: italic; }
+.relacoes .qual { color: var(--muted); font-size: 12px; margin-left: 4px; }
+.relacoes .solto { color: var(--text-secondary); }
+
+/* documentos */
+table.docs { width: 100%; border-collapse: collapse; }
+table.docs th {
+  text-align: left; font-size: 12px; font-weight: 600; color: var(--text-secondary);
+  border-bottom: 1px solid var(--border); padding: 8px 10px; white-space: nowrap;
+}
+table.docs td { padding: 10px; border-bottom: 1px solid var(--gridline); vertical-align: top; }
+table.docs tr:last-child td { border-bottom: none; }
+table.docs .num { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+table.docs a { color: var(--person); text-decoration: none; font-weight: 600; }
+table.docs a:hover { text-decoration: underline; }
+table.docs .meta { color: var(--muted); font-size: 12px; }
+.tag-origem {
+  font-size: 11px; color: var(--text-secondary);
+  border: 1px solid var(--border); border-radius: 3px; padding: 0 6px;
+}
+
 /* referencias */
 .busca { margin-bottom: 4px; }
 .busca input { width: 100%; max-width: 380px; }
@@ -113,6 +143,8 @@ var FONTE_NO = '13px system-ui, -apple-system, "Segoe UI", sans-serif';
 var PAD_X = 10;          // respiro do rotulo dentro da caixa
 var RAIO  = 5;
 var MAPA  = null;
+var MAP_ID = <?php echo json_encode($map_id, $JS); ?>;
+var DOMAIN = <?php echo json_encode($domain, $JS); ?>;
 var PALETA = {};
 var vista = { escala: 1, dx: 0, dy: 0 };
 
@@ -431,9 +463,174 @@ function montarReferencias(mapa, destino, termo){
     });
 }
 
-function aba(rotulo, contagem, id_conteudo, ativa){
+// ------------------------------------------------- relacoes em forma textual
+function _dotDe(etype){
+    return $("<i class='dot dot-" + (etype || "other") + "'>");
+}
+
+function _nomeEnt(el){
+    // origem/destino chegam como toJsonShallow: so id, etype, text_label e o centro.
+    var s = $("<span class='ent'>");
+    s.append(_dotDe(el.etype));
+    s.append(document.createTextNode(el.text_label || "(sem nome)"));
+    return s;
+}
+
+function montarRelacoes(mapa, destino){
+    var bloco = $("<div class='relacoes'>");
+    bloco.append($("<h2>").text("Relações"));
+
+    var links = mapa.elements.filter(function(e){ return e.etype === "link"; });
+    // Cada par origem→destino vira um item proprio: um vinculo com 3 destinos sao 3
+    // afirmacoes distintas, e enfileirar tudo num item so obrigaria o leitor a
+    // desempacotar de novo o que o mapa ja tinha juntado.
+    var itens = [];
+    links.forEach(function(l){
+        var origens  = l.from || [];
+        var destinos = l.to || [];
+        if(origens.length === 0 && destinos.length === 0){ return; }
+        if(origens.length === 0){ origens = [null]; }
+        if(destinos.length === 0){ destinos = [null]; }
+        origens.forEach(function(o){
+            destinos.forEach(function(d){
+                itens.push({origem: o, vinculo: l, destino: d});
+            });
+        });
+    });
+
+    bloco.append($("<p class='nota'>").text(
+        itens.length === 0 ? "Este mapa não tem vínculos."
+                           : itens.length + (itens.length === 1 ? " relação descrita a partir do mapa acima."
+                                                                : " relações descritas a partir do mapa acima.")
+    ));
+
+    if(itens.length > 0){
+        var ol = $("<ol>");
+        itens.forEach(function(it){
+            var li = $("<li>");
+            if(it.origem){ li.append(_nomeEnt(it.origem)); }
+            else { li.append($("<span class='solto'>").text("(sem origem)")); }
+
+            li.append($("<span class='seta'>").text("→"));
+            li.append($("<span class='vinc'>").text(it.vinculo.text_label || "(vínculo sem rótulo)"));
+            li.append($("<span class='seta'>").text("→"));
+
+            if(it.destino){ li.append(_nomeEnt(it.destino)); }
+            else { li.append($("<span class='solto'>").text("(sem destino)")); }
+
+            // Qualificador cinza, como no KDD: quantas referencias sustentam a afirmacao.
+            var n = (it.vinculo.references || []).length;
+            if(n > 0){
+                li.append($("<span class='qual'>").text("(" + n + (n === 1 ? " referência)" : " referências)")));
+            }
+            ol.append(li);
+        });
+        bloco.append(ol);
+    }
+
+    // Entidades que nao participam de vinculo nenhum: existem no mapa e sumiriam da lista.
+    var ligadas = {};
+    links.forEach(function(l){
+        (l.from || []).concat(l.to || []).forEach(function(p){ ligadas[p.id] = true; });
+    });
+    var soltas = mapa.elements.filter(function(e){ return e.etype !== "link" && !ligadas[e.id]; });
+    if(soltas.length > 0){
+        bloco.append($("<h2 style='margin-top:16px'>").text("Sem vínculo (" + soltas.length + ")"));
+        var ul = $("<ol>");
+        soltas.forEach(function(e){ ul.append($("<li>").append(_nomeEnt(e))); });
+        bloco.append(ul);
+    }
+
+    destino.append(bloco);
+}
+
+// ---------------------------------------------------------------- documentos
+function tamanhoLegivel(n){
+    n = Number(n) || 0;
+    var u = ["B", "KB", "MB", "GB"];
+    for(var i = 0; i < u.length; i++){
+        if(n < 1024){ return (i === 0 ? n.toFixed(0) : n.toFixed(1)) + " " + u[i]; }
+        n = n / 1024;
+    }
+    return n.toFixed(1) + " TB";
+}
+
+function dataCurta(s){
+    if(!s){ return "—"; }
+    var p = String(s).split(" ")[0].split("-");
+    return p.length === 3 ? (p[2] + "/" + p[1] + "/" + p[0]) : String(s);
+}
+
+function montarDocumentos(destino){
+    // Somente leitura: o web ve e baixa. O envio e pelo botao "Documentos" do cliente
+    // desktop, que passa pelo execute.php e tem sessao — aqui nao ha como saber quem esta
+    // do outro lado, e um formulario aberto seria escrita anonima no servidor.
+    destino.empty();
+    destino.append($("<div id='lista_docs'>"));
+    carregarDocumentos();
+}
+
+function carregarDocumentos(){
+    var destino = $("#lista_docs");
+    if(destino.length === 0){ return; }
+    $.ajax({
+        url: "../../service/document_list.php",
+        data: { id: MAP_ID, domain: DOMAIN },
+        success: function(r){
+            var js = (typeof r === "string") ? JSON.parse(r) : r;
+            renderDocumentos(destino, js.documentos || []);
+            $("#cont_docs").text((js.documentos || []).length);
+        },
+        error: function(xhr){
+            var motivo = "HTTP " + xhr.status;
+            try { var js = JSON.parse(xhr.responseText); if(js && js.error){ motivo = js.error; } } catch(e) {}
+            destino.empty().append($("<p class='aviso'>").text("Não foi possível listar: " + motivo));
+        }
+    });
+}
+
+function renderDocumentos(destino, docs){
+    destino.empty();
+    if(docs.length === 0){
+        destino.append($("<p class='aviso'>").text("Nenhum documento neste mapa."));
+        return;
+    }
+    var tab = $("<table class='docs'>");
+    var thead = $("<tr>");
+    ["Título", "Origem", "Tamanho", "Mapas", "Enviado"].forEach(function(c, i){
+        thead.append($("<th>").addClass(i === 2 || i === 3 ? "num" : "").text(c));
+    });
+    tab.append($("<thead>").append(thead));
+
+    var tbody = $("<tbody>");
+    docs.forEach(function(d){
+        var tr = $("<tr>");
+        var td = $("<td>");
+        var url = "../../service/document_download.php?id=" + encodeURIComponent(d.id) +
+                  "&domain=" + encodeURIComponent(DOMAIN);
+        td.append($("<a>").attr("href", url).attr("target", "_blank")
+                          .attr("rel", "noopener noreferrer").text(d.title || "(sem título)"));
+        if(d.description){ td.append($("<div class='meta'>").text(d.description)); }
+        tr.append(td);
+        tr.append($("<td>").append($("<span class='tag-origem'>").text(d.origem || "—")));
+        tr.append($("<td class='num'>").text(tamanhoLegivel(d.bytes)));
+        // "Mapas" mostra em quantos mapas o mesmo arquivo esta: e o dedup por sha256 ficando
+        // visivel para quem le.
+        tr.append($("<td class='num'>").text(d.mapas || 1));
+        tr.append($("<td class='meta'>").text(dataCurta(d.creation_time) + (d.username ? " · " + d.username : "")));
+        tbody.append(tr);
+    });
+    tab.append(tbody);
+    destino.append(tab);
+}
+
+function aba(rotulo, contagem, id_conteudo, ativa, id_cont){
     var btn = $("<button class='tablinks'>").text(rotulo);
-    if(contagem != null){ btn.append($("<span class='cont'>").text(contagem)); }
+    if(contagem != null){
+        var c = $("<span class='cont'>").text(contagem);
+        if(id_cont){ c.attr("id", id_cont); }
+        btn.append(c);
+    }
     if(ativa){ btn.addClass("active"); }
     btn.on("click", function(evt){ abrirAba(evt, id_conteudo); });
     $("#tbl_abas").append(btn);
@@ -529,9 +726,14 @@ function callbackMap(js){
 
     var nRefs = agruparPorEntidade(js).reduce(function(s, g){ return s + g.references.length; }, 0);
     var aba_mapa = aba("Mapa", js.elements.length, "div_mapa", true);
+    // A contagem de documentos chega por AJAX depois; o span nasce vazio e e preenchido
+    // pelo carregarDocumentos.
+    var aba_docs = aba("Documentos", "", "div_documentos", false, "cont_docs");
     var aba_refs = aba("Referências", nRefs, "div_referencias", false);
 
+    montarDocumentos(aba_docs);
     montarMapa(aba_mapa);
+    montarRelacoes(js, aba_mapa);
     lerPaleta();
     // medir() antes de dimensionar(): a altura do palco vem de MAPA._h, que so existe
     // depois da medicao. Invertido, o canvas nascia com altura NaN e nada era desenhado.
@@ -569,7 +771,7 @@ function getMap(id, domain, callback){
    });
 }
 
-getMap(<?php echo json_encode($map_id, $JS); ?>, <?php echo json_encode($domain, $JS); ?>, callbackMap);
+getMap(MAP_ID, DOMAIN, callbackMap);
 </script>
 
 </body>
