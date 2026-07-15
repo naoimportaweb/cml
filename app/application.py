@@ -200,6 +200,27 @@ class MainWindow(QMainWindow):
         f.exec();
 
     @Slot()
+    def map_extrair(self):
+        buffer = self.__mapa_ativo__();
+        if buffer == None:
+            return;
+        # Carrega pelo config.json, como o QBot faz: o bot continua plugavel — trocar o
+        # modulo ou a classe e editar o JSON, sem tocar aqui.
+        try:
+            import json, importlib.util;
+            cfg = json.loads( open( CURRENTDIR + "/bot/brazil/entidades/config.json" ).read() );
+            spec = importlib.util.spec_from_file_location( cfg["module"], CURRENTDIR + "/" + cfg["path"] );
+            modulo = importlib.util.module_from_spec(spec);
+            sys.modules[ cfg["module"] ] = modulo;
+            spec.loader.exec_module(modulo);
+            cls = getattr( modulo, cfg["class"] );
+            f = cls(self, buffer);
+            f.exec();
+        except Exception as e:
+            import traceback; traceback.print_exc();
+            QMessageBox.information(self, "Extrair de URL", str(e));
+
+    @Slot()
     def map_documents(self):
         buffer = self.__mapa_ativo__();
         if buffer != None:
@@ -316,6 +337,11 @@ class MainWindow(QMainWindow):
                                 statusTip="Import",
                                 triggered=self.import_data)
 
+        icon = QIcon.fromTheme(QIcon.ThemeIcon.EditFind);
+        self._map_extrair = QAction(icon, "Extrair de URL", self,
+                                statusTip="Extrair sujeitos e vínculos de uma URL (rolhama)",
+                                triggered=self.map_extrair)
+
         icon = QIcon.fromTheme(QIcon.ThemeIcon.DocumentPrint);
         self._map_documents = QAction(icon, "Documents", self,
                                 statusTip="Documentos (PDF) do mapa",
@@ -415,6 +441,7 @@ class MainWindow(QMainWindow):
         self._map_tool_bar.addAction(self._map_edit_check);
         self._map_tool_bar.addAction(self._import_data);
         self._map_tool_bar.addAction(self._map_documents);
+        self._map_tool_bar.addAction(self._map_extrair);
         #self._edit_tool_bar.addAction(self._copy_act)
         #self._edit_tool_bar.addAction(self._paste_act)
         #self._file_tool_bar.setEnabled(False);

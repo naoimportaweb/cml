@@ -1,0 +1,6 @@
+{
+    "button" : "Extrair de URL",
+    "path"   : "bot/brazil/entidades/extrair.py",
+    "class"  : "DialogExtrairEntidades",
+    "module" : "dialogextrairentidades"
+}

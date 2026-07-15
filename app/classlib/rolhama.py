@@ -25,7 +25,7 @@ sys.path.append( CURRENTDIR );
 import bdd;
 
 CANAL_OPS    = 500;      # reservado para testes e ops de catalogo; nunca e alocado
-PROJETO      = "cml";
+PROJETO      = "cml";        # projeto padrao (o report). O bot de entidades usa o seu.
 BLOB_MAX     = 1048576;  # 1 MiB; acima disso o cofre devolve 413
 POLL_WAIT    = 30;       # o wait maximo por chamada e 60s; o laco cobre esperas maiores
 ESPERA_TOTAL = 3600;
@@ -54,7 +54,11 @@ def _env(nome, padrao=None):
 
 
 class Rolhama:
-    def __init__(self):
+    def __init__(self, projeto=PROJETO):
+        # O canal e alocado POR PROJETO e e idempotente: dois consumidores com o mesmo
+        # nome recebem o mesmo canal e colidiriam entre si. Por isso o projeto e
+        # parametro, e nao constante — o report e "cml", o bot e "cml/entidades".
+        self.projeto = projeto;
         chave = _env("ROLHAMA_BDD_KEY");
         if chave == None or chave == "":
             raise Exception("Falta ROLHAMA_BDD_KEY no ~/.env (a mesma chave do worker; veja rolhama/INTEGRACAO.md).");
@@ -91,7 +95,7 @@ class Rolhama:
         """Pede o canal do projeto ao worker. Idempotente: sempre devolve o mesmo."""
         if self.canal != None:
             return self.canal;
-        pedido = json.dumps({"op": "alocar", "projeto": PROJETO, "uso": uso}).encode("utf-8");
+        pedido = json.dumps({"op": "alocar", "projeto": self.projeto, "uso": uso}).encode("utf-8");
         # Op nao passa pelo ollama: a resposta e rapida, so espera a vez na varredura.
         resposta = self.__troca__(CANAL_OPS, pedido, espera_total=180);
         js = json.loads(resposta.decode("utf-8", errors="replace"));
@@ -104,14 +108,20 @@ class Rolhama:
         resposta = self.__troca__(CANAL_OPS, json.dumps({"op": "canais"}).encode("utf-8"), espera_total=180);
         return json.loads(resposta.decode("utf-8", errors="replace"));
 
-    def gerar(self, prompt, model=None, ctx=None, espera_total=ESPERA_TOTAL):
-        """Manda o prompt para o ollama pelo canal do projeto e devolve o texto cru."""
+    def gerar(self, prompt, model=None, ctx=None, formato=None, espera_total=ESPERA_TOTAL):
+        """Manda o prompt para o ollama pelo canal do projeto e devolve o texto cru.
+
+        formato="json" ativa o decoding restrito do ollama: a saida e JSON valido por
+        construcao. Sem isso, extrair estrutura de texto livre vira parsing fragil — o
+        modelo enfeita com markdown, preambulo e explicacao.
+        """
         canal = self.alocar();
-        if model == None and ctx == None:
+        if model == None and ctx == None and formato == None:
             payload = prompt.encode("utf-8");   # texto puro: contexto zero, modelo padrao
         else:
             corpo = {"prompt": prompt};
-            if model != None: corpo["model"] = model;
-            if ctx   != None: corpo["ctx"]   = ctx;
+            if model   != None: corpo["model"]  = model;
+            if ctx     != None: corpo["ctx"]    = ctx;
+            if formato != None: corpo["format"] = formato;
             payload = json.dumps(corpo).encode("utf-8");
         return self.__troca__(canal, payload, espera_total=espera_total).decode("utf-8", errors="replace");
