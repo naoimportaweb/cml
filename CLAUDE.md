@@ -23,6 +23,10 @@ cd script && ./deploy.sh
 
 O `app/install.sh` é o instalador para o **usuário final**, não um comando de desenvolvimento: exige root, recebe a URL do site, baixa o `client.tar.gz` desse site, descompacta em `/opt/cml` e cria o symlink `/bin/cml`.
 
+O procedimento completo de publicação em produção (Hostinger/LiteSpeed, a flag-portão do deploy, o `data/` que nunca é enviado) está em `DEPLOY.md` — leia-o antes de mexer no `deploy.sh` ou em qualquer coisa de deploy.
+
+Os recursos de report e o bot de entidades falam com um serviço externo (o **rolhama**) e leem segredos do `~/.env` (`ROLHAMA_BDD_KEY`, `ROLHAMA_WEBAPI_URL`/`ROLHAMA_BDD_URL`, etc.). Nada de valor concreto vai em arquivo versionado — sempre a variável, nunca o valor. Sem essas variáveis, o report simplesmente falha em runtime; o resto do app funciona.
+
 Para subir o servidor: Apache + PHP com o diretório `server/` servido no caminho **`/cml`** da raiz web (o cliente tem `/cml/services/execute.php` fixo no código), o schema MySQL de `server/data/create.sql` e um diretório de certificados com permissão de escrita (`/var/certs/`, conforme `server/data/config.json`), onde o par de chaves RSA é gerado na primeira requisição.
 
 ### Testes
@@ -77,9 +81,29 @@ Um `MapRelationship` contém `elements`, que são caixas envolvendo entidades. *
 
 O `OrganizationChart` é a estrutura paralela para organogramas, com seu próprio engine de canvas. Os dois canvas ficam em `app/view/ui/mapa_relationship_engine.py` e `app/view/ui/mapa_organization_chart_engine.py`.
 
+Um mapa também tem **documentos** anexados (hoje só PDFs de report). O `Document` (`app/classlib/document.py`, `server/.../Document/001.php`) grava os bytes **fora do banco**, em `server/data/documents/<sha256>.pdf` (coberto pelo `Deny from all` do `data/.htaccess`); o banco guarda só hash, tamanho e vínculos. O `sha256` é a chave de deduplicação — o mesmo PDF em N mapas grava o arquivo uma vez e cria uma linha em `document_map` por mapa. O servidor confere a assinatura `%PDF-` em vez de confiar na extensão.
+
+### Reports em segundo plano (rolhama)
+
+Um mapa gera um **relatório em PDF** a partir das suas referências: `app/classlib/report.py` coleta os links das entidades, baixa o texto (até `MAX_REFERENCIAS = 50`, o resto vai listado em "Demais referências"), monta **um único prompt** e manda ao LLM; a saída vira PDF via `QTextDocument`→`QPdfWriter` e é anexada como `Document`.
+
+- **Um prompt só, não um por referência**, porque o worker do rolhama serializa **globalmente** (uma geração por vez em toda a máquina); cada chamada segura a fila de todos os projetos. O corte de referências existe para caber na **janela de contexto do modelo** — se estourar, o ollama trunca o prompt em silêncio e o modelo responde confiante sobre o pedaço que viu, então `report.py` derruba referências até caber e diz quantas.
+- A geração roda no `ReportManager` (`app/view/ui/report_manager.py`), um **singleton de módulo** que vive fora dos diálogos: a `QThread` não pertence ao `DialogDocument`, senão fechar a janela mataria a geração. A GUI só escuta sinais (`progresso`/`concluiu`/`falhou`/`mudou`); a janela principal mostra o estado no botão "Documents".
+- A trava entre máquinas é o `ReportJob` (`server/.../ReportJob/001.php`): uma coluna gerada `lock_global` com índice `UNIQUE` garante **um report por vez no domain** sem "verifica e insere" (que teria corrida). Jobs cujo dono sumiu por mais de 45 min são expirados antes de cada aquisição. `ReportManager` também tem uma trava local, que só impede disparar dois no mesmo cliente.
+
+**O cliente do rolhama fala o contrato webapi** (migrado do bddphp antigo, que foi apagado da Hostinger). `app/classlib/rolhama.py` usa `webapi.ClientAPI` (`app/classlib/webapi.py`, cópia literal de `../rolhama/llm/webapi.py`): `enqueue`/`response` por **job UUID**, MAC de autenticação (`K_auth[canal]`), sem 409 nem `remove()`, teto de 64 MiB. A cifra do payload é ChaCha20-Poly1305 por `(part, canal)` via `bdd.seal`/`bdd.open_blob` (o `app/classlib/bdd.py` é **byte a byte idêntico** ao do worker — se divergir, a resposta não decifra). URL vem de `ROLHAMA_WEBAPI_URL` (aceita `ROLHAMA_BDD_URL` por compat), chave de `ROLHAMA_BDD_KEY`, ambas do `~/.env`.
+
+O webapi ainda **não tem rota de alocação** de canal (é pendência do lado rolhama — `../rolhama/llm/CANAIS.md`), então o canal é **fixo por projeto**, semeado no servidor e mapeado em `CANAL_POR_PROJETO`: report (`"cml"`) → **507**, bot de entidades (`"cml/entidades"`) → **508**, sobrescrevíveis por env (`CML_ROLHAMA_CANAL`, `CML_ROLHAMA_CANAL_ENTIDADES`). Projetos diferentes precisam de canais diferentes porque a mesma chave decifraria a resposta um do outro. O `Rolhama.alocar()` sobreviveu só como compat — hoje devolve o canal fixo, sem ir ao servidor. Contrato completo em `../rolhama/llm/INTEGRACAO.md`; para atualizar o transporte, recopie `webapi.py` e `bdd.py` de `../rolhama/llm/`.
+
+**A confirmar do lado do servidor:** que os canais 507/508 estejam semeados e sendo atendidos pelo worker (o `CANAIS.md` os lista na faixa da semente 500–510, mas marcados "livres" — o CML não aparece na tabela de consumidores).
+
+### App web (somente leitura)
+
+`server/webpage/` é um app PHP MVC próprio (não JSON-RPC) para **visualizar** mapas e baixar documentos pelo navegador — a "aba Documentos na web" e as relações em texto. Entra por `server/webpage/index.php`, que escolhe o domain (reusa `Mysql::domains()` do `data/config.json`) e redireciona para a lista. É servido no caminho `.../cml/webpage/`. Estrutura clássica `controller/`/`model/`/`view/`/`service/`, com os assets em `public/`.
+
 ### Os bots são plug-ins
 
-Os bots (scrape da Wikipedia, gravação no Wayback) ficam em `app/bot/<pais>/<nome>/`, como um `config.json` mais um módulo:
+Os bots ficam em `app/bot/<pais>/<nome>/`, cada um um `config.json` mais um módulo. Hoje existem quatro em `app/bot/brazil/`: `wikipedia` (scrape), `wayback` (gravação no Wayback), `referencias` (busca links candidatos para uma entidade via Wikipedia/DuckDuckGo) e `entidades` (extrai sujeitos e vínculos de uma URL pelo rolhama, com `format=json`, num canal/projeto próprio — `Rolhama(projeto="cml/entidades")` — separado do canal do report). O `config.json`:
 
 ```json
 {"button": "Load", "path": "bot/brazil/wikipedia/search.py", "class": "DialogBotWikipedia", "module": "dialogbotwikipedia"}

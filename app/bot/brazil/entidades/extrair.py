@@ -1,8 +1,10 @@
 """Bot: extrai sujeitos e vínculos de uma URL usando o rolhama.
 
-Canal proprio (cml/entidades -> 508), separado do report (cml -> 507): o alocar e
-idempotente POR PROJETO, entao pedir como "cml" devolveria o mesmo 507 e um report rodando
-junto colidiria — um leria a resposta do outro.
+Canal proprio (cml/entidades -> 510), separado do report (cml -> 507): o worker serializa
+global, mas dois projetos no MESMO canal decifrariam a resposta um do outro (mesma chave).
+Canal por projeto e o que mantem report e bot isolados. (No webapi o canal e fixo/semeado;
+o r.alocar() aqui so devolve o canal do projeto, sem ida ao servidor. 507/510 sao os canais
+LLM livres — 508=WHISPER, 509=EMBED.)
 
 O bot NAO escreve direto no mapa. Um qwen2.5:14b em CPU erra classificacao: nos testes
 "Claude for Chrome" saiu ora como organization ora como other, e "Researchers" apareceu

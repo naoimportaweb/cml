@@ -7,9 +7,11 @@ Por que UM prompt e nao um por referencia: o worker do rolhama e concentrador de
 unica e serializa globalmente, entao cada chamada segura a fila de todos os projetos.
 Um report = uma geracao.
 
-Por que o corte em 50: o cofre-cego recusa blob acima de 1 MiB. Com 50 referencias sobra
-~17 KB de texto por referencia, que cobre o corpo de um artigo tipico. O que passa do
-corte nao some — vai listado em "Demais referencias" no fim do PDF.
+Por que o corte em 50: o prompt inteiro tem que caber na janela de contexto do modelo (o
+teto de 64 MiB do transporte webapi e folgado demais para servir de limite). Com 50
+referencias, o ORCAMENTO_TEXTO derivado do NUM_CTX vira o teto por referencia
+(MAX_POR_REFERENCIA). O que passa do corte nao some — vai listado em "Demais referencias"
+no fim do PDF.
 """
 
 import os, sys, inspect, re, html, datetime;
@@ -26,8 +28,8 @@ from classlib.document import Document;
 # Teto de referencias lidas pelo LLM. As demais entram na lista do fim do PDF.
 MAX_REFERENCIAS = 50;
 
-# O que limita o prompt NAO e o teto de 1 MiB do cofre (isso e transporte): e a janela de
-# contexto do modelo, ~130x menor. Estourar a janela nao da erro — o ollama trunca o prompt
+# O que limita o prompt NAO e o teto do transporte (64 MiB no webapi): e a janela de
+# contexto do modelo, muito menor. Estourar a janela nao da erro — o ollama trunca o prompt
 # em SILENCIO e o modelo responde confiante sobre o pedaco que viu. Tem que casar com o
 # ROLHAMA_OLLAMA_NUM_CTX do .env da maquina 90; se divergir, quem manda e o worker.
 NUM_CTX = int( _env("ROLHAMA_OLLAMA_NUM_CTX", "16384") );
@@ -181,7 +183,7 @@ def gerar(mapa, caminho_pdf, progresso=None):
         aviso("%d referência(s) não couberam na janela de %d tokens e foram para “Demais referências”." % (derrubadas, NUM_CTX));
 
     if len(prompt.encode("utf-8")) > BLOB_MAX:
-        raise Exception("O prompt tem %d bytes e o cofre recusa acima de %d." % (len(prompt.encode("utf-8")), BLOB_MAX));
+        raise Exception("O prompt tem %d bytes e o webapi recusa acima de %d." % (len(prompt.encode("utf-8")), BLOB_MAX));
 
     aviso("Gerando o relatório no rolhama (%s; pode levar minutos, o worker atende um por vez)…" % MODELO);
     r = Rolhama();
