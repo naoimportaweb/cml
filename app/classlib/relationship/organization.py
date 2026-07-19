@@ -17,6 +17,8 @@ class Organization(MapRelationshipBox):
         super().__init__(mapa, x, y, w, h, text=text, id_=id_, entity_id_=entity_id_ );
         self.entity.etype = "organization";
     def draw(self, painter):
+        if self.mostra_rosto() and self.draw_face_only(painter):
+            return;
         penRectangle = QPen(Qt.black)
         penRectangle.setWidth(1)
         painter.setPen(penRectangle)

@@ -54,9 +54,20 @@ UA = "Mozilla/5.0 (compatible; CML/1.0; +https://github.com/naoimportaweb/cml)";
 
 ROTULO = {"person": "Pessoa", "organization": "Organização", "other": "Outro", "link": "Vínculo"};
 
+# Idiomas oferecidos por mapa. (codigo, rotulo na UI). O codigo do mapa alimenta o prompt do
+# report E do bot de entidades (via idioma_frase); um so ponto de verdade.
+IDIOMAS = [("en", "English"), ("pt-BR", "Português (Brasil)"), ("es", "Español")];
+IDIOMA_PADRAO = "en";
+_IDIOMA_FRASE = {"pt-BR": "português do Brasil", "en": "English (inglês)", "es": "español (espanhol)"};
 
-def _texto_da_pagina(url):
-    """Baixa a URL e devolve o texto legivel. Nunca lanca: erro vira a propria mensagem."""
+
+def idioma_frase(codigo):
+    """Nome do idioma para instruir o modelo (ex.: 'pt-BR' -> 'português do Brasil')."""
+    return _IDIOMA_FRASE.get(codigo or IDIOMA_PADRAO, _IDIOMA_FRASE[IDIOMA_PADRAO]);
+
+
+def _requisitar(url):
+    """Baixa a URL uma vez e devolve (sopa, erro). Nunca lanca."""
     try:
         r = requests.get(url, timeout=TIMEOUT_HTTP, headers={"User-Agent": UA});
         if r.status_code != 200:
@@ -64,16 +75,63 @@ def _texto_da_pagina(url):
         tipo = r.headers.get("Content-Type", "");
         if "html" not in tipo and "text" not in tipo:
             return None, "tipo não textual (" + tipo.split(";")[0] + ")";
-        sopa = BeautifulSoup(r.text, "html.parser");
+        return BeautifulSoup(r.text, "html.parser"), None;
+    except Exception as e:
+        return None, type(e).__name__;
+
+
+def _titulo_pagina(sopa, url):
+    """Titulo legivel: <title>, senao og:title, senao a propria URL. Nunca vazio."""
+    if sopa.title != None and sopa.title.string != None:
+        t = sopa.title.string.strip();
+        if t != "":
+            return t[:250];
+    og = sopa.find("meta", attrs={"property": "og:title"});
+    if og != None and og.get("content") and og["content"].strip() != "":
+        return og["content"].strip()[:250];
+    return url;
+
+
+def _descricao_pagina(sopa):
+    """Descricao pela meta tag (description / og:description). '' se a pagina nao tiver."""
+    for attrs in ({"name": "description"}, {"property": "og:description"}):
+        m = sopa.find("meta", attrs=attrs);
+        if m != None and m.get("content") and m["content"].strip() != "":
+            return m["content"].strip()[:600];
+    return "";
+
+
+def ler_pagina(url):
+    """Baixa a URL UMA vez e devolve (texto, titulo, descricao, erro). Nunca lanca.
+
+    O titulo e a descricao saem da propria pagina (<title>/<meta>), NAO do modelo — o
+    rolhama nao recebe pedido para isso. Sao o que uma Reference precisa alem do link, e e
+    por isso que ler o texto e os metadados na mesma requisicao evita baixar a pagina duas
+    vezes.
+    """
+    sopa, erro = _requisitar(url);
+    if sopa == None:
+        return None, None, None, erro;
+    try:
+        # Le titulo/descricao ANTES de decompor: a extracao de texto muta a arvore.
+        titulo = _titulo_pagina(sopa, url);
+        descricao = _descricao_pagina(sopa);
         for tag in sopa(["script", "style", "nav", "header", "footer", "aside", "noscript"]):
             tag.decompose();
         texto = re.sub(r"\n{3,}", "\n\n", re.sub(r"[ \t]{2,}", " ", sopa.get_text("\n")));
         texto = texto.strip();
-        if texto == "":
-            return None, "página sem texto";
-        return texto, None;
     except Exception as e:
-        return None, type(e).__name__;
+        return None, None, None, type(e).__name__;
+    if texto == "":
+        return None, titulo, descricao, "página sem texto";
+    return texto, titulo, descricao, None;
+
+
+def _texto_da_pagina(url):
+    """Compat: so o texto legivel (e o erro). Chamadores antigos (report, buscar de
+    referencias) seguem com a mesma assinatura."""
+    texto, _titulo, _descricao, erro = ler_pagina(url);
+    return texto, erro;
 
 
 def coletar_referencias(mapa):
@@ -122,11 +180,12 @@ def descrever_mapa(mapa):
 
 
 def montar_prompt(mapa, lidas):
+    idioma = idioma_frase( getattr(mapa, "language", None) );
     partes = [
-        "Você é um analista de inteligência. Escreva um relatório em português do Brasil "
-        "sobre o mapa de vínculos abaixo, usando SOMENTE o que está no mapa e nos artigos "
-        "fornecidos. Não invente fatos, datas nem nomes. Se algo não estiver nas fontes, "
-        "diga que não foi possível confirmar.",
+        "Você é um analista de inteligência. Escreva um relatório sobre o mapa de vínculos "
+        "abaixo, usando SOMENTE o que está no mapa e nos artigos fornecidos. Não invente "
+        "fatos, datas nem nomes. Se algo não estiver nas fontes, diga que não foi possível "
+        "confirmar. Escreva TODO o relatório em " + idioma + ".",
         "",
         "Estruture assim: 1) Sumário executivo; 2) Entidades e papéis; 3) Vínculos e o que "
         "as fontes sustentam; 4) Lacunas e contradições entre as fontes.",

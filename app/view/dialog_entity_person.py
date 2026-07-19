@@ -27,6 +27,7 @@ class DialogEntityPerson(DialogEntityGeneric):
         self.panelUrls();
         self.panelDoxxing();
         self.panelReferences();
+        self.panelImages();
         self.panelClassification();
         self.panelActioins();
         

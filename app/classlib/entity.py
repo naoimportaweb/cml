@@ -28,6 +28,11 @@ class Entity(ConnectObject):
         self.format_date = "yyyy-MM-dd";
         self.default_url = None;
         self.icon = None;
+        self.images = [];   # lista de {"id":..., "png_base64":...} — carregada sob demanda
+        self.face = None;   # PNG do rosto em base64, ou None
+        self.sub_etype_id = None;    # subtipo (so entidades Other), chave = md5(nome) no server
+        self.sub_etype_name = None;  # nome do subtipo, para o combo
+        self.subtype_face = None;    # rosto default do subtipo (badge no mapa), resolvido no load
 
     #def getWarnings(self, arr):
     #    if self.full_description == None or self.full_description.strip() == "":
@@ -73,6 +78,64 @@ class Entity(ConnectObject):
         
     def toJson(self):
         return { "id" : self.id, "icon" : self.icon, "etype" : self.etype, "name" : self.text, "data_extra" : self.data_extra, "full_description" : self.full_description, "wikipedia" : self.wikipedia, "classification" : self.classification, "small_label" : self.small_label}
+
+    # Imagens (endpoint dedicado Entity.load_images/save_images; base64 no banco). Carregadas
+    # sob demanda quando o diagolo abre, nao no load do mapa, para nao pesar o mapa.
+    def load_images(self):
+        js = self.__execute__("Entity", "load_images", {"entity_id" : self.id});
+        if js["status"] and js["return"] != None:
+            self.images = js["return"].get("images") or [];
+            face = js["return"].get("face") or "";
+            self.face = face if face != "" else None;
+        return self.images;
+
+    def save_images(self):
+        # Manda text_label/etype junto: o servidor garante a linha em entity (FK de
+        # entity_image) com um upsert nao-destrutivo caso a caixa ainda nao tenha sido salva.
+        return self.__execute__("Entity", "save_images", { "entity_id" : self.id,
+            "text_label" : self.text or "", "etype" : self.etype or "",
+            "images" : self.images, "face" : self.face or "" });
+
+    def add_image(self, png_base64):
+        img = { "id" : uuid.uuid4().hex + "_" + uuid.uuid4().hex + "_" + uuid.uuid4().hex, "png_base64" : png_base64 };
+        self.images.append( img );
+        return img;
+
+    def remove_image(self, index):
+        if index >= 0 and index < len( self.images ):
+            self.images.pop( index );
+
+    def set_face(self, png_base64):
+        self.face = png_base64;
+
+    def clear_face(self):
+        self.face = None;
+
+    # --- subtipo (Other) ---
+    def load_subetypes(self):
+        # Lista de {id, name, face_default} para o combo do subtipo. [] se falhar.
+        js = self.__execute__("Entity", "load_subetypes", {});
+        if js["status"] and js["return"] != None:
+            return js["return"];
+        return [];
+
+    def set_subetype(self, name):
+        # Define/limpa o subtipo desta entidade (name vazio = sem subtipo).
+        self.sub_etype_name = name or None;
+        return self.__execute__("Entity", "set_subetype", { "entity_id" : self.id,
+            "text_label" : self.text or "", "etype" : self.etype or "", "sub_etype_name" : name or "" });
+
+    def set_subetype_face(self, name, png_base64):
+        # Define/remove o rosto default do SUBTIPO (compartilhado por todas as Others dele).
+        return self.__execute__("Entity", "set_subetype_face", { "sub_etype_name" : name or "", "face" : png_base64 or "" });
+
+    def create_subetype(self, name):
+        # Cria um subtipo valido (tela global). Nao atribui a nenhuma entidade.
+        return self.__execute__("Entity", "create_subetype", { "name" : name or "" });
+
+    def delete_subetype(self, name):
+        # Remove um subtipo valido e desvincula as entidades que o usavam.
+        return self.__execute__("Entity", "delete_subetype", { "name" : name or "" });
 
     def toType(self, etype):
         js = self.__execute__("Entity", "to_type", {"type" : etype, "id" : self.id});

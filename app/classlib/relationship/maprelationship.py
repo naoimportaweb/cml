@@ -23,6 +23,8 @@ class MapRelationship(ConnectObject):
         self.lock_list = [];
         self.locked = False;
         self.default_reference = None;
+        self.language = "en";   # idioma do report e do bot de entidades (default: ingles)
+        self.show_face = False;    # desenhar o PNG de rosto nas caixas do mapa
     
     def getErros(self):
         arr = [];
@@ -89,7 +91,8 @@ class MapRelationship(ConnectObject):
         return buffer;
     
     def toJson(self):
-        return { "id" : self.id,  "name" : self.name, "keyword" : self.keyword, "elements" : [], "default_reference" : self.default_reference}
+        return { "id" : self.id,  "name" : self.name, "keyword" : self.keyword, "elements" : [], "default_reference" : self.default_reference,
+            "language" : self.language or "en", "show_face" : (1 if self.show_face else 0) }
     
     def lock_map(self):
         js = self.__execute__("MapRelationship", "lock_map", {"diagram_relationship_id" : self.id });
@@ -124,6 +127,8 @@ class MapRelationship(ConnectObject):
         self.person_id = data["person_id"];
         self.lock_list = data["lock"];
         self.default_reference = data.get("default_reference");
+        self.language = data.get("language") or "en";
+        self.show_face = bool( int( data.get("show_face") or 0 ) );
         self.locked = data["locked"];
         if data.get("elements") != None:
             for element in data['elements']:
@@ -144,6 +149,14 @@ class MapRelationship(ConnectObject):
                     buffer.entity.end_date          = element["entity_end_date"];
                     buffer.entity.format_date       = element["entity_format_date"];
                     buffer.entity.default_url       = element["default_url"];
+                    # Rosto so vem no load quando o mapa esta com show_face ligado (o servidor
+                    # so busca entity_face nesse caso); "" quando nao ha rosto.
+                    face = element.get("face");
+                    buffer.entity.face             = face if (face != None and face != "") else None;
+                    buffer.entity.sub_etype_id     = element.get("sub_etype_id");
+                    buffer.entity.sub_etype_name   = element.get("sub_etype_name");
+                    sface = element.get("subtype_face");
+                    buffer.entity.subtype_face     = sface if (sface != None and sface != "") else None;
                     #ent.default_url as default_url, ent.start_date as entity_start_date, ent.end_date as entity_end_date, ent.format_date as entity_format_date, dre.start_date as element_start_date, dre.end_date as element_end_date, dre.format_date as element_format_date 
             for element in data['elements']:
                 if element["etype"] == "link":

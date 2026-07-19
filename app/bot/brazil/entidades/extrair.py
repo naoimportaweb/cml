@@ -24,7 +24,7 @@ ROOT = os.path.dirname( os.path.dirname( os.path.dirname( CURRENTDIR ) ) );   # 
 sys.path.append( ROOT );
 
 from classlib.rolhama import Rolhama;
-from classlib.report import _texto_da_pagina, MODELO;
+from classlib.report import ler_pagina, MODELO, idioma_frase;
 from classlib.configuration import Configuration;
 
 PROJETO_BOT = "cml/entidades";
@@ -42,20 +42,25 @@ class _Extrator(QObject):
     terminou  = Signal(object);
     falhou    = Signal(str);
 
-    def __init__(self, url):
+    def __init__(self, url, idioma):
         super().__init__();
         self.url = url;
+        self.idioma = idioma;   # frase do idioma do mapa, para as descricoes/relacoes
 
     @Slot()
     def executar(self):
         try:
             self.progresso.emit("Lendo a página…");
-            texto, erro = _texto_da_pagina(self.url);
+            # Titulo e descricao saem da propria pagina, na mesma requisicao do texto: sao o
+            # que a referencia de origem precisa alem do link, e o rolhama nao e pedido para
+            # isso (o modelo erra citacao e nao ve o <title>/<meta>).
+            texto, titulo, descricao, erro = ler_pagina(self.url);
             if texto == None:
                 raise Exception("Não foi possível ler a página: " + str(erro));
             texto = texto[:MAX_ARTIGO];
 
             prompt = ('Extraia do artigo os sujeitos e as relações. tipo: person|organization|other.\n'
+                      'Escreva "descricao" e "relacao" em ' + self.idioma + '.\n'
                       'Responda SOMENTE JSON: {"entidades":[{"nome":"","tipo":"","descricao":""}],'
                       '"vinculos":[{"origem":"","relacao":"","destino":""}]}\n\nARTIGO:\n' + texto);
 
@@ -70,7 +75,8 @@ class _Extrator(QObject):
                 raise Exception("O modelo não devolveu JSON válido. Tente de novo — a saída varia.");
             self.terminou.emit({"entidades": js.get("entidades") or [],
                                 "vinculos": js.get("vinculos") or [],
-                                "canal": canal});
+                                "canal": canal,
+                                "url": self.url, "url_titulo": titulo, "url_descricao": descricao});
         except Exception as e:
             traceback.print_exc();
             self.falhou.emit(str(e));
@@ -150,7 +156,7 @@ class DialogExtrairEntidades(QDialog):
         self.btn_extrair.setEnabled(False);
         self.btn_add.setEnabled(False);
         self.thread = QThread();
-        self.worker = _Extrator(url);
+        self.worker = _Extrator(url, idioma_frase( getattr(self.mapa, "language", None) ));
         self.worker.moveToThread(self.thread);
         self.thread.started.connect(self.worker.executar);
         self.worker.progresso.connect(lambda m: self.lbl.setText("⏳ " + m));
@@ -212,6 +218,26 @@ class DialogExtrairEntidades(QDialog):
             # coordenada deixaria o mapa ilegivel. O analista arrasta depois.
             criadas = {};
             reusadas = 0;
+            refs = 0;
+
+            # A "referencia de insercao": todo objeto marcado — novo OU reaproveitado —
+            # recebe uma referencia apontando para a URL de onde veio, com o titulo e a
+            # descricao da PAGINA (vieram junto do texto em ler_pagina; nao sao pedidos ao
+            # rolhama). Para o reaproveitado e uma referencia a mais no objeto que ja existia.
+            url_ref  = str(self.dados.get("url") or "").strip();
+            tit_ref  = str(self.dados.get("url_titulo") or "").strip() or url_ref;
+            desc_ref = str(self.dados.get("url_descricao") or "").strip();
+
+            def _referenciar(caixa):
+                # Nao duplica: extrair a mesma URL duas vezes nao repete a referencia no
+                # objeto. Compara por link1 normalizado.
+                if url_ref == "":
+                    return 0;
+                for ref in caixa.entity.references:
+                    if str(ref.link1 or "").strip() == url_ref:
+                        return 0;
+                caixa.addReference(tit_ref, url_ref, descricao=desc_ref);
+                return 1;
 
             # O que JA esta no mapa, por nome. Sem isto, extrair um segundo artigo que cita
             # a mesma entidade cria uma caixa nova E uma entity_id nova no banco: viram dois
@@ -242,6 +268,7 @@ class DialogExtrairEntidades(QDialog):
                     desc = self.tab_ent.item(i, 3).text().strip();
                     if desc != "" and not str(caixa.entity.full_description or "").strip():
                         caixa.entity.full_description = desc;
+                    refs = refs + _referenciar(caixa);   # abre o objeto existente e anexa a URL
                     criadas[chave] = caixa;
                     reusadas = reusadas + 1;
                     continue;
@@ -250,23 +277,26 @@ class DialogExtrairEntidades(QDialog):
                 desc = self.tab_ent.item(i, 3).text().strip();
                 caixa = self.mapa.addEntity(tipo, x, y, text=nome);
                 caixa.entity.full_description = desc;
+                refs = refs + _referenciar(caixa);
                 criadas[chave] = caixa;
                 existentes[chave] = caixa;
                 x = x + 260;
                 if x > 1000: x = 40; y = y + 120;
 
-            # Vinculos que o mapa ja tem, como (origem, relacao, destino) em minusculas: o
-            # mesmo par de artigos costuma repetir a mesma afirmacao.
-            vinc_existentes = set();
+            # Vinculos que o mapa ja tem, indexados por (origem, relacao, destino) em
+            # minusculas -> a CAIXA do link (nao so a chave): guardar a caixa e o que permite
+            # abrir um vinculo reaproveitado e anexar tambem NELE a referencia da URL. O
+            # vinculo (etype "link") tambem e uma entity com references.
+            vinc_existentes = {};
             for el in self.mapa.elements:
                 if el.entity.etype != "link":
                     continue;
                 rel_atual = str(el.entity.text or "").strip().lower();
                 for a in el.from_entity:
                     for b in el.to_entity:
-                        vinc_existentes.add(( str(a.entity.getText() or "").strip().lower(),
-                                              rel_atual,
-                                              str(b.entity.getText() or "").strip().lower() ));
+                        vinc_existentes[( str(a.entity.getText() or "").strip().lower(),
+                                          rel_atual,
+                                          str(b.entity.getText() or "").strip().lower() )] = el;
 
             n_vin = 0; vin_reusados = 0;
             yv = y + 140;
@@ -283,13 +313,17 @@ class DialogExtrairEntidades(QDialog):
                 # recusou.
                 if o not in existentes or d not in existentes or rel == "":
                     continue;
-                if (o, rel.lower(), d) in vinc_existentes:
+                chave_vin = (o, rel.lower(), d);
+                if chave_vin in vinc_existentes:
+                    # Vinculo ja existe: abre e anexa tambem nele a referencia da URL.
+                    refs = refs + _referenciar( vinc_existentes[chave_vin] );
                     vin_reusados = vin_reusados + 1;
                     continue;
                 link = self.mapa.addEntity("link", 40 + (n_vin * 300), yv, text=rel);
                 link.addFrom( existentes[o] );
                 link.addTo( existentes[d] );
-                vinc_existentes.add((o, rel.lower(), d));
+                refs = refs + _referenciar(link);   # o vinculo novo tambem recebe a URL
+                vinc_existentes[chave_vin] = link;
                 n_vin = n_vin + 1;
 
             novas = len(criadas) - reusadas;
@@ -297,6 +331,9 @@ class DialogExtrairEntidades(QDialog):
             if reusadas or vin_reusados:
                 msg = msg + ("\n\nJá existiam no mapa e foram reaproveitados: %d sujeito(s) e "
                              "%d vínculo(s) — não foram duplicados." % (reusadas, vin_reusados));
+            if refs:
+                msg = msg + ("\n\nReferência de origem (a URL, com título e descrição da página) "
+                             "anexada a %d item(ns) — objetos e vínculos." % refs);
             msg = msg + "\n\nOs novos entraram numa grade; arraste para posicionar. Salve o mapa para gravar.";
             self.__msg__(msg);
             self.accept();

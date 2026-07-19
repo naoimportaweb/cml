@@ -13,6 +13,7 @@ from view.ui.customvlayout import CustomVLayout;
 from view.dialogreference import DialogReference;
 from view.dialog_link_edit import DialogLinkEdit;
 from view.ui.qeditorplus import QEditorPlus;
+from view.ui.qimages import QImages;
 
 class DialogEntityLink(QDialog):
     def __init__(self, form, link, mapa):
@@ -39,6 +40,7 @@ class DialogEntityLink(QDialog):
         self.page_ent_from = CustomVLayout.widget_tab( self.tab, "Entity From");
         self.page_ent_to   = CustomVLayout.widget_tab( self.tab, "Entity To");
         self.page_ref      = CustomVLayout.widget_tab( self.tab, "References");
+        self.page_img      = CustomVLayout.widget_tab( self.tab, "Images");
         self.page_act = CustomVLayout.widget_tab( self.tab, "Actions");
         # ------------------------------------------
         self.lbl_text = QLabel("Text");
@@ -110,7 +112,10 @@ class DialogEntityLink(QDialog):
         CustomVLayout.widget_linha(self, self.page_ref, [btn_reference_add, btn_reference_del] );
         self.table_reference = CustomVLayout.widget_tabela(self, ["Title"], tamanhos=[QHeaderView.Stretch], double_click=self.table_reference_click);
         self.page_ref.addWidget(self.table_reference);
-        
+
+        # Vinculo tambem tem lista de imagens, mas sem rosto (with_face=False).
+        self.page_img.addWidget( QImages(self, self.link.entity, with_face=False) );
+
         self.table_from_load();
         self.table_to_load();
         self.table_reference_load();

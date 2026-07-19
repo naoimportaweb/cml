@@ -25,6 +25,7 @@ class DialogEntityOrganization(DialogEntityGeneric):
         self.panelDescricao();
         self.panelUrls();
         self.panelReferences();
+        self.panelImages();
         self.panelClassification();
         self.panelActioins();
         

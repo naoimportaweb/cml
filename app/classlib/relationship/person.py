@@ -25,6 +25,8 @@ class Person(MapRelationshipBox):
         return objeto;  
 
     def draw(self, painter):
+        if self.mostra_rosto() and self.draw_face_only(painter):
+            return;
         penRectangle = QPen(Qt.black)
         penRectangle.setWidth(1)
         painter.setPen(penRectangle);

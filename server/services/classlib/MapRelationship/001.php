@@ -18,13 +18,31 @@ class MapRelationship
         $buffer_diagram["elements"] = array();
         $buffer_diagram["lock"] = array();
 
-        $buffer_elements =  $mysql->DataTable("SELECT ent.default_url as default_url, ent.start_date as entity_start_date, ent.end_date as entity_end_date, ent.format_date as entity_format_date, dre.start_date as element_start_date, dre.end_date as element_end_date, dre.format_date as element_format_date,  ent.small_label as small_label, ent.wikipedia as wikipedia, dre.id as id, ent.id as entity_id, ent.data_extra as data_extra, ent.text_label as text_label, ent.description as full_description, ent.etype, dre.x, dre.y, dre.w, dre.h  FROM entity as ent inner join diagram_relationship_element as dre on ent.id = dre.entity_id where dre.diagram_relationship_id = ? order by dre.creation_time asc", [$post_data["parameters"]["id"]]);
+        $buffer_elements =  $mysql->DataTable("SELECT ent.default_url as default_url, ent.start_date as entity_start_date, ent.end_date as entity_end_date, ent.format_date as entity_format_date, dre.start_date as element_start_date, dre.end_date as element_end_date, dre.format_date as element_format_date,  ent.small_label as small_label, ent.wikipedia as wikipedia, dre.id as id, ent.id as entity_id, ent.data_extra as data_extra, ent.text_label as text_label, ent.description as full_description, ent.etype, ent.sub_etype_id as sub_etype_id, subt.name as sub_etype_name, dre.x, dre.y, dre.w, dre.h  FROM entity as ent inner join diagram_relationship_element as dre on ent.id = dre.entity_id left join sub_etype as subt on ent.sub_etype_id = subt.id where dre.diagram_relationship_id = ? order by dre.creation_time asc", [$post_data["parameters"]["id"]]);
+
+        // So carrega os rostos quando o mapa esta com "Exibir PNG de rosto" ligado: senao
+        // trazer o base64 de todas as entidades pesaria o load a toa.
+        $mostrar_rosto = array_key_exists("show_face", $buffer_diagram) && $buffer_diagram["show_face"];
 
         for($i = 0; $i < count($buffer_elements); $i++ ) {
-            
+
             $buffer_elements[$i]["references"] = $mysql->DataTable("SELECT drer.id, drer.title, drer.link1, drer.link2, drer.link3, drer.description as descricao FROM diagram_relationship_element_reference AS drer where drer.entity_id = ?", [$buffer_elements[$i]["entity_id"]]);
 
             $buffer_elements[$i]["classification"] = $mysql->DataTable("select eci.format_date as format_date, eci.entity_id as entity_id, eci.start_date as start_date, eci.end_date as end_date, eci.id as id, clsi.text_label as text_label_choice, cls.text_label as text_label, clsi.id as classification_item_id from entity_classification_item as eci inner join classification_item as clsi on eci.classification_item_id = clsi.id inner join classification as cls on clsi.classification_id = cls.id where eci.entity_id = ?", [$buffer_elements[$i]["entity_id"]]);
+
+            if( $mostrar_rosto && $buffer_elements[$i]["etype"] != "link" ){
+                // Rosto PROPRIO da entidade — substitui a caixa no mapa.
+                $rosto = $mysql->DataTable("SELECT png_base64 FROM entity_face WHERE entity_id = ?", [$buffer_elements[$i]["entity_id"]]);
+                $buffer_elements[$i]["face"] = ( count($rosto) > 0 ? $rosto[0]["png_base64"] : "" );
+                // Rosto default do SUBTIPO — vai separado, como BADGE: nao substitui nada,
+                // e uma pequena imagem ADICIONADA ao que ja aparece (caixa ou rosto proprio).
+                $sub_face = "";
+                if( $buffer_elements[$i]["sub_etype_id"] != null && $buffer_elements[$i]["sub_etype_id"] != "" ) {
+                    $sf = $mysql->DataTable("SELECT face_default FROM sub_etype WHERE id = ?", [$buffer_elements[$i]["sub_etype_id"]]);
+                    if( count($sf) > 0 && $sf[0]["face_default"] != null ) { $sub_face = $sf[0]["face_default"]; }
+                }
+                $buffer_elements[$i]["subtype_face"] = $sub_face;
+            }
 
             if( $buffer_elements[$i]["etype"] == "link" ){
                 $buffer_elements[$i]["from"] = $mysql->DataTable("SELECT drl.diagram_relationship_element_id as id, drl.start_date as start_date, drl.end_date as end_date, drl.format_date as format_date FROM diagram_relationship_link AS drl where drl.diagram_relationship_element_id_reference = ? and ltype = 1", [   $buffer_elements[$i]["id"]  ]);
@@ -134,8 +152,8 @@ class MapRelationship
                 return false;
             }
         }
-        array_push($sqls,  "INSERT INTO diagram_relationship (id, name, keyword, person_id, default_reference) VALUES( ?,?,?,?,? ) ON DUPLICATE KEY UPDATE name = ?, keyword = ?, default_reference=?" );
-        array_push( $valuess, [ $post_data["parameters"]["id"], $post_data["parameters"]["name"], $post_data["parameters"]["keyword"], $user->id, $post_data["parameters"]["default_reference"], $post_data["parameters"]["name"], $post_data["parameters"]["keyword"], $post_data["parameters"]["default_reference"] ] );
+        array_push($sqls,  "INSERT INTO diagram_relationship (id, name, keyword, person_id, default_reference, language, show_face) VALUES( ?,?,?,?,?,?,? ) ON DUPLICATE KEY UPDATE name = ?, keyword = ?, default_reference=?, language=?, show_face=?" );
+        array_push( $valuess, [ $post_data["parameters"]["id"], $post_data["parameters"]["name"], $post_data["parameters"]["keyword"], $user->id, $post_data["parameters"]["default_reference"], $post_data["parameters"]["language"], $post_data["parameters"]["show_face"], $post_data["parameters"]["name"], $post_data["parameters"]["keyword"], $post_data["parameters"]["default_reference"], $post_data["parameters"]["language"], $post_data["parameters"]["show_face"] ] );
 
         for($i = 0; $i < count($post_data["parameters"]["elements"]); $i++) {
             $element = $post_data["parameters"]["elements"][$i];

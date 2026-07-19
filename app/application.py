@@ -200,6 +200,13 @@ class MainWindow(QMainWindow):
         f.exec();
 
     @Slot()
+    def open_subtypes(self):
+        # Tela global de sub-tipos (nao depende de mapa aberto).
+        from view.dialog_subtypes import DialogSubtypes;
+        f = DialogSubtypes(self);
+        f.exec();
+
+    @Slot()
     def map_extrair(self):
         buffer = self.__mapa_ativo__();
         if buffer == None:
@@ -352,6 +359,11 @@ class MainWindow(QMainWindow):
                                 statusTip="Documentos (PDF) do mapa",
                                 triggered=self.map_documents)
 
+        icon = QIcon.fromTheme(QIcon.ThemeIcon.AddressBookNew);
+        self._subtypes_act = QAction(icon, "Sub-tipos", self,
+                                statusTip="Editar sub-tipos válidos (global) e seus rostos default",
+                                triggered=self.open_subtypes)
+
 
         #icon = QIcon.fromTheme(QIcon.ThemeIcon.EditCopy)
         #self._copy_act = QAction(icon, "&Copy", self,
@@ -409,6 +421,7 @@ class MainWindow(QMainWindow):
         self._file_menu.addAction(self._save_act)
         #self._file_menu.addAction(self._save_as_act)
         self._file_menu.addSeparator()
+        self._file_menu.addAction(self._subtypes_act)
         action = self._file_menu.addAction("Switch layout direction")
         action.triggered.connect(self.switch_layout_direction)
         self._file_menu.addAction(self._exit_act)
@@ -447,6 +460,7 @@ class MainWindow(QMainWindow):
         self._map_tool_bar.addAction(self._import_data);
         self._map_tool_bar.addAction(self._map_documents);
         self._map_tool_bar.addAction(self._map_extrair);
+        self._map_tool_bar.addAction(self._subtypes_act);
         #self._edit_tool_bar.addAction(self._copy_act)
         #self._edit_tool_bar.addAction(self._paste_act)
         #self._file_tool_bar.setEnabled(False);

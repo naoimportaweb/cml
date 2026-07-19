@@ -16,6 +16,7 @@ from classlib.culture import Culture;
 from view.dialog_enityts_merge import DialogEntitysMerge;
 from view.ui.qeditorplus import QEditorPlus;
 from view.ui.qbot import QBot;
+from view.ui.qimages import QImages;
 
 class DialogEntityGeneric(QDialog):
     def __init__(self, form, obj):
@@ -117,6 +118,11 @@ class DialogEntityGeneric(QDialog):
         self.page_ref.addWidget(self.table_reference);
         self.table_reference_load();
 
+    def panelImages(self):
+        # Aba de imagens (lista + rosto). O QImages carrega e grava sozinho, na hora.
+        self.page_img = CustomVLayout.widget_tab( self.tab, "Images");
+        self.page_img.addWidget( QImages(self, self.obj.entity, with_face=True) );
+
     def panelClassification(self):
         self.page_cls = CustomVLayout.widget_tab( self.tab, "Classification");
         btn_class_add = QPushButton("Add");
@@ -132,6 +138,10 @@ class DialogEntityGeneric(QDialog):
     
     def panelActioins(self):
         self.page_act = CustomVLayout.widget_tab( self.tab, "Actions");
+        # So Other tem sub-tipo. Aqui e apenas SELECAO — cadastrar/editar sub-tipos e o rosto
+        # default e na tela global (menu/toolbar "Sub-tipos"), nao dentro da entidade.
+        if self.obj.entity.etype == "other":
+            self.__subtype_selector__();
         self.cmb_type = QComboBox()
         self.cmb_type.setFont( Configuration.instancia().getFont() );
         for buffer in self.reclass:
@@ -144,6 +154,33 @@ class DialogEntityGeneric(QDialog):
         btn_remover.setFont( Configuration.instancia().getFont() );
         btn_remover.clicked.connect(self.btn_remover_click);
         CustomVLayout.widget_linha(self, self.page_act, [btn_remover] );
+
+    def __subtype_selector__(self):
+        # Combo somente-leitura de sub-tipos existentes (buscados do servidor). Selecionar
+        # grava na hora (Entity.set_subetype). "(nenhum)" limpa o sub-tipo.
+        lbl = QLabel("Sub-tipo:");
+        lbl.setFont( Configuration.instancia().getFont() );
+        self.cmb_subtype = QComboBox();
+        self.cmb_subtype.setFont( Configuration.instancia().getFont() );
+        self.subtype_nomes = [""];
+        self.cmb_subtype.addItem("(nenhum)");
+        try:
+            for s in self.obj.entity.load_subetypes():
+                self.cmb_subtype.addItem( s.get("name") or "" );
+                self.subtype_nomes.append( s.get("name") or "" );
+        except Exception as e:
+            print("subtype selector: falha ao carregar:", e);
+        atual = self.obj.entity.sub_etype_name or "";
+        if atual in self.subtype_nomes:
+            self.cmb_subtype.setCurrentIndex( self.subtype_nomes.index( atual ) );
+        self.cmb_subtype.currentIndexChanged.connect( self.__subtype_changed__ );
+        CustomVLayout.widget_linha(self, self.page_act, [lbl, self.cmb_subtype] );
+
+    def __subtype_changed__(self):
+        nome = self.subtype_nomes[ self.cmb_subtype.currentIndex() ];
+        js = self.obj.entity.set_subetype( nome );
+        if not js or not js.get("status"):
+            QMessageBox.warning(self, "Falha", "Não foi possível salvar o sub-tipo no servidor.");
 
     def __panelNickname__(self, label_small_label):
         self.lbl_text_small = QLabel( label_small_label );

@@ -15,13 +15,15 @@ create table entity_simple_association (
 create table sub_etype (
     id VARCHAR(128) PRIMARY KEY,
     icon varchar(255),
-    name varchar(255) NOT NULL
+    name varchar(255) NOT NULL,
+    face_default LONGTEXT
 );
 
 create table entity_image (
     id VARCHAR(128) PRIMARY KEY,
     entity_id VARCHAR(128) NOT NULL,
-    path varchar(255) NOT NULL
+    png_base64 LONGTEXT NOT NULL,
+    creation_time DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 ALTER TABLE entity ADD COLUMN sub_etype_id varchar(128);
@@ -69,6 +71,8 @@ create table diagram_relationship (
     keyword VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
     visibility INT NOT NULL DEFAULT 0,
+    language VARCHAR(16) NOT NULL DEFAULT 'en',
+    show_face INT NOT NULL DEFAULT 0,
     creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
     modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
 );
@@ -125,13 +129,41 @@ create table entity_simple_association (
 create table sub_etype (
     id VARCHAR(128) PRIMARY KEY,
     icon varchar(255),
-    name varchar(255) NOT NULL
+    name varchar(255) NOT NULL,
+    face_default LONGTEXT
 );
 
 create table entity_image (
     id VARCHAR(128) PRIMARY KEY,
     entity_id VARCHAR(128) NOT NULL,
-    path varchar(255) NOT NULL
+    png_base64 LONGTEXT NOT NULL,
+    creation_time DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+# ==========================================================================================
+# MIGRACAO para bancos ja em producao (ex.: cyberwar). O deploy NAO altera bancos existentes
+# (ver DEPLOY.md), entao rodar isto a mao uma vez. Instalacoes novas ja saem corretas.
+#
+#   -- Imagens da entidade (lista base64) — reaproveita a tabela entity_image (troca path):
+#   ALTER TABLE entity_image DROP COLUMN path,
+#       ADD COLUMN png_base64 LONGTEXT NOT NULL,
+#       ADD COLUMN creation_time DATETIME DEFAULT CURRENT_TIMESTAMP;
+#   -- Rosto (1 por entidade) — tabela nova (entity_face, logo abaixo).
+#   -- Idioma e "exibir rosto" por mapa:
+#   ALTER TABLE diagram_relationship
+#       ADD COLUMN language VARCHAR(16) NOT NULL DEFAULT 'en',
+#       ADD COLUMN show_face INT NOT NULL DEFAULT 0;
+#   -- Rosto default por subtipo (entidades Other):
+#   ALTER TABLE sub_etype ADD COLUMN face_default LONGTEXT DEFAULT NULL;
+# ==========================================================================================
+
+# Rosto (imagem principal, 1 por entidade). Tabela propria em vez de coluna em entity:
+# o save_images roda independente do save do mapa, entao precisa gravar sem depender de
+# a linha em entity ja existir. Sem FK de proposito.
+create table entity_face (
+    entity_id VARCHAR(128) PRIMARY KEY,
+    png_base64 LONGTEXT NOT NULL,
+    creation_time DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 

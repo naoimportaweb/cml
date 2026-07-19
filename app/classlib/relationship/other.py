@@ -18,6 +18,9 @@ class Other(MapRelationshipBox):
         
         self.entity.etype = "other";
     def draw(self, painter):
+        if self.mostra_rosto() and self.draw_face_only(painter):
+            self.draw_subtype_badge(painter);   # badge do subtipo tambem sobre o rosto proprio
+            return;
         penRectangle = QPen(Qt.black)
         penRectangle.setWidth(1)
         painter.setPen(penRectangle)
@@ -27,3 +30,4 @@ class Other(MapRelationshipBox):
             if self.entity.small_label != None and self.entity.small_label.strip() != "":
                 texto = self.entity.small_label;
             painter.drawText(QRectF(self.x , self.y, self.w, self.h), Qt.AlignCenter | Qt.AlignTop, texto)
+        self.draw_subtype_badge(painter);

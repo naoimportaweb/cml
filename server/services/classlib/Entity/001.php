@@ -127,6 +127,145 @@ class Entity
         return $elements;
     }
 
+    // Imagens da entidade: uma lista de PNGs (base64) mais um "rosto" opcional (1 PNG).
+    // Endpoint dedicado, separado do save do mapa, porque os base64 sao grandes e nao devem
+    // ser copiados para o diagram_relationship_history a cada save.
+    public function load_images( $ip, $user, $post_data, $domain ) {
+        $mysql = new Mysql( $domain );
+        $entity_id = $post_data["parameters"]["entity_id"];
+        $imagens = $mysql->DataTable("SELECT id, png_base64 FROM entity_image WHERE entity_id = ? ORDER BY creation_time ASC", [ $entity_id ]);
+        $rosto = $mysql->DataTable("SELECT png_base64 FROM entity_face WHERE entity_id = ?", [ $entity_id ]);
+        // Retorna um array (o cliente recebe dict direto; so faz base64-decode quando o
+        // return e string). A face fica como string DENTRO do dict, entao chega intacta.
+        return array( "images" => $imagens, "face" => ( count($rosto) > 0 ? $rosto[0]["png_base64"] : "" ) );
+    }
+
+    public function save_images( $ip, $user, $post_data, $domain ) {
+        $mysql = new Mysql( $domain );
+        $p = $post_data["parameters"];
+        $entity_id = $p["entity_id"];
+        $images = array_key_exists("images", $p) ? $p["images"] : array();
+        $face   = array_key_exists("face", $p)   ? $p["face"]   : "";
+        $sqls = array();
+        $valuess = array();
+
+        // entity_image tem FK para entity(id): garante que a entity exista antes de gravar.
+        // Upsert nao-destrutivo (ON DUPLICATE KEY UPDATE id=id nao mexe em nada); se a caixa
+        // ainda nao foi salva no mapa, cria uma linha minima que o save do mapa completa.
+        array_push($sqls, "INSERT INTO entity (id, text_label, etype) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE id = id");
+        array_push($valuess, [ $entity_id, $p["text_label"], $p["etype"] ]);
+
+        // Upsert de cada imagem da lista.
+        for($i = 0; $i < count($images); $i++) {
+            array_push($sqls, "INSERT INTO entity_image (id, entity_id, png_base64) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE png_base64 = ?");
+            array_push($valuess, [ $images[$i]["id"], $entity_id, $images[$i]["png_base64"], $images[$i]["png_base64"] ]);
+        }
+
+        // Apaga as que nao vieram na lista (mesmo padrao do delete de referencias no save do mapa).
+        $existentes = $mysql->DataTable("SELECT id FROM entity_image WHERE entity_id = ?", [ $entity_id ]);
+        for($i = 0; $i < count($existentes); $i++) {
+            $achou = false;
+            for($j = 0; $j < count($images); $j++) {
+                if( $existentes[$i]["id"] == $images[$j]["id"] ) { $achou = true; break; }
+            }
+            if( ! $achou ) {
+                array_push($sqls, "DELETE FROM entity_image WHERE id = ?");
+                array_push($valuess, [ $existentes[$i]["id"] ]);
+            }
+        }
+
+        // Rosto: grava (upsert) ou remove quando vazio.
+        if( trim($face) != "" ) {
+            array_push($sqls, "INSERT INTO entity_face (entity_id, png_base64) VALUES (?, ?) ON DUPLICATE KEY UPDATE png_base64 = ?");
+            array_push($valuess, [ $entity_id, $face, $face ]);
+        } else {
+            array_push($sqls, "DELETE FROM entity_face WHERE entity_id = ?");
+            array_push($valuess, [ $entity_id ]);
+        }
+
+        $mysql->ExecuteNoQuery($sqls, $valuess);
+        return true;
+    }
+
+    // Subtipos (sub_etype) das entidades Other. Cada subtipo (chave = md5(nome), como no
+    // import_all) pode ter um "rosto default" em base64 usado no mapa quando a Other nao tem
+    // rosto proprio (fallback resolvido no load do mapa).
+    public function load_subetypes( $ip, $user, $post_data, $domain ) {
+        $mysql = new Mysql( $domain );
+        // Lista para o combo + o face_default de cada um (o cliente mostra o preview).
+        return $mysql->DataTable("SELECT id, name, face_default FROM sub_etype ORDER BY name ASC", []);
+    }
+
+    public function set_subetype( $ip, $user, $post_data, $domain ) {
+        // Define (ou limpa) o subtipo de UMA entidade. Nao mexe no rosto default do subtipo.
+        $mysql = new Mysql( $domain );
+        $p = $post_data["parameters"];
+        $entity_id = $p["entity_id"];
+        $nome = trim( $p["sub_etype_name"] );
+        $sqls = array();
+        $valuess = array();
+        // Garante a entity (mesmo motivo do save_images: FK e caixa nao salva ainda).
+        array_push($sqls, "INSERT INTO entity (id, text_label, etype) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE id = id");
+        array_push($valuess, [ $entity_id, $p["text_label"], $p["etype"] ]);
+        if( $nome != "" ) {
+            $sub_id = md5( $nome );
+            array_push($sqls, "INSERT INTO sub_etype (id, name) VALUES (?, ?) ON DUPLICATE KEY UPDATE name = name");
+            array_push($valuess, [ $sub_id, $nome ]);
+            array_push($sqls, "UPDATE entity SET sub_etype_id = ? WHERE id = ?");
+            array_push($valuess, [ $sub_id, $entity_id ]);
+        } else {
+            array_push($sqls, "UPDATE entity SET sub_etype_id = NULL WHERE id = ?");
+            array_push($valuess, [ $entity_id ]);
+        }
+        $mysql->ExecuteNoQuery($sqls, $valuess);
+        return true;
+    }
+
+    public function set_subetype_face( $ip, $user, $post_data, $domain ) {
+        // Define/remove o rosto default de um SUBTIPO (compartilhado por todas as Others dele).
+        $mysql = new Mysql( $domain );
+        $p = $post_data["parameters"];
+        $nome = trim( $p["sub_etype_name"] );
+        if( $nome == "" ) { return false; }
+        $face = array_key_exists("face", $p) ? $p["face"] : "";
+        $sub_id = md5( $nome );
+        $sqls = array();
+        $valuess = array();
+        array_push($sqls, "INSERT INTO sub_etype (id, name) VALUES (?, ?) ON DUPLICATE KEY UPDATE name = name");
+        array_push($valuess, [ $sub_id, $nome ]);
+        if( trim($face) != "" ) {
+            array_push($sqls, "UPDATE sub_etype SET face_default = ? WHERE id = ?");
+            array_push($valuess, [ $face, $sub_id ]);
+        } else {
+            array_push($sqls, "UPDATE sub_etype SET face_default = NULL WHERE id = ?");
+            array_push($valuess, [ $sub_id ]);
+        }
+        $mysql->ExecuteNoQuery($sqls, $valuess);
+        return true;
+    }
+
+    // Gerencia o CONJUNTO de subtipos validos (tela global, nivel banco). Separado de
+    // set_subetype (que so atribui um subtipo ja existente a uma entidade).
+    public function create_subetype( $ip, $user, $post_data, $domain ) {
+        $mysql = new Mysql( $domain );
+        $nome = trim( $post_data["parameters"]["name"] );
+        if( $nome == "" ) { return false; }
+        $mysql->ExecuteNoQuery("INSERT INTO sub_etype (id, name) VALUES (?, ?) ON DUPLICATE KEY UPDATE name = name", [ md5($nome), $nome ]);
+        return true;
+    }
+
+    public function delete_subetype( $ip, $user, $post_data, $domain ) {
+        $mysql = new Mysql( $domain );
+        $nome = trim( $post_data["parameters"]["name"] );
+        if( $nome == "" ) { return false; }
+        $id = md5( $nome );
+        // Desvincula as entidades antes de apagar (FK entity.sub_etype_id -> sub_etype.id).
+        $mysql->ExecuteNoQuery( array( "UPDATE entity SET sub_etype_id = NULL WHERE sub_etype_id = ?",
+                                       "DELETE FROM sub_etype WHERE id = ?" ),
+                                array( [ $id ], [ $id ] ) );
+        return true;
+    }
+
     public static function appendData($entity_json, $domain){
         $mysql = new Mysql( $domain );
         $entity_json["references"] = $mysql->DataTable("SELECT drer.id, drer.title, drer.link1, drer.link2, drer.link3, drer.description as descricao FROM diagram_relationship_element_reference AS drer where drer.entity_id = ?", [$entity_json["id"]]);

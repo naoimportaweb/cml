@@ -2,7 +2,7 @@ import os, sys, inspect;
 
 from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence
-from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QTabWidget, QMdiArea, QMessageBox, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton)
+from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QTabWidget, QMdiArea, QMessageBox, QDialog, QDialogButtonBox, QVBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton, QComboBox, QCheckBox)
 
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
 ROOT = os.path.dirname( CURRENTDIR );
@@ -14,6 +14,7 @@ from view.ui.customvlayout import CustomVLayout;
 from classlib.server import Server;
 from classlib.relationship.maprelationship import MapRelationship;
 from view.ui.qeditorplus import QEditorPlus;
+from classlib.report import IDIOMAS, IDIOMA_PADRAO;
 
 class DialogRelationshipEdit(QDialog):
     def __init__(self, form, mapa):
@@ -25,6 +26,7 @@ class DialogRelationshipEdit(QDialog):
             form.y() + form.height()/2 - nHeight/2,
             nWidth, nHeight);
 
+        self.form = form;   # guardado para redesenhar o mapa ao fechar (ver closeEvent)
         self.map = mapa;
         self.setWindowTitle("Edit")
         self.tab = QTabWidget();  
@@ -57,7 +59,24 @@ class DialogRelationshipEdit(QDialog):
         self.txt_key.setText( self.map.keyword );
         self.txt_key.textEdited.connect(      self.txt_key_press );
         CustomVLayout.widget_linha(self, self.page_info, [lbl_key, self.txt_key] );
-        
+
+        # Idioma (usado pelo report e pelo bot de entidades) e exibir rosto no canvas.
+        lbl_lang = QLabel("Idioma:")
+        lbl_lang.setProperty("class", "normal");
+        self.cmb_language = QComboBox();
+        self.idioma_codigos = [];
+        for codigo, rotulo in IDIOMAS:
+            self.cmb_language.addItem( rotulo );
+            self.idioma_codigos.append( codigo );
+        atual = self.map.language or IDIOMA_PADRAO;
+        if atual in self.idioma_codigos:
+            self.cmb_language.setCurrentIndex( self.idioma_codigos.index( atual ) );
+        CustomVLayout.widget_linha(self, self.page_info, [lbl_lang, self.cmb_language] );
+
+        self.chk_show_face = QCheckBox("Exibir PNG de rosto");
+        self.chk_show_face.setChecked( bool(self.map.show_face) );
+        CustomVLayout.widget_linha(self, self.page_info, [self.chk_show_face] );
+
         lbl_url = QLabel("URL:")
         lbl_url.setProperty("class", "normal");
         self.txt_url = QEditorPlus()
@@ -101,10 +120,28 @@ class DialogRelationshipEdit(QDialog):
         self.map.name = self.txt_name.text();
         self.map.keyword = self.txt_key.text();
         self.map.default_reference = self.txt_default_reference.text();
+        self.map.language = self.idioma_codigos[ self.cmb_language.currentIndex() ];
+        self.map.show_face = self.chk_show_face.isChecked();
         if self.validar():
             if self.map.save():
                 self.close();
-    
+
+    def __redesenhar_mapa__(self):
+        # O Property nao e aberto por um double-click no canvas (que redesenharia sozinho) e
+        # nao tem pai proprio, entao pega o MdiMap ativo pela janela principal e manda
+        # redesenhar. Sem isto, ligar "Exibir PNG de rosto" (ou mudar nome/idioma) so aparece
+        # depois de mover uma caixa (que dispara o redraw no mouseReleaseEvent).
+        try:
+            mdi = self.form and self.form.active_mdi_child();
+            if mdi != None and hasattr(mdi, "redesenhar"):
+                mdi.redesenhar();
+        except Exception:
+            pass;
+
+    def closeEvent(self, event):
+        self.__redesenhar_mapa__();
+        super().closeEvent(event);
+
     def txt_default_reference_finish(self):
         pass;
     def txt_name_finish(self):
