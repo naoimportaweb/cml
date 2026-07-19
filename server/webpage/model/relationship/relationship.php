@@ -15,6 +15,7 @@ class Relationship{
     private $elements_loaded = false;
     private $width = 0;
     private $height = 0;
+    private $show_face = 0;
 
     function __construct($id, $domain) {
         $this->domain = $domain;
@@ -97,9 +98,37 @@ class Relationship{
         // eram ~800 conexões. Agora são 2 queries para o mapa inteiro.
         $this->loadLinksAll( $mysql );
         $this->loadReferencesAll( $mysql );
+        // So carrega os rostos (base64 grande) quando o mapa esta com "Exibir PNG de rosto".
+        if( $this->show_face ){
+            $this->loadFacesAll( $mysql );
+        }
 
         $this->elements_loaded = true;
         return count( $this->elements );
+    }
+
+    private function loadFacesAll($mysql){
+        // Rosto proprio (entity_face) e rosto default do subtipo (sub_etype.face_default),
+        // por entidade. Mesma resolucao do cliente desktop: proprio substitui a caixa, o do
+        // subtipo vira badge. Uma query so para o mapa inteiro.
+        $buffer = $mysql->DataTable("SELECT dre.entity_id as entity_id, ef.png_base64 as face, se.face_default as subtype_face
+            FROM diagram_relationship_element as dre
+            LEFT JOIN entity_face as ef ON ef.entity_id = dre.entity_id
+            LEFT JOIN entity as ent ON ent.id = dre.entity_id
+            LEFT JOIN sub_etype as se ON se.id = ent.sub_etype_id
+            WHERE dre.diagram_relationship_id = ?", [ $this->id ]);
+        $por_entidade = [];
+        foreach( $buffer as $linha ){
+            $por_entidade[ $linha["entity_id"] ] = $linha;
+        }
+        foreach( $this->elements as $element ){
+            $eid = $element->getEntityId();
+            if( ! isset( $por_entidade[ $eid ] ) ){
+                continue;
+            }
+            $element->setFace( $por_entidade[ $eid ]["face"] );
+            $element->setSubtypeFace( $por_entidade[ $eid ]["subtype_face"] );
+        }
     }
 
     private function loadLinksAll($mysql){
@@ -144,10 +173,11 @@ class Relationship{
         $this->id       = $data_table[0]["id"];
         $this->keyword  = $data_table[0]["keyword"];
         $this->name     = $data_table[0]["name"];
+        $this->show_face = isset( $data_table[0]["show_face"] ) ? intval( $data_table[0]["show_face"] ) : 0;
     }
 
     public function toJson(){
-        $buffer = array( "id" => $this->id, "keyword" => $this->keyword, "name" => $this->name , "elements" => [], "width" => $this->getWidth(), "height" => $this->getHeight() );
+        $buffer = array( "id" => $this->id, "keyword" => $this->keyword, "name" => $this->name , "show_face" => $this->show_face, "elements" => [], "width" => $this->getWidth(), "height" => $this->getHeight() );
         for($i = 0; $i < count( $this->elements ); $i++) {
             array_push( $buffer["elements"], $this->elements[$i]->toJson() );
         }

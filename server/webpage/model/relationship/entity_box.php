@@ -28,6 +28,8 @@ class EntityBox{
     private $references = [];
     private $to_entity = [];
     private $from_entity = [];
+    private $face = null;          // rosto proprio (base64), substitui a caixa
+    private $subtype_face = null;  // rosto default do subtipo (badge)
 
     function __construct($mapa, $domain) {
         $this->domain = $domain;
@@ -76,7 +78,7 @@ class EntityBox{
     }
 
     public function toJson(){
-        $buffer = array("id" => $this->id, "entity_id" => $this->entity_id, "etype" => $this->etype, "x" => $this->x, "y" => $this->y, "h" => $this->h, "w" => $this->w, "text_label" => $this->text_label, "full_description" => $this->full_description, "wikipedia" => $this->wikipedia, "references" => $this->references, "to" => [], "from" => [], "center_x" => $this->center_x, "center_y" => $this->center_y);
+        $buffer = array("id" => $this->id, "entity_id" => $this->entity_id, "etype" => $this->etype, "x" => $this->x, "y" => $this->y, "h" => $this->h, "w" => $this->w, "text_label" => $this->text_label, "full_description" => $this->full_description, "wikipedia" => $this->wikipedia, "references" => $this->references, "to" => [], "from" => [], "center_x" => $this->center_x, "center_y" => $this->center_y, "face" => $this->face, "subtype_face" => $this->subtype_face);
 
         if( $this->etype == "link") {
             foreach( $this->to_entity as $_to ) {
@@ -97,6 +99,14 @@ class EntityBox{
 
     public function setReferences($references){
         $this->references = $references;
+    }
+
+    public function setFace($face){
+        $this->face = $face;
+    }
+
+    public function setSubtypeFace($face){
+        $this->subtype_face = $face;
     }
 
     public function addTo($element){

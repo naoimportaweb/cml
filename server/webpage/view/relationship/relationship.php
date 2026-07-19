@@ -147,6 +147,35 @@ var MAP_ID = <?php echo json_encode($map_id, $JS); ?>;
 var DOMAIN = <?php echo json_encode($domain, $JS); ?>;
 var PALETA = {};
 var vista = { escala: 1, dx: 0, dy: 0 };
+var FACE_ALT = 40;   // altura do no quando o rosto substitui a caixa
+var FACES = {};      // cache base64 -> Image
+
+// data URI do rosto: JPEG (gravado hoje) comeca com "/9j/"; senao trata como PNG (gravados
+// antes). Cobre os dois formatos que existem no banco.
+function dataUri(b64){
+    var mime = (b64 && b64.slice(0, 4) === "/9j/") ? "image/jpeg" : "image/png";
+    return "data:" + mime + ";base64," + b64;
+}
+
+function imgDe(b64){
+    if(!b64){ return null; }
+    if(FACES[b64]){ return FACES[b64]; }
+    var im = new Image();
+    // A imagem chega assincrona: quando carrega, remede (o no ganha o tamanho da imagem) e
+    // redesenha. Sem isto o mapa desenharia antes das imagens e elas nao apareceriam.
+    im.onload = function(){ if(MAPA){ medir(MAPA); desenhar(); } };
+    im.src = dataUri(b64);
+    FACES[b64] = im;
+    return im;
+}
+
+function precarregarFaces(mapa){
+    if(!mapa.show_face){ return; }
+    mapa.elements.forEach(function(e){
+        if(e.face){ imgDe(e.face); }
+        if(e.subtype_face){ imgDe(e.subtype_face); }
+    });
+}
 
 function lerPaleta(){
     // O canvas nao enxerga CSS custom properties: resolve aqui e redesenha quando o
@@ -191,9 +220,18 @@ function medir(mapa){
     ctx.font = FONTE_NO;
     var porId = {};
     mapa.elements.forEach(function(e){
-        var t = e.text_label || "";
-        e._w  = Math.ceil(ctx.measureText(t).width) + PAD_X * 2;
-        e._h  = Math.max(Number(e.h) || 20, 22);
+        if(mapa.show_face && e.face){
+            // Rosto proprio substitui a caixa: o no ganha o tamanho da imagem (altura fixa,
+            // largura pela proporcao) para as setas e o clique baterem na imagem.
+            var im = FACES[e.face];
+            var asp = (im && im.naturalWidth) ? (im.naturalWidth / im.naturalHeight) : 1.5;
+            e._h = FACE_ALT;
+            e._w = Math.min(Math.round(FACE_ALT * asp), 84);
+        } else {
+            var t = e.text_label || "";
+            e._w  = Math.ceil(ctx.measureText(t).width) + PAD_X * 2;
+            e._h  = Math.max(Number(e.h) || 20, 22);
+        }
         e._cx = Number(e.x) + e._w / 2;
         e._cy = Number(e.y) + e._h / 2;
         porId[e.id] = e;
@@ -244,6 +282,18 @@ function desenharNo(ctx, e, destaque){
     var cor = corDe(e.etype);
     var x = Number(e.x), y = Number(e.y), w = e._w, h = e._h;
 
+    // Rosto proprio: substitui a caixa (tem preferencia sobre o badge do subtipo).
+    if(MAPA.show_face && e.face){
+        var imf = FACES[e.face];
+        if(imf && imf.complete && imf.naturalWidth){
+            ctx.drawImage(imf, x, y, w, h);
+            ctx.strokeStyle = destaque ? cor : PALETA.borda;
+            ctx.lineWidth = destaque ? 2 : 1;
+            ctx.strokeRect(x, y, w, h);
+            return;
+        }
+    }
+
     if(e.etype === "link"){
         // Vinculo nao e categoria: e a estrutura que liga as entidades. Fica neutro para
         // nao competir com os slots categoricos nem gastar um deles.
@@ -265,6 +315,15 @@ function desenharNo(ctx, e, destaque){
     ctx.font = FONTE_NO;
     ctx.textBaseline = "middle";
     ctx.fillText(e.text_label || "", x + PAD_X, y + h/2 + 0.5);
+
+    // Badge do subtipo, antes do no (a esquerda), so quando nao ha rosto proprio.
+    if(MAPA.show_face && e.subtype_face && !e.face){
+        var bi = FACES[e.subtype_face];
+        if(bi && bi.complete && bi.naturalWidth){
+            var bl = 18;
+            ctx.drawImage(bi, x - bl - 3, y + h/2 - bl/2, bl, bl);
+        }
+    }
 }
 
 function desenhar(){
@@ -725,7 +784,11 @@ function callbackMap(js){
     }
 
     var nRefs = agruparPorEntidade(js).reduce(function(s, g){ return s + g.references.length; }, 0);
+    var nLinks = js.elements.filter(function(e){ return e.etype === "link"; }).length;
     var aba_mapa = aba("Mapa", js.elements.length, "div_mapa", true);
+    // "Relações" numa aba propria: fica fora da aba Mapa para o diagrama poder ocupar todo o
+    // espaco (antes a lista ficava embaixo do canvas e o encolhia).
+    var aba_rel = aba("Relações", nLinks, "div_relacoes", false);
     // A contagem de documentos chega por AJAX depois; o span nasce vazio e e preenchido
     // pelo carregarDocumentos.
     var aba_docs = aba("Documentos", "", "div_documentos", false, "cont_docs");
@@ -733,8 +796,9 @@ function callbackMap(js){
 
     montarDocumentos(aba_docs);
     montarMapa(aba_mapa);
-    montarRelacoes(js, aba_mapa);
+    montarRelacoes(js, aba_rel);
     lerPaleta();
+    precarregarFaces(js);
     // medir() antes de dimensionar(): a altura do palco vem de MAPA._h, que so existe
     // depois da medicao. Invertido, o canvas nascia com altura NaN e nada era desenhado.
     medir(js);
