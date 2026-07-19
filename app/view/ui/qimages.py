@@ -1,7 +1,7 @@
 import os, sys, inspect;
 
 from PySide6.QtCore import Qt, QByteArray, QBuffer;
-from PySide6.QtGui import QImage, QPixmap;
+from PySide6.QtGui import QImage, QPixmap, QPainter;
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
                                QFileDialog, QMessageBox, QListWidget, QFrame);
 
@@ -11,40 +11,49 @@ sys.path.append( ROOT );
 
 from classlib.configuration import Configuration;
 
-# Reduz imagens muito grandes antes de gravar: o PNG vai em base64 no banco e viaja no
-# envelope RPC, entao um maior-lado limitado mantem o tamanho sob controle sem pedir isso
-# ao usuario. Nao afeta imagens ja pequenas.
-MAX_LADO = 1600;
+# Reduz TODA imagem antes de gravar (o usuario autorizou perder qualidade): o base64 vai no
+# banco e viaja no envelope RPC, entao imagens grandes (fotos/screenshots de varios MB)
+# estouravam tamanho. Limita o maior lado e salva como JPEG com qualidade reduzida.
+MAX_LADO = 800;
+QUALIDADE = 72;   # qualidade JPEG (0-100); menor = arquivo menor
 
 # Formatos que o QFileDialog oferece para abrir. O Qt le todos e o cliente converte para PNG.
 FILTRO = "Imagens (*.png *.jpg *.jpeg *.bmp *.gif *.webp *.tif *.tiff);;Todos os arquivos (*)";
 
 
 def png_base64_from_file(path, max_lado=MAX_LADO):
-    """Le uma imagem de QUALQUER formato suportado pelo Qt e devolve o PNG em base64 (str).
+    """Le uma imagem de QUALQUER formato suportado pelo Qt e devolve base64 (str) reduzida.
 
-    Devolve None se o arquivo nao for uma imagem valida. E aqui — na camada de UI — que o
-    'so PNG; outro formato o cliente converte' acontece: QImage le o que o Qt suportar e a
-    saida e sempre PNG.
+    Devolve None se o arquivo nao for uma imagem valida. Reduz o tamanho (maior lado <=
+    max_lado) e salva como JPEG com qualidade reduzida — bem menor que PNG para fotos. O nome
+    e legado ('png_'); a saida hoje e JPEG, mas os decodificadores auto-detectam o formato,
+    entao os PNGs ja gravados continuam funcionando.
     """
     img = QImage(path);
     if img.isNull():
         return None;
     if max_lado and (img.width() > max_lado or img.height() > max_lado):
         img = img.scaled(max_lado, max_lado, Qt.KeepAspectRatio, Qt.SmoothTransformation);
+    # JPEG nao tem canal alpha: achata sobre branco para nao virar fundo preto.
+    if img.hasAlphaChannel():
+        fundo = QImage(img.size(), QImage.Format_RGB32);
+        fundo.fill(Qt.white);
+        p = QPainter(fundo); p.drawImage(0, 0, img); p.end();
+        img = fundo;
     ba = QByteArray();
     buf = QBuffer(ba);
     buf.open(QBuffer.WriteOnly);
-    img.save(buf, "PNG");
+    img.save(buf, "JPEG", QUALIDADE);
     buf.close();
     return bytes(ba.toBase64()).decode("ascii");
 
 
 def pixmap_from_base64(b64):
-    """QPixmap a partir de um PNG em base64 (para os previews)."""
+    """QPixmap a partir de base64 (para os previews). Sem dica de formato: auto-detecta, entao
+    le tanto o JPEG novo quanto os PNG ja gravados."""
     ba = QByteArray.fromBase64( QByteArray(b64.encode("ascii")) );
     pix = QPixmap();
-    pix.loadFromData(ba, "PNG");
+    pix.loadFromData(ba);
     return pix;
 
 

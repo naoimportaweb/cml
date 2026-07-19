@@ -130,7 +130,7 @@ class MapRelationshipBox():
             return self._face_pix;
         ba = QByteArray.fromBase64( QByteArray(self.entity.face.encode("ascii")) );
         pix = QPixmap();
-        pix.loadFromData(ba, "PNG");
+        pix.loadFromData(ba);   # auto-detecta (JPEG novo ou PNG antigo)
         self._face_pix = pix;
         self._face_src = self.entity.face;
         return pix;
@@ -154,7 +154,7 @@ class MapRelationshipBox():
             return self._subface_pix;
         ba = QByteArray.fromBase64( QByteArray(face.encode("ascii")) );
         pix = QPixmap();
-        pix.loadFromData(ba, "PNG");
+        pix.loadFromData(ba);   # auto-detecta (JPEG novo ou PNG antigo)
         self._subface_pix = pix;
         self._subface_src = face;
         return pix;
