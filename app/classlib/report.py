@@ -39,7 +39,10 @@ NUM_CTX = int( _env("ROLHAMA_OLLAMA_NUM_CTX", "16384") );
 # "qwen2.5:14b") faria o ollama baixar outros 9GB e, com OLLAMA_MAX_LOADED_MODELS=1,
 # descarregar/carregar modelo a cada alternancia com os outros projetos. Pedir a mesma tag
 # do padrao nao troca nada e deixa registrado no PDF qual modelo escreveu o relatorio.
-MODELO = _env("CML_REPORT_MODELO", "qwen2.5:14b-instruct");
+# q6_K numa RTX 5060 16GB: pesos ~12 GB + cache KV (16k ctx) ~3 GB = ~15 GB — encaixa, mas
+# fica justo. Se der OOM no worker, baixar ROLHAMA_OLLAMA_NUM_CTX (12288/8192) ou voltar ao
+# Q4 (qwen2.5:14b-instruct). Precisa estar 'ollama pull' no servidor.
+MODELO = _env("CML_REPORT_MODELO", "qwen2.5:14b-instruct-q6_K");
 
 TOKENS_SAIDA     = 2000;   # espaco reservado para a resposta dentro da mesma janela
 TOKENS_ESTRUTURA = 1500;   # instrucoes + entidades e vinculos do mapa
