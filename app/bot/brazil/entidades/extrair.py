@@ -24,7 +24,7 @@ ROOT = os.path.dirname( os.path.dirname( os.path.dirname( CURRENTDIR ) ) );   # 
 sys.path.append( ROOT );
 
 from classlib.rolhama import Rolhama;
-from classlib.report import ler_pagina, MODELO, idioma_frase;
+from classlib.report import ler_pagina, MODELO, idioma_frase, instrucao_idioma;
 from classlib.configuration import Configuration;
 
 PROJETO_BOT = "cml/entidades";
@@ -42,10 +42,11 @@ class _Extrator(QObject):
     terminou  = Signal(object);
     falhou    = Signal(str);
 
-    def __init__(self, url, idioma):
+    def __init__(self, url, idioma_codigo):
         super().__init__();
         self.url = url;
-        self.idioma = idioma;   # frase do idioma do mapa, para as descricoes/relacoes
+        self.idioma_codigo = idioma_codigo;          # codigo do idioma do mapa (en/pt-BR/es)
+        self.idioma = idioma_frase(idioma_codigo);   # frase, para o texto do prompt
 
     @Slot()
     def executar(self):
@@ -67,7 +68,8 @@ class _Extrator(QObject):
             r = Rolhama(projeto=PROJETO_BOT);
             canal = r.alocar(uso="Extrair entidades e vínculos de uma URL");
             self.progresso.emit("Extraindo no rolhama (canal %d, %s) — leva minutos…" % (canal, MODELO));
-            saida = r.gerar(prompt, model=MODELO, formato="json", espera_total=900);
+            saida = r.gerar(prompt, model=MODELO, formato="json", espera_total=900,
+                            idioma_instrucao=instrucao_idioma(self.idioma_codigo));
 
             try:
                 js = json.loads(saida);
@@ -156,7 +158,7 @@ class DialogExtrairEntidades(QDialog):
         self.btn_extrair.setEnabled(False);
         self.btn_add.setEnabled(False);
         self.thread = QThread();
-        self.worker = _Extrator(url, idioma_frase( getattr(self.mapa, "language", None) ));
+        self.worker = _Extrator(url, getattr(self.mapa, "language", None));
         self.worker.moveToThread(self.thread);
         self.thread.started.connect(self.worker.executar);
         self.worker.progresso.connect(lambda m: self.lbl.setText("⏳ " + m));

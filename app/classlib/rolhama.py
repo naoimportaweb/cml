@@ -129,13 +129,18 @@ class Rolhama:
                 return bdd.open_blob( self.base, "response", self.canal, resp );
         raise Exception("Sem resposta no canal " + str(self.canal) + " (job " + str(job) + ") após " + str(espera_total) + "s.");
 
-    def gerar(self, prompt, model=None, ctx=None, formato=None, espera_total=ESPERA_TOTAL):
+    def gerar(self, prompt, model=None, ctx=None, formato=None, espera_total=ESPERA_TOTAL, idioma_instrucao=None):
         """Manda o prompt para o ollama pelo canal do projeto e devolve o texto cru.
 
         formato="json" ativa o decoding restrito do ollama: a saida e JSON valido por
         construcao. Sem isso, extrair estrutura de texto livre vira parsing fragil — o
         modelo enfeita com markdown, preambulo e explicacao.
+
+        idioma_instrucao: a cultura/idioma do mapa. Vai como ULTIMA linha do prompt (recencia)
+        para o modelo respeitar o idioma na saida. Toda chamada ao rolhama deve passar isto.
         """
+        if idioma_instrucao:
+            prompt = prompt.rstrip() + "\n\n" + idioma_instrucao;
         if model == None and ctx == None and formato == None:
             payload = prompt.encode("utf-8");   # texto puro: contexto zero, modelo padrao
         else:

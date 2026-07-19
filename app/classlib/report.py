@@ -66,6 +66,21 @@ def idioma_frase(codigo):
     return _IDIOMA_FRASE.get(codigo or IDIOMA_PADRAO, _IDIOMA_FRASE[IDIOMA_PADRAO]);
 
 
+# Instrucao FORTE, escrita NO PROPRIO idioma-alvo (sinaliza melhor ao modelo). "linguagem
+# natural" exclui de proposito as chaves JSON do bot de entidades — so os valores/texto vao
+# traduzidos, a estrutura fica intacta.
+_IDIOMA_INSTRUCAO = {
+    "pt-BR": "IMPORTANTE: Todo texto em linguagem natural da sua saída DEVE estar em português do Brasil. Não use nenhum outro idioma.",
+    "en":    "IMPORTANT: All natural-language text in your output MUST be in English. Do not use any other language.",
+    "es":    "IMPORTANTE: Todo el texto en lenguaje natural de tu salida DEBE estar en español. No uses ningún otro idioma.",
+};
+
+
+def instrucao_idioma(codigo):
+    """Instrucao de idioma passada a Rolhama.gerar para reforcar o output (cultura do mapa)."""
+    return _IDIOMA_INSTRUCAO.get(codigo or IDIOMA_PADRAO, _IDIOMA_INSTRUCAO[IDIOMA_PADRAO]);
+
+
 def _requisitar(url):
     """Baixa a URL uma vez e devolve (sopa, erro). Nunca lanca."""
     try:
@@ -246,7 +261,7 @@ def gerar(mapa, caminho_pdf, progresso=None):
 
     aviso("Gerando o relatório no rolhama (%s; pode levar minutos, o worker atende um por vez)…" % MODELO);
     r = Rolhama();
-    texto_report = r.gerar(prompt, model=MODELO);
+    texto_report = r.gerar(prompt, model=MODELO, idioma_instrucao=instrucao_idioma( getattr(mapa, "language", None) ));
 
     aviso("Montando o PDF…");
     escrever_pdf(caminho_pdf, mapa, texto_report, lidas, demais, falhas);
