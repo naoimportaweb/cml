@@ -79,6 +79,22 @@ Ainda **não importados**: tools/botnet/exploit-kit, country, sector, vendors/ag
 não-CTI (firearms, naics, nice-framework, sigma-rules…). As **técnicas MITRE** (attack-pattern etc.)
 são taxonomia — melhores como `classification`/`sub_etype` do que como caixas.
 
+## Países com bandeira (seed à parte)
+
+A galaxy **`country`** do MISP (252 países) dá nome + código **ISO** (`meta.ISO`), mas **todos os
+values compartilham o mesmo `uuid`** — então o id de cada país é um **`uuid5(ISO)`** determinístico
+(formato UUID, reversível como o resto). A **bandeira** vem do **flagcdn** (`flagcdn.com/w320/<iso>.png`,
+PNG) e é gravada como **rosto próprio** (`entity_face`), etype `other`. Colisões de nome enriquecem a
+entidade existente (ex.: `Israel`, `United States of America` já nos mapas ganharam a bandeira, sem
+duplicar). Com `show_face`, o país vira a bandeira no mapa (cliente e web).
+
+Feito (jul/2026): 236 países novos + 14 enriquecidos, 250 bandeiras (2 territórios sem bandeira no
+flagcdn). Reexecutar:
+
+```bash
+python3 script/country_seed.py --country /caminho/misp-galaxy/clusters/country.json --write
+```
+
 ## Reexecutar / estender
 
 O importer é **idempotente** (`ON DUPLICATE KEY`) — rodar de novo não duplica. Para incluir mais
