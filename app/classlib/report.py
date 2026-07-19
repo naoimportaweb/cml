@@ -153,7 +153,12 @@ def _texto_da_pagina(url):
 
 
 def coletar_referencias(mapa):
-    """Junta as referencias das entidades do mapa, sem repetir a mesma referencia."""
+    """Junta as referencias das entidades do mapa, sem repetir a mesma referencia.
+
+    Alem das references, inclui o site oficial (default_url) e a Wikipedia da entidade quando
+    forem URLs http(s): sao fontes que o analista ja apontou na entidade e o report deve
+    considerar, nao so os links da aba References.
+    """
     vistos = set();
     saida = [];
     for element in mapa.elements:
@@ -166,6 +171,18 @@ def coletar_referencias(mapa):
             # A classe Reference (classlib/relationship/entitys.py) guarda em .description;
             # 'descricao' e o nome do campo no JSON do servidor, nao no objeto do cliente.
             saida.append({"title": ref.title, "link": chave, "descricao": ref.description,
+                          "entidade": entidade.text, "etype": entidade.etype});
+        # Site oficial e Wikipedia da propria entidade tambem entram como fonte (so URLs
+        # http(s), que e o que ler_pagina consegue baixar), deduplicados junto das references.
+        for titulo, url in ((str(entidade.text) + " — site oficial", entidade.default_url),
+                            (str(entidade.text) + " — Wikipedia",    entidade.wikipedia)):
+            u = (url or "").strip();
+            if u == "" or u in vistos:
+                continue;
+            if not (u.lower().startswith("http://") or u.lower().startswith("https://")):
+                continue;
+            vistos.add(u);
+            saida.append({"title": titulo, "link": u, "descricao": "",
                           "entidade": entidade.text, "etype": entidade.etype});
     return saida;
 
