@@ -173,9 +173,10 @@ class DialogEntityGeneric(QDialog):
         # Lista os OUTROS elementos-entidade do mapa (nao este, nao vinculos) como candidatos.
         self.incorp_alvos = [];
         self.cmb_incorp.clear();
-        for el in self.obj.mapa.elements:
-            if el is self.obj or el.entity.etype == "link":
-                continue;
+        candidatos = [ el for el in self.obj.mapa.elements
+                       if el is not self.obj and el.entity.etype != "link" ];
+        candidatos.sort( key=lambda el: str(el.entity.text or "").lower() );
+        for el in candidatos:
             self.incorp_alvos.append( el );
             nome = str(el.entity.text or "(sem nome)");
             self.cmb_incorp.addItem( "%s  [%s]" % (nome, el.entity.etype) );
