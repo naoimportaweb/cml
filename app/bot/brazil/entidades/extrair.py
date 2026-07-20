@@ -12,7 +12,7 @@ como se fosse um sujeito. Entao ele PROPOE, com tipo editavel, e so entra no map
 analista marcar.
 """
 
-import os, sys, inspect, json, traceback;
+import os, sys, inspect, json, traceback, re, unicodedata;
 
 from PySide6.QtCore import Qt, QObject, QThread, Signal, Slot;
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
@@ -35,6 +35,17 @@ ROTULO = {"person": "Pessoa", "organization": "Organização", "other": "Outro"}
 # JSON quebrado; a curta produziu valido. O format=json restringe o decoding, mas nao
 # impede o modelo de se enrolar com instrucao comprida.
 MAX_ARTIGO = 11000;
+
+
+def _norm(s):
+    # minusculas, sem acento e sem pontuacao: "OpenAI, Inc." e "openai inc" viram a mesma
+    # coisa. E o denominador comum para casar a ponta de um vinculo com o nome da entidade.
+    s = unicodedata.normalize("NFD", str(s or ""));
+    s = "".join(c for c in s if unicodedata.category(c) != "Mn").lower();
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", s)).strip();
+
+def _tokens(s):
+    return [t for t in _norm(s).split(" ") if t];
 
 
 class _Extrator(QObject):
@@ -300,36 +311,100 @@ class DialogExtrairEntidades(QDialog):
                                           rel_atual,
                                           str(b.entity.getText() or "").strip().lower() )] = el;
 
+            # Indice das pontas por nome normalizado. O problema real: o modelo NAO restringe
+            # a ponta do vinculo a lista de entidades — ele escreve "cameras IP" na ponta sem
+            # nunca ter listado "cameras IP" como entidade. Casar so por nome derrubava esse
+            # vinculo (o mapa ficava so com as caixas das 3 entidades). Aqui, marcar o vinculo
+            # VALE como aprovar os nos dele: (1) resolve a ponta por igualdade sem acento/
+            # pontuacao ou por conjunto de tokens contido (nome unico) — reaproveita a entidade
+            # existente; (2) se ainda assim nao existir, CRIA a ponta como 'other' e liga. O no
+            # criado entra no indice, entao "cameras IP vulneraveis" reaproveita "cameras IP".
+            existentes_por_norm = {};   # nome normalizado -> caixa
+            for chave, caixa in existentes.items():
+                existentes_por_norm.setdefault( _norm(chave), caixa );
+
+            def _resolver_ponta(nome):
+                n = _norm(nome);
+                if n in existentes_por_norm:
+                    return existentes_por_norm[n];
+                tn = set(_tokens(nome));
+                if not tn:
+                    return None;
+                cand = [];
+                for nm, caixa in existentes_por_norm.items():
+                    ts = set(nm.split(" ")) if nm else set();
+                    if not ts:
+                        continue;
+                    menor = tn if len(tn) <= len(ts) else ts;
+                    # subconjunto e ao menos um token "de peso" (>=3): evita casar so por "us",
+                    # "ai" e afins, que apareceriam em varios nomes.
+                    if (tn <= ts or ts <= tn) and any(len(t) >= 3 for t in menor):
+                        cand.append(caixa);
+                if len(cand) == 1:
+                    return cand[0];
+                return None;   # ausente ou ambiguo -> quem chama decide criar
+
+            # Grade para as pontas que precisarem ser criadas (band proprio, acima dos links).
+            xp = 40; yp = y + 140;
+            pontas_criadas = [];
+            def _obter_ou_criar_ponta(nome):
+                nonlocal xp, yp;
+                cx = _resolver_ponta(nome);
+                if cx != None:
+                    return cx;
+                if nome == "":
+                    return None;
+                # Ponta citada no vinculo mas ausente da lista de entidades: cria como 'other'.
+                # 'other' e o tipo neutro (pode ser coisa, sistema, alvo — "cameras IP"), e o
+                # analista troca depois se for pessoa/organizacao.
+                nova = self.mapa.addEntity("other", xp, yp, text=nome);
+                _referenciar(nova);   # tambem recebe a referencia de origem
+                chave = nome.lower();
+                existentes[chave] = nova;
+                existentes_por_norm.setdefault( _norm(nome), nova );
+                pontas_criadas.append(nome);
+                xp = xp + 260;
+                if xp > 1000: xp = 40; yp = yp + 120;
+                return nova;
+
             n_vin = 0; vin_reusados = 0;
-            yv = y + 140;
+            yv = yp + 200;
             for i in range(self.tab_vin.rowCount()):
                 if not self.checks_vin[i].isChecked():
                     continue;
-                o = self.tab_vin.item(i, 1).text().strip().lower();
-                d = self.tab_vin.item(i, 3).text().strip().lower();
+                nome_o = self.tab_vin.item(i, 1).text().strip();
+                nome_d = self.tab_vin.item(i, 3).text().strip();
                 rel = self.tab_vin.item(i, 2).text().strip();
-                # Procura em 'existentes', nao em 'criadas': a ponta pode ja estar no mapa
-                # de uma extracao anterior — um artigo novo costuma citar entidade que ja
-                # esta la. Mas so o que EXISTE: o modelo cita nomes fora da lista, e o
-                # analista desmarca outros; criar a caixa aqui traria de volta o que ele
-                # recusou.
-                if o not in existentes or d not in existentes or rel == "":
+                if rel == "":
                     continue;
-                chave_vin = (o, rel.lower(), d);
+                cx_o = _obter_ou_criar_ponta(nome_o);
+                cx_d = _obter_ou_criar_ponta(nome_d);
+                if cx_o == None or cx_d == None:
+                    # So cai aqui se o nome da ponta veio vazio — nada a ligar.
+                    continue;
+                chave_vin = ( str(cx_o.entity.getText() or "").strip().lower(),
+                              rel.lower(),
+                              str(cx_d.entity.getText() or "").strip().lower() );
                 if chave_vin in vinc_existentes:
                     # Vinculo ja existe: abre e anexa tambem nele a referencia da URL.
                     refs = refs + _referenciar( vinc_existentes[chave_vin] );
                     vin_reusados = vin_reusados + 1;
                     continue;
                 link = self.mapa.addEntity("link", 40 + (n_vin * 300), yv, text=rel);
-                link.addFrom( existentes[o] );
-                link.addTo( existentes[d] );
+                link.addFrom( cx_o );
+                link.addTo( cx_d );
                 refs = refs + _referenciar(link);   # o vinculo novo tambem recebe a URL
                 vinc_existentes[chave_vin] = link;
                 n_vin = n_vin + 1;
 
             novas = len(criadas) - reusadas;
             msg = "Adicionados ao mapa: %d sujeito(s) novo(s) e %d vínculo(s) novo(s)." % (novas, n_vin);
+            if pontas_criadas:
+                # Transparencia: o analista precisa saber que apareceram nos que ele nao marcou
+                # na tabela de entidades — vieram das pontas dos vinculos que ele marcou.
+                msg = msg + ("\n\nCriei %d nó(s) 'other' que o modelo citou como ponta de vínculo "
+                             "mas não listou como entidade (troque o tipo se precisar):\n  - %s" %
+                             (len(pontas_criadas), "\n  - ".join(pontas_criadas)));
             if reusadas or vin_reusados:
                 msg = msg + ("\n\nJá existiam no mapa e foram reaproveitados: %d sujeito(s) e "
                              "%d vínculo(s) — não foram duplicados." % (reusadas, vin_reusados));
