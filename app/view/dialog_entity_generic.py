@@ -155,6 +155,60 @@ class DialogEntityGeneric(QDialog):
         btn_remover.clicked.connect(self.btn_remover_click);
         CustomVLayout.widget_linha(self, self.page_act, [btn_remover] );
 
+        # INCORPORAR: absorve outro elemento do mapa (referencias + vinculos repontados),
+        # mantendo o nome e o tipo deste. Nao e o "Merge entity" (dedup global por nome).
+        # So aparece para entidades (nao para vinculos), e so se houver outro elemento.
+        if self.obj.entity.etype != "link":
+            self.lbl_incorp = QLabel("Incorporate element:");
+            self.lbl_incorp.setFont( Configuration.instancia().getFont() );
+            self.cmb_incorp = QComboBox();
+            self.cmb_incorp.setFont( Configuration.instancia().getFont() );
+            self.btn_incorp = QPushButton("Incorporate");
+            self.btn_incorp.setFont( Configuration.instancia().getFont() );
+            self.btn_incorp.clicked.connect(self.btn_incorporar_click);
+            CustomVLayout.widget_linha(self, self.page_act, [self.lbl_incorp, self.cmb_incorp, self.btn_incorp] );
+            self.__incorp_load__();
+
+    def __incorp_load__(self):
+        # Lista os OUTROS elementos-entidade do mapa (nao este, nao vinculos) como candidatos.
+        self.incorp_alvos = [];
+        self.cmb_incorp.clear();
+        for el in self.obj.mapa.elements:
+            if el is self.obj or el.entity.etype == "link":
+                continue;
+            self.incorp_alvos.append( el );
+            nome = str(el.entity.text or "(sem nome)");
+            self.cmb_incorp.addItem( "%s  [%s]" % (nome, el.entity.etype) );
+        vazio = ( len(self.incorp_alvos) == 0 );
+        self.cmb_incorp.setEnabled( not vazio );
+        self.btn_incorp.setEnabled( not vazio );
+        if vazio:
+            self.cmb_incorp.addItem( "(nenhum outro elemento no mapa)" );
+
+    def btn_incorporar_click(self):
+        if not self.incorp_alvos:
+            return;
+        alvo = self.incorp_alvos[ self.cmb_incorp.currentIndex() ];
+        nome_alvo = str(alvo.entity.text or "(sem nome)");
+        resp = QMessageBox.question(self, "Incorporate",
+            ("Incorporar \"%s\" em \"%s\"?\n\nAs referências e os vínculos de \"%s\" passam "
+             "para \"%s\"; \"%s\" sai do mapa. Seu nome e tipo não mudam.") %
+            (nome_alvo, str(self.obj.entity.text or ""), nome_alvo, str(self.obj.entity.text or ""), nome_alvo),
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No);
+        if resp != QMessageBox.Yes:
+            return;
+        try:
+            self.obj.mapa.incorporate( self.obj, alvo );
+        except Exception as e:
+            QMessageBox.warning(self, "Falha", str(e));
+            return;
+        # atualiza a UI: referencias novas na aba References e o combo sem o alvo incorporado.
+        if hasattr(self, "table_reference"):
+            self.table_reference_load();
+        self.__incorp_load__();
+        QMessageBox.information(self, "Incorporate",
+            "\"%s\" incorporado. Salve o mapa para gravar." % nome_alvo);
+
     def __subtype_selector__(self):
         # Combo somente-leitura de sub-tipos existentes (buscados do servidor). Selecionar
         # grava na hora (Entity.set_subetype). "(nenhum)" limpa o sub-tipo.

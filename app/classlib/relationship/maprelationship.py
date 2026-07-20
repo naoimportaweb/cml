@@ -77,6 +77,47 @@ class MapRelationship(ConnectObject):
                 self.elements.pop(i);
                 return;
 
+    def incorporate(self, destino, origem):
+        # INCORPORAR (nao e merge): 'destino' absorve outro elemento do mapa 'origem'. As
+        # referencias de 'origem' passam a 'destino' (copiadas com id novo, sem duplicar por
+        # link1) e TODO vinculo que apontava para 'origem' passa a apontar para 'destino'.
+        # 'origem' sai do mapa. 'destino' mantem seu nome e seu tipo. E uma composicao no
+        # proprio mapa (nao mexe na entidade global nem no merge_to).
+        if origem is destino:
+            raise Exception("Não é possível incorporar o próprio elemento.");
+        if origem.entity.etype == "link" or destino.entity.etype == "link":
+            raise Exception("Incorporar vale só entre entidades, não vínculos.");
+
+        # 1) referencias: copia as de origem para destino, sem repetir link1 ja presente.
+        links_destino = set();
+        for r in destino.entity.references:
+            links_destino.add( str(r.link1 or "").strip() );
+        for r in origem.entity.references:
+            chave = str(r.link1 or "").strip();
+            if chave != "" and chave in links_destino:
+                continue;
+            destino.addReference( r.title, r.link1, r.link2, r.link3, descricao=r.description );
+            links_destino.add( chave );
+
+        # 2) vinculos: reponta as pontas que eram 'origem' para 'destino'. As pontas em
+        # to_entity/from_entity sao LinkEntity cujo .entity e a CAIXA (o element).
+        for el in self.elements:
+            if el.entity.etype != "link":
+                continue;
+            for lentity in el.to_entity:
+                if lentity.entity is origem:
+                    lentity.entity = destino;
+            for lentity in el.from_entity:
+                if lentity.entity is origem:
+                    lentity.entity = destino;
+
+        # 3) tira a caixa de 'origem' do mapa (ja repontada, nao trava em delEntity).
+        for i in range(len(self.elements)):
+            if self.elements[i] is origem:
+                self.elements.pop(i);
+                break;
+        return True;
+
     def addEntity(self, ptype, x, y, text=None, id_=None, entity_id_=None, wikipedia=None):
         if ptype == "person":
             self.elements.append(  Person(self,     x, y, 100, 20 , text=text, id_=id_, entity_id_=entity_id_)  );
