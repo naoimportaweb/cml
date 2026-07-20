@@ -53,8 +53,11 @@ class DialogDiagramLoad(QDialog):
         layout_server.addWidget(lbl_ordem, 2, 0);
         self.combo_ordem = QComboBox();
         # (rotulo, chave, comeca decrescente?)
-        self.ordens = [ ("Nome",            "nome",  False),
-                        ("Data de edição",  "data",  True),
+        # O DEFAULT e o primeiro item: "Data de edição" (decrescente) — o mapa em que o
+        # usuario mexeu por ultimo vem no topo, que e o que se quer ao entrar. Nome/Tipo/
+        # Usuario continuam disponiveis no combo.
+        self.ordens = [ ("Data de edição",  "data",  True),
+                        ("Nome",            "nome",  False),
                         ("Tipo",            "tipo",  False),
                         ("Usuário",         "user",  False) ];
         for rot, _, _ in self.ordens:
