@@ -112,6 +112,41 @@ https://<site>/<projeto>          ->  cliente completa com /cml/services/execute
 > `execute.php` cairia em `$DEPLOY_DIR/services/execute.php` e nenhum cliente acharia, porque
 > não existe URL base capaz de produzir esse caminho.
 
+## Ferramentas MCP (`cml-remoto`)
+
+O caminho preferido para operar o servidor. Registrado em `.mcp.json` (versionado, sem segredo);
+o código é `mcp/remoto_hostinger.py`, stdio + JSON-RPC, só stdlib. As credenciais saem do `~/.env`
+da estação na hora do uso, e a senha nunca passa por `argv`: vai por `SSHPASS` no ambiente ou, se
+não houver `sshpass` na máquina, por `SSH_ASKPASS` — o próprio script responde à pergunta do `ssh`
+quando chamado com `--askpass`.
+
+Toda ferramenta aceita `projeto` (um nome de `CML_PROJECTS`); sem ele, vale o primeiro.
+
+| Ferramenta | O que faz |
+|---|---|
+| `projetos` | lista `CML_PROJECTS` e a raiz de deploy de cada um |
+| `flag_confirmar` | a regra que vem antes de todas: sem a flag na raiz, publicar é proibido |
+| `deploy` | empacota (`script/deploy.sh`), confere a flag e envia com `--exclude data/` e **sem** `--delete`. Exige `confirmar=true` |
+| `lint` | `php -l` com o binário de **produção** em todo `.php` publicado; lista só o que falhou |
+| `php` / `php_versoes` | invoca a versão certa (padrão 85) e mostra os `alt-php` disponíveis |
+| `sql` | consulta o MySQL do projeto; leitura por padrão, `escrita=true` para DDL/DML |
+| `log_ref` | acha no `error_log` a `ref.` de um erro de banco |
+| `smoke` | os testes de ponta a ponta desta página, por HTTPS |
+| `listar` / `ler_arquivo` / `env_chaves` | navegação; `ler_arquivo` recusa segredo, `env_chaves` devolve só nomes |
+| `executar` | comando livre, com recusa do obviamente destrutivo |
+
+As recusas são **rede de proteção contra engano, não contra intenção**: `ler_arquivo` bloqueia `.env`,
+`*.pem`, chaves e `data/config.json` (senha do MySQL em claro); `sql` bloqueia `DROP`, `TRUNCATE`,
+`GRANT`/`REVOKE`, `CREATE USER` e `DELETE`/`UPDATE` sem `WHERE`; `executar` bloqueia `rm -rf` em raiz,
+`rsync --delete` e qualquer `rm` no `data/` do servidor. O que for mesmo necessário, faça pelo
+terminal, conscientemente.
+
+> **Onde ficam os logs.** Não há `~/logs` nesta conta, e o `error_log` do PHP está configurado como
+> caminho **relativo**: o arquivo nasce no diretório do script que falhou — para o endpoint, é
+> `cml/services/error_log`. Por isso o `log_ref` faz `find` sob a raiz do projeto em vez de olhar uma
+> lista fixa de caminhos, e diz explicitamente quando não existe log nenhum (que é diferente de "a
+> ref não apareceu").
+
 ## Passo 1 — empacotar localmente
 
 ```bash

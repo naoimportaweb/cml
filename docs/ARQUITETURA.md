@@ -80,11 +80,11 @@ trunca em silêncio).
 `bdd.py`, cópias literais de `../rolhama/llm/`). `enqueue`/`response` por **job UUID**, MAC de
 autenticação, cifra **ChaCha20-Poly1305 por `(part, canal)`**. Sem rota de alocação de canal ainda,
 então o canal é **fixo por projeto**: report (`"cml"`) → **507**, bot de entidades
-(`"cml/entidades"`) → **508**. Variáveis: `ROLHAMA_WEBAPI_URL` (ou `ROLHAMA_BDD_URL`),
+(`"cml/entidades"`) → **510**. Variáveis: `ROLHAMA_WEBAPI_URL` (ou `ROLHAMA_BDD_URL`),
 `ROLHAMA_BDD_KEY`, `ROLHAMA_OLLAMA_NUM_CTX`, `CML_REPORT_MODELO`, `CML_ROLHAMA_CANAL*`. Contrato
 completo em `../rolhama/llm/INTEGRACAO.md` e `CANAIS.md`.
 
-**A confirmar:** que os canais 507/508 estejam semeados e atendidos pelo worker na máquina 90.
+**A confirmar:** que os canais 507/510 estejam semeados e atendidos pelo worker na máquina 90.
 
 ## Fontes de dados externas
 

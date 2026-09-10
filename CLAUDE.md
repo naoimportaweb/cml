@@ -4,15 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## O que é isto
 
-O CML é uma ferramenta de análise de vínculos dividida em duas partes: um **cliente desktop PySide6** (`app/`), que desenha mapas de relacionamento e organogramas, conversando com um **servidor PHP + MySQL** (`server/`) através de um endpoint JSON-RPC próprio. O código, os comentários e as mensagens de interface estão majoritariamente em português (pt-BR); mantenha essa convenção ao editar os arquivos existentes.
+O CML é uma ferramenta de análise de vínculos dividida em duas partes: um **cliente desktop PySide6** (`app/`), que desenha mapas de relacionamento, organogramas e linhas do tempo, conversando com um **servidor PHP + MySQL** (`server/`) através de um endpoint JSON-RPC próprio. O código, os comentários e as mensagens de interface estão majoritariamente em português (pt-BR); mantenha essa convenção ao editar os arquivos existentes.
 
 ## Comandos
 
 Não há build system, runner de testes, linter nem `requirements.txt`. As dependências são instaladas de forma imperativa.
 
 ```bash
-# Instala as dependências do cliente (a lista está em app/install.sh)
-pip3 install requests PySide6 pycryptodome pyspellchecker beautifulsoup4 waybackpy
+# Prepara a máquina para rodar o cliente a partir do código (apt + pip)
+./dependencias.sh
 
 # Executa o cliente (mostra o diálogo de Connect/Login primeiro; encerra se o login falhar)
 python3 app/application.py
@@ -21,7 +21,15 @@ python3 app/application.py
 cd script && ./deploy.sh
 ```
 
-O `app/install.sh` é o instalador para o **usuário final**, não um comando de desenvolvimento: exige root, recebe a URL do site, baixa o `client.tar.gz` desse site, descompacta em `/opt/cml` e cria o symlink `/bin/cml`.
+O `dependencias.sh` (raiz) é o bootstrap de **desenvolvimento**: instala as libs de sistema do plugin xcb do Qt6 — sem `libxcb-cursor0` o PySide6 ≥ 6.5 no Debian 13 morre com *"libxcb-cursor0 is needed to load the Qt xcb platform plugin"*, e o pip não traz essa lib — e depois as deps Python (`requests PySide6 pycryptodome pyspellchecker beautifulsoup4 waybackpy`, com `--break-system-packages` por causa do PEP 668). Não baixa nada do site nem exige servidor.
+
+O `app/install.sh` é o instalador para o **usuário final**, não um comando de desenvolvimento: exige root, recebe a URL do site, baixa o `client.tar.gz` desse site, descompacta em `/opt/cml` e cria o symlink `/bin/cml`. A lista de deps Python vive nele e no `dependencias.sh` — mudou uma, mude a outra.
+
+### Acesso ao servidor
+
+Prefira o servidor MCP `cml-remoto` (`mcp/remoto_hostinger.py`, registrado em `.mcp.json`) a montar `ssh`, `rsync` e `mysql` na mão: ele já carrega as regras do `DEPLOY.md`. `flag_confirmar` faz a checagem da flag antes de qualquer envio, `deploy` empacota e envia já com `--exclude data/` e sem `--delete`, `php`/`lint` usam o binário **8.5** (o `php` do PATH no SSH é 7.4 e **não** é o runtime de produção), `sql` manda a senha por stdin e recusa o irreversível, `log_ref` acha no `error_log` o SQL por trás de um erro que chegou ao usuário, e `ler_arquivo` recusa `.env`, chaves, certificados e o `data/config.json`. Lista das ferramentas em `DEPLOY.md`.
+
+Credenciais vêm do `~/.env` da estação (`SSH_HOSTINGER_*`, `<PROJETO>_DEPLOY_*`, `<PROJETO>_DB_*`); **nunca** escreva segredo no `.mcp.json`, que é versionado. O servidor é o mesmo padrão do `aivalia-remoto` (`../aivalia/mcp/remoto_hostinger.py`) — a convenção do workspace é **copiar, não compartilhar** (como o `webapi.py`/`bdd.py` do rolhama), então os dois arquivos evoluem separados.
 
 O procedimento completo de publicação em produção (Hostinger/LiteSpeed, a flag-portão do deploy, o `data/` que nunca é enviado) está em `DEPLOY.md` — leia-o antes de mexer no `deploy.sh` ou em qualquer coisa de deploy.
 
@@ -71,15 +79,21 @@ Handshake de três etapas em `app/classlib/user.py` + `server/services/classlib/
 
 `Server` (`classlib/server.py`) e `Configuration` (`classlib/configuration.py`) usam `SingletonMeta` e são acessados por `.instancia()`. O `Server.ip` guarda a **URL base completa** (ex.: `http://localhost`), não um IP, apesar do nome. O `Configuration` persiste em `~/.cml.json`, com os padrões preenchidos pelo helper de caminho pontuado `__getParameter__`.
 
-Todo módulo prepara o `sys.path` com `CURRENTDIR`/`ROOT` via `inspect.getfile` antes dos imports — é por isso que os imports são absolutos (`from classlib.x import Y`) e o app roda a partir de qualquer diretório. Mantenha esse preâmbulo ao criar módulos novos.
+Todo módulo prepara o `sys.path` com `CURRENTDIR`/`ROOT` via `inspect.getfile` antes dos imports — é por isso que os imports são absolutos (`from classlib.x import Y`) e o app roda a partir de qualquer diretório. Mantenha esse preâmbulo ao criar módulos novos. Alguns diálogos (`dialog_connect.py`, `dialogreference.py`, `dialog_classification.py` e outros) ainda somam um `sys.path.append("/opt/cml/app/")` fixo, resquício do caminho de instalação; é inofensivo rodando do código, mas não copie isso para arquivo novo.
+
+**Código morto que parece vivo:** o corretor ortográfico não funciona. O botão "Spell check" do `QEditorPlus` chama `MyHighlighter` → `Culture.errors` (`app/classlib/culture.py`), e o `from spellchecker import SpellChecker` de lá está **comentado** — clicar estoura `NameError`. O `pyspellchecker` continua na lista de dependências, e o `Culture("pt")` é fixo em português, ignorando o idioma do mapa. Consertar é reativar o import (e passar o idioma), não reescrever.
 
 ### Modelo de domínio
 
 A `Entity` é o registro central (`app/classlib/entity.py`, `server/.../Entity/001.php`), com um `etype` que pode ser `person`, `organization`, `other` ou `link`. As entidades são globais e compartilhadas entre os mapas; o `merge_to` faz a deduplicação repontando todas as tabelas que as referenciam.
 
-Um `MapRelationship` contém `elements`, que são caixas envolvendo entidades. **Os links também são elements**, com `etype == "link"`, carregando as listas `to_entity`/`from_entity` — por isso apagar uma caixa que participa de um link lança exceção em vez de fazer cascata. Os mapas são salvos como documento inteiro: o `save()` serializa o mapa mais o `toJson()` de cada element em uma única chamada. Os mapas também têm trava consultiva (`lock_map`/`unlock_map`); um mapa travado fica somente leitura e o título da janela principal indica isso.
+Além do `etype`, a entidade recebe **classificações datadas**. A taxonomia é global no banco — `classification` ("Cargo") → `classification_item` ("Diretor") — e **não tem tela de cadastro**: o cliente só a consulta (`Classification.search`, com `%like%` em `app/classlib/classification.py`), então taxonomia nova entra no banco à mão. O que é por entidade é a linha em `entity_classification_item`, com `start_date`/`end_date` e um `format_date` que decide como a data é exibida (aba **Classification** dos diálogos de entidade, alimentada por `DialogClassification`). Esse vínculo **é gravado no save do mapa** (o `MapRelationship/001.php` insere e apaga `entity_classification_item` junto com os elements), não por endpoint próprio — o `Classification.add` do servidor existe mas nenhum cliente o chama.
 
-O `OrganizationChart` é a estrutura paralela para organogramas, com seu próprio engine de canvas. Os dois canvas ficam em `app/view/ui/mapa_relationship_engine.py` e `app/view/ui/mapa_organization_chart_engine.py`.
+Um `MapRelationship` contém `elements`, que são caixas envolvendo entidades. **Os links também são elements**, com `etype == "link"`, carregando as listas `to_entity`/`from_entity` — por isso apagar uma caixa que participa de um link lança exceção em vez de fazer cascata. Os mapas são salvos como documento inteiro: o `save()` serializa o mapa mais o `toJson()` de cada element em uma única chamada, e cada save empilha o JSON inteiro em `diagram_relationship_history` (o histórico é só append; não há tela que o leia). Os mapas também têm trava consultiva (`lock_map`/`unlock_map`); um mapa travado fica somente leitura e o título da janela principal indica isso.
+
+**Incorporar não é merge.** O `merge_to` da `Entity` é global: funde duas entidades no banco inteiro. Já o `MapRelationship.incorporate(destino, origem)` (botão *Incorporate* na aba **Actions** dos diálogos de entidade) é composição **dentro de um mapa só**: copia as referências de `origem` para `destino` (pulando `link1` já presente), reponta toda ponta `to_entity`/`from_entity` que apontava para a caixa `origem` e tira `origem` do mapa. A entidade global, o nome e o tipo do destino ficam intactos; vale só entre entidades (vínculo não incorpora) e nada persiste até salvar o mapa. Repontar antes de remover é o que evita a exceção do `delEntity`.
+
+O `OrganizationChart` é a estrutura paralela para organogramas, com seu próprio engine de canvas. Os dois canvas ficam em `app/view/ui/mapa_relationship_engine.py` e `app/view/ui/mapa_organization_chart_engine.py`. As duas estruturas se encontram num lugar só: a classe de serviço `Map` (`server/.../Map/001.php`, método `search`) devolve `relationship` e `organization` na mesma resposta, e é dela que sai a lista de "abrir mapa" — por isso o `SELECT` do organograma traz `creation_time`/`modification_time` explícitos, para a lista poder ordenar os dois tipos pela data de edição.
 
 Um mapa também tem **documentos** anexados (hoje só PDFs de report). O `Document` (`app/classlib/document.py`, `server/.../Document/001.php`) grava os bytes **fora do banco**, em `server/data/documents/<sha256>.pdf` (coberto pelo `Deny from all` do `data/.htaccess`); o banco guarda só hash, tamanho e vínculos. O `sha256` é a chave de deduplicação — o mesmo PDF em N mapas grava o arquivo uma vez e cria uma linha em `document_map` por mapa. O servidor confere a assinatura `%PDF-` em vez de confiar na extensão.
 
@@ -90,6 +104,44 @@ Entidades **Other** têm um **subtipo** (`sub_etype`, chave = `md5(nome)`). O **
 Cada mapa (`MapRelationship`) tem duas configurações no diálogo **Property** (`DialogRelationshipEdit`): **Idioma** (`language`, um de `pt-BR`/`en`/`es` — a lista canônica é `report.IDIOMAS`) e **Exibir PNG de rosto** (`show_face`). O idioma alimenta o prompt do **report** e do **bot de entidades** (via `report.idioma_frase`, único ponto de verdade — o report não é mais fixo em português). Com `show_face` ligado, quando a entidade (pessoa/org/outro) tem rosto, a **imagem substitui a caixinha com o nome** — não desenha retângulo nem texto, só o PNG (`MapRelationshipBox.mostra_rosto`/`draw_face_only`; o `recalc` dimensiona `w`/`h` pela miniatura para a área de clique e as linhas de vínculo baterem na imagem). Sem rosto, a caixa normal com o nome. O servidor só traz os `entity_face` no load do mapa quando `show_face` está ligado, e o efeito de ligar aparece **ao reabrir** o mapa (o load atual não tinha os rostos). Ambos os campos persistem em colunas novas de `diagram_relationship` (mesma migração).
 
 O banco de entidades é **semeado com CTI do MISP Galaxy** (github.com/MISP/misp-galaxy): threat actors, malware, ransomware, RATs — ~7.900 entidades no domain `cyberwar`, com sinônimos (`entity_aka`), referências e relações globais (`entity_simple_association`, entidade↔entidade, ainda sem UI). Convenção: entidade **de origem MISP** tem `id` no formato **UUID** (com hífens); entidade **nativa** tem `id` `hex_hex_hex` (underscores) — isso torna a origem identificável e reversível. Colisões de nome **enriquecem** a entidade existente (não duplicam). Mapeamento, reexecução e rollback em **`docs/MISP-GALAXY.md`**; o importador é `script/misp_import.py`. Um segundo seeder, `script/country_seed.py`, cadastra **países** (galaxy `country` do MISP) como Others com a **bandeira** (flagcdn PNG) de rosto (`entity_face`); `id` = `uuid5` do ISO (formato UUID, reversível como o import MISP), enriquece por nome, idempotente, e lê as credenciais do banco de `~/.env` (`{PROJETO}_DB_HOST_REMOTO/_USER/_PASSWORD/_DATABASE`). Roda com `--country <clusters/country.json>` (dry-run) mais `--write` para gravar; requer `pymysql` e `requests`. Panorama de infra e fontes de dados em **`docs/ARQUITETURA.md`**.
+
+Fora dos seeders (que falam MySQL direto), a carga em massa pela via normal do app é o `DialogImport` (`app/view/dialog_import.py` + `app/classlib/importlib.py`): cada arquivo escolhido é **um** JSON de uma entidade e precisa trazer **todas** as colunas `text_label`, `small_label`, `description`, `etype`, `sub_etype`, `wikipedia`, `default_url`, `icon` — se faltar uma, o lote inteiro é abortado. O servidor grava tudo numa tacada em `Entity.import_all`.
+
+### Timeline — o terceiro tipo de diagrama
+
+A `Timeline` (`app/classlib/timeline/`) é um **documento**, como o mapa e o organograma: tem nome e keyword, é criada pelo **New**, salva, aparece na lista do **Open** (o `Map.search` devolve os três tipos) e pertence a um usuário. O que ela **não** guarda é geometria — a posição de um evento *é* a data dele, então não há x/y para persistir. Tabelas: `diagram_timeline` e `diagram_timeline_event`.
+
+O **mapa de origem é opcional** (`diagram_timeline.diagram_relationship_id`), e é ele que define os dois modos:
+
+- **com mapa** — a timeline **projeta** as datas que já estavam lá e soma os eventos marcados;
+- **sem mapa** — timeline solta, só com os eventos que o analista marcar.
+
+São **seis origens de data**, cinco de projeção e uma marcada à mão (`timeline_event.py` guarda o mapa de cor/rótulo/prioridade; a legenda sai daí para não discordar do desenho):
+
+| Origem | De onde vem |
+|---|---|
+| Evento marcado | `diagram_timeline_event` — o único que a timeline cria |
+| Acontecimento | `diagram_relationship_element_reference.start_date/end_date` |
+| Vínculo | `diagram_relationship_link` (um evento por **ponta datada**: as duas pontas podem ter períodos diferentes) |
+| Classificação | `entity_classification_item` |
+| Entidade | `entity.start_date/end_date` |
+| Caixa no mapa | `diagram_relationship_element.start_date/end_date` |
+
+A projeção é feita **no cliente**: o `Timeline.load_data` carrega o mapa pelo caminho normal (`MapRelationship.load`, que já traz todas as datas) e varre o que veio. O servidor não relê o mapa — duplicar essa leitura criaria uma segunda verdade sobre o que conta como data.
+
+Regras do desenho: data única vira **marco** (abaixo do eixo), período vira **barra** (acima); eventos que disputam o mesmo trecho do eixo **sobem de nível** em vez de escrever um por cima do outro; eventos idênticos (mesmo título e mesmas datas) são **deduplicados** ficando a origem de maior prioridade — a data da entidade costuma estar repetida na caixa do mapa. Data suja (`0000-00-00`, `NULL`, texto) simplesmente não vira evento, e período invertido é normalizado: um mapa mal cadastrado não pode derrubar o desenho inteiro.
+
+O **layout mora no modelo** (`timeline.py`: escala, ticks, empilhamento, `draw`), como no organograma; `app/view/ui/mapa_timeline_engine.py` só cuida de mouse, pixmap e menu. Como a largura é o zoom do eixo (pode passar de dez mil px), a timeline — **e só ela** — é embrulhada num `QScrollArea` no `MdiMap`. Não há arrastar elemento; o que se ajusta é o zoom (Ctrl+roda ou menu).
+
+**Referência com data = acontecimento.** A referência já era a fonte ("o que diz que isso aconteceu"); com data ela vira também o fato datado. Continua opcional — sem data, segue sendo só fonte. O campo está no `DialogReference` (aba Referencia) e a data aparece na coluna "Acontecimento" das abas References. Grava no **save do mapa**, junto do resto da referência.
+
+**Evento marcado** (`MapEvent`, `app/classlib/timeline/map_event.py`) é o acontecimento que não está em nenhum outro cadastro. Pertence à **timeline**, não ao mapa (a mesma investigação pode ter várias linhas do tempo com recortes diferentes), tem entidade associada **opcional** e grava **na hora** por endpoint próprio (`TimelineEvent/001.php`, `save`/`delete`) — não pelo save do documento, que teria de mandar a lista inteira de volta a cada evento novo. Botão direito na timeline: novo/editar/remover. Projeção não se edita ali: a data mora no vínculo/classificação/referência e é lá que se muda.
+
+**Migração obrigatória** para bancos que já existem (o deploy não altera banco; ver `DEPLOY.md`): as três colunas de data em `diagram_relationship_element_reference` e as tabelas `diagram_timeline`/`diagram_timeline_event`. O bloco pronto está no fim de `server/data/create.sql`. Sem ela, o load do mapa quebra — o `SELECT` das referências nomeia as colunas novas.
+
+Um cuidado que vale para todo o modelo: **toda ponta de data tem que sobreviver ao load**. O `Link.addFrom` descartava as datas que o servidor mandava, e o save seguinte gravava `NULL` por cima; o mesmo valia para as referências carregadas pelo `Entity.load` e para as copiadas pelo `incorporate`. Ao mexer em qualquer caminho de carga, confira se as três colunas (`start_date`/`end_date`/`format_date`) chegam ao objeto.
+
+O par de datas na interface é o widget `QPeriodo` (`app/view/ui/qperiodo.py`): dois `QDateEdit` com botão Enable/Disable — "sem data" é um valor legítimo, diferente de "hoje" — mais o combo de formato. O `DialogLinkEdit` e o `DialogClassification` têm a mesma UI escrita à mão, de antes do widget.
 
 ### Reports em segundo plano (rolhama)
 
@@ -103,9 +155,9 @@ O **idioma** do mapa (`language`, default `en`; ver *Modelo de domínio*) vai em
 
 **O cliente do rolhama fala o contrato webapi** (migrado do bddphp antigo, que foi apagado da Hostinger). `app/classlib/rolhama.py` usa `webapi.ClientAPI` (`app/classlib/webapi.py`, cópia literal de `../rolhama/llm/webapi.py`): `enqueue`/`response` por **job UUID**, MAC de autenticação (`K_auth[canal]`), sem 409 nem `remove()`, teto de 64 MiB. A cifra do payload é ChaCha20-Poly1305 por `(part, canal)` via `bdd.seal`/`bdd.open_blob` (o `app/classlib/bdd.py` é **byte a byte idêntico** ao do worker — se divergir, a resposta não decifra). URL vem de `ROLHAMA_WEBAPI_URL` (aceita `ROLHAMA_BDD_URL` por compat), chave de `ROLHAMA_BDD_KEY`, ambas do `~/.env`.
 
-O webapi ainda **não tem rota de alocação** de canal (é pendência do lado rolhama — `../rolhama/llm/CANAIS.md`), então o canal é **fixo por projeto**, semeado no servidor e mapeado em `CANAL_POR_PROJETO`: report (`"cml"`) → **507**, bot de entidades (`"cml/entidades"`) → **508**, sobrescrevíveis por env (`CML_ROLHAMA_CANAL`, `CML_ROLHAMA_CANAL_ENTIDADES`). Projetos diferentes precisam de canais diferentes porque a mesma chave decifraria a resposta um do outro. O `Rolhama.alocar()` sobreviveu só como compat — hoje devolve o canal fixo, sem ir ao servidor. Contrato completo em `../rolhama/llm/INTEGRACAO.md`; para atualizar o transporte, recopie `webapi.py` e `bdd.py` de `../rolhama/llm/`.
+O webapi ainda **não tem rota de alocação** de canal (é pendência do lado rolhama — `../rolhama/llm/CANAIS.md`), então o canal é **fixo por projeto**, semeado no servidor e mapeado em `CANAL_POR_PROJETO`: report (`"cml"`) → **507**, bot de entidades (`"cml/entidades"`) → **510**, sobrescrevíveis por env (`CML_ROLHAMA_CANAL`, `CML_ROLHAMA_CANAL_ENTIDADES`). Projetos diferentes precisam de canais diferentes porque a mesma chave decifraria a resposta um do outro. O `Rolhama.alocar()` sobreviveu só como compat — hoje devolve o canal fixo, sem ir ao servidor. Contrato completo em `../rolhama/llm/INTEGRACAO.md`; para atualizar o transporte, recopie `webapi.py` e `bdd.py` de `../rolhama/llm/`.
 
-**A confirmar do lado do servidor:** que os canais 507/508 estejam semeados e sendo atendidos pelo worker (o `CANAIS.md` os lista na faixa da semente 500–510, mas marcados "livres" — o CML não aparece na tabela de consumidores).
+**A confirmar do lado do servidor:** que os canais 507/510 estejam semeados e sendo atendidos pelo worker (o `CANAIS.md` os lista na faixa da semente 500–510, mas marcados "livres" — o CML não aparece na tabela de consumidores).
 
 **A "máquina 90" (o host do rolhama/ollama):** GPU **RTX 5060 16 GB**. Modelo default `qwen2.5:14b-instruct-q6_K` (`report.py`, sobrescrevível por `CML_REPORT_MODELO`; usado por report **e** bot de entidades) — q6_K + 16k de contexto ≈ ~15 GB, encaixa justo na 16 GB; se der OOM, baixar `ROLHAMA_OLLAMA_NUM_CTX` (12288/8192) no `~/.env` **da máquina 90** ou voltar ao Q4. O worker **serializa globalmente** (uma geração por vez na máquina), por isso o report manda um prompt só. Panorama de infra e fontes de dados em `docs/ARQUITETURA.md`.
 
@@ -128,3 +180,5 @@ O `app/view/ui/qbot.py` renderiza o botão e carrega a classe no momento do cliq
 ### Shell da interface
 
 O `application.py` executa o `DialogConnect` **antes** de criar a janela principal e encerra a menos que o `Server.status` esteja setado. A janela principal é um `QMdiArea` cujos filhos são instâncias de `MdiMap`; os menus e toolbars são construídos, mas várias ações estão comentadas. Os diálogos ficam em `app/view/`, como `dialog_*.py`, e os widgets reutilizáveis em `app/view/ui/`.
+
+O `DialogRelationshipCheck` é o *lint* do mapa: mostra `mapa.getErros()` como **Errors** e `mapa.getWarnings()` como **Warnings**, com duplo clique abrindo o diálogo do objeto culpado. O catálogo de regras são os métodos estáticos de `app/classlib/relationship/relationship_info.py` (classe `RelatinshipInfo`, **com o typo no nome** — buscar por "Relationship" não acha) — regra nova é um método estático a mais ali, chamado de dentro do `getErros`/`getWarnings` do mapa.
