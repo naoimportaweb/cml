@@ -33,7 +33,9 @@ class DialogTimelineEvent(QDialog):
         if evento == None:
             self.evento.start_date = QDate.currentDate().toString("yyyy-MM-dd");
 
-        self.resize(620, 480);
+        # O tamanho que o usuario deixou da ultima vez. Marcar evento e um trabalho de
+        # digitar descricao: quem alargou a janela uma vez quer ela assim sempre.
+        self.resize( *Configuration.instancia().getTamanhoJanela("timeline_event", 620, 480) );
         self.setWindowTitle("Evento da timeline");
         fonte = Configuration.instancia().getFont();
 
@@ -80,6 +82,12 @@ class DialogTimelineEvent(QDialog):
         btn_cancelar.clicked.connect( self.close );
         botoes.append( btn_cancelar );
         layout_principal.addWidget( CustomVLayout.widget_layout(self, botoes) );
+
+    def closeEvent(self, event):
+        # Grava no fechamento, e nao no resizeEvent: arrastar a borda dispara dezenas de
+        # eventos por segundo, e cada um reescreveria o ~/.cml.json inteiro.
+        Configuration.instancia().setTamanhoJanela("timeline_event", self.width(), self.height());
+        super().closeEvent(event);
 
     # DialogEntityLoad devolve por callback: e o contrato que ele ja usa no resto do app.
     def btn_entidade_click(self):
