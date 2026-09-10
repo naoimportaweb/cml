@@ -61,10 +61,14 @@ class MapaOrganizationChartEngine(QWidget):
             self.diff = [current_pos.x() - self.selected_element.x];
 
     def redraw(self):
+        # Ver o comentario do mesmo metodo no engine de relacionamento: painter aberto quando
+        # o desenho estoura derruba o processo inteiro.
         self.painter.begin(self.pixmap);
-        self.pixmap.fill(Qt.white);
-        self.mapa.draw(self.painter);
-        self.painter.end();
+        try:
+            self.pixmap.fill(Qt.white);
+            self.mapa.draw(self.painter);
+        finally:
+            self.painter.end();
         self.update();
 
     def mouseDoubleClickEvent(self, event):

@@ -54,6 +54,9 @@ class OrganizationChart(ConnectObject):
         return True;
     def load(self, id):
         js = self.__execute__("OrganizationChart", "load", {"id" : id });
+        if not js.get("status") or js.get("return") == None:
+            self.ultimo_erro = js.get("error") or "O servidor não devolveu o organograma.";
+            return False;
         return self.load_data(js["return"]);
 
     def save(self):

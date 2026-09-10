@@ -65,17 +65,22 @@ class MapaRelationshipEngine(QWidget):
             self.diff = [current_pos.x() - self.selected_element.x, current_pos.y() - self.selected_element.y];
 
     def redraw(self):
+        # try/finally: se o desenho estourar no meio (mapa que veio quebrado do servidor, por
+        # exemplo), o painter TEM que fechar. Painter aberto + pixmap destruido = segfault,
+        # e ai o traceback do erro de verdade se perde junto com o processo.
         self.painter.begin(self.pixmap);
-        self.pixmap.fill(Qt.white);
-        for elemento in self.mapa.elements:
-            elemento.recalc(self.painter);
-        for elemento in self.mapa.elements:
-            if elemento.entity.etype == "link":
-                elemento.draw( self.painter );
-        for elemento in self.mapa.elements:
-            if elemento.entity.etype == "person" or elemento.entity.etype == "organization" or elemento.entity.etype == "other":
-                elemento.draw( self.painter );
-        self.painter.end();
+        try:
+            self.pixmap.fill(Qt.white);
+            for elemento in self.mapa.elements:
+                elemento.recalc(self.painter);
+            for elemento in self.mapa.elements:
+                if elemento.entity.etype == "link":
+                    elemento.draw( self.painter );
+            for elemento in self.mapa.elements:
+                if elemento.entity.etype == "person" or elemento.entity.etype == "organization" or elemento.entity.etype == "other":
+                    elemento.draw( self.painter );
+        finally:
+            self.painter.end();
         self.update();
 
     def mouseDoubleClickEvent(self, event):

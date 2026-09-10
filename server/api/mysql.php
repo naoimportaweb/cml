@@ -18,6 +18,17 @@ class Mysql
     var $con = null;
     var $action = false;
     var $CONFIG  = null;
+
+    // Uma conexao por (host, banco, usuario), compartilhada por TODAS as instancias de Mysql
+    // do mesmo request.
+    //
+    // Por que isto existe: o Datatable anulava $this->con no finally, entao cada consulta
+    // abria uma conexao TCP nova. Um load de mapa faz uma consulta por elemento, mais uma
+    // por referencia, classificacao e vinculo — dezenas a centenas de conexoes em sequencia
+    // num unico request. Hospedagem compartilhada corta isso, e o erro que chega e
+    // "SQLSTATE[HY000] [2002] Operation not permitted", intermitente e numa consulta
+    // aleatoria (a primeira que passar do limite), o que faz parecer problema da consulta.
+    private static $pool = [];
     function __construct($config) {
         $buffer_json = Json::FromFile_v2(dirname(__DIR__) . "/data/config.json");
         if( $buffer_json == null ) {
@@ -66,15 +77,36 @@ class Mysql
     public function  Connection(){
         try
         {
-            if($this->con == null){
-                $port = 3306;
-                $this->con = new PDO('mysql:host=' . $this->CONFIG["host"] . ';port='. $port .';charset=utf8;dbname=' . $this->CONFIG["name"], $this->CONFIG["user"], $this->CONFIG["password"]);
-                $this->con->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $chave = $this->CONFIG["host"] . "|" . $this->CONFIG["name"] . "|" . $this->CONFIG["user"];
+            if( isset(self::$pool[$chave]) && self::$pool[$chave] != null ){
+                $this->con = self::$pool[$chave];
+                return $this->con;
             }
+            $port = 3306;
+            $this->con = new PDO('mysql:host=' . $this->CONFIG["host"] . ';port='. $port .';charset=utf8;dbname=' . $this->CONFIG["name"], $this->CONFIG["user"], $this->CONFIG["password"]);
+            $this->con->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            self::$pool[$chave] = $this->con;
             return $this->con;
         } catch (PDOException $e) {
             throw $e;
         }
+    }
+
+    // Codigo do erro do banco (1062 de UNIQUE, 2002 de conexao...) para a mensagem que sobe
+    // ao cliente. E so um numero: nao revela tabela, coluna nem dado — e o ReportJob depende
+    // de enxergar o 1062 para saber que a trava global de report ja esta tomada.
+    private static function codigo_erro($e){
+        if( $e instanceof PDOException && isset($e->errorInfo) && isset($e->errorInfo[1]) ){
+            return strval($e->errorInfo[1]);
+        }
+        $codigo = $e->getCode();
+        return ($codigo === null || $codigo === "") ? "?" : strval($codigo);
+    }
+
+    // Devolver a conexao ao pool em vez de destrui-la. Anular $this->con nao fecha nada
+    // enquanto o pool a segurar — e e isso que se quer: o PHP fecha tudo no fim do request.
+    private function soltar(){
+        $this->con = null;
     }
     
     public function hasColumn($database, $entity, $field){
@@ -121,7 +153,7 @@ class Mysql
             throw $e;
         } finally {
             if($this->action == false) {
-                $this->con = null;
+                $this->soltar();
             }
         }
         return null;
@@ -146,7 +178,7 @@ class Mysql
             throw $e;
         } finally {
             if($this->action == false) {
-                $this->con = null;
+                $this->soltar();
             }
         }
         return null;
@@ -168,9 +200,7 @@ class Mysql
             error_log('Error: ' . $e->getMessage() . ' in ' . $sql . ' parms ' . json_encode($values), 0);
             throw $e;
         } finally {
-            //if($this->action == false) {
-                $this->con = null;
-            //}
+            $this->soltar();
         }
         return null;
     }
@@ -184,12 +214,15 @@ class Mysql
             return $query->fetchAll(PDO::FETCH_ASSOC);
 
         }catch(Exception $e){
-            error_log('Error: ' . $e->getMessage() . ' in ' . $sql . ' parms ' . json_encode($values), 0);
-            throw new Exception('Erro: ' .  $e->getMessage() . " - " . $sql);
+            // A mensagem que sobe para o cliente NAO leva SQL, nome de tabela nem parametro:
+            // o erro do banco viaja no envelope de resposta e apareceria na tela do usuario,
+            // entregando o schema (e as vezes o dado) a quem estiver olhando. O detalhe fica
+            // no error_log do servidor, e o cliente recebe so a referencia para casar os dois.
+            $ref = substr( md5( uniqid( mt_rand(), true ) ), 0, 8 );
+            error_log('[' . $ref . '] Error: ' . $e->getMessage() . ' in ' . $sql . ' parms ' . json_encode($values), 0);
+            throw new Exception('Erro ao consultar o banco de dados (código ' . self::codigo_erro($e) . ', ref. ' . $ref . ').');
         } finally {
-            //if($this->action == false) {
-                $this->con = null;
-            //}
+            $this->soltar();
         }
     }
     
@@ -263,12 +296,15 @@ class Mysql
             if( $this->con != null && $this->con->inTransaction() ){
                 $this->con->rollback();
             }
-            error_log("Falha de sql", 0);
+            // Mesmo cuidado do Datatable: o PDO poe o SQL na mensagem, e ela chega ao
+            // cliente pelo campo "error" do envelope.
+            $ref = substr( md5( uniqid( mt_rand(), true ) ), 0, 8 );
+            error_log("[" . $ref . "] Falha de sql", 0);
             error_log($e, 0);
-            throw $e;
+            throw new Exception('Erro ao gravar no banco de dados (código ' . self::codigo_erro($e) . ', ref. ' . $ref . ').');
         } finally {
             if($this->action == false) {
-                $this->con = null;
+                $this->soltar();
             }
         }
         return 0;

@@ -65,6 +65,9 @@ class ReportJob
         } catch (Exception $e) {
             // 1062 = o UNIQUE de lock_global barrou: ja existe um 'executando'. E o
             // caminho esperado quando dois clientes disputam, nao uma falha.
+            // O Mysql nao propaga mais a mensagem crua do PDO (ela levava o SQL para a tela
+            // do usuario), mas mantem o codigo do erro na mensagem — e por isso que procurar
+            // "1062" continua valendo. O "Duplicate" fica como rede de seguranca.
             if( strpos( $e->getMessage(), "1062" ) !== false || stripos( $e->getMessage(), "Duplicate" ) !== false ){
                 $atual = $this->current( $ip, $user, $post_data, $domain );
                 return array( "ok" => false, "ocupado_por" => $atual );
