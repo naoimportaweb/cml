@@ -88,8 +88,8 @@ class MapRelationshipBox():
             return True;
         return self.mapa.switchType(self, etype);
 
-    def addReference(self, title, link1, link2 = "", link3 = "", id_=None, descricao=""):
-        return self.entity.addReference(title, link1, link2, link3, id_, descricao=descricao);
+    def addReference(self, title, link1, link2 = "", link3 = "", id_=None, descricao="", start_date=None, end_date=None, format_date=None):
+        return self.entity.addReference(title, link1, link2, link3, id_, descricao=descricao, start_date=start_date, end_date=end_date, format_date=format_date);
 
     def addTimeSlice(self, text_label, date_start=None, date_end=None, id_=None):
         return self.entity.addTimeSlice(text_label, date_start, date_end, id_);

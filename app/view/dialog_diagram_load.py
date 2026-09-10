@@ -18,6 +18,7 @@ from classlib.relationship.organization import Organization
 from classlib.relationship.other import Other
 from classlib.relationship.link import Link
 from classlib.organization_chart.organization_chart import OrganizationChart
+from classlib.timeline.timeline import Timeline
 
 class DialogDiagramLoad(QDialog):
     def __init__(self, form):
@@ -99,6 +100,19 @@ class DialogDiagramLoad(QDialog):
                 "tipo": "Organization Chart",
                 "data": str(m.get("modification_time") or m.get("creation_time") or ""),
             });
+        # Terceiro tipo. O .get segura servidor antigo (sem a chave "timeline" na resposta):
+        # a lista continua funcionando com os dois tipos de sempre.
+        for m in (self.mapas.get("timeline") or []):
+            nome = str(m.get("name") or "");
+            if str(m.get("relationship_name") or "") != "":
+                nome = nome + " (mapa: " + str(m.get("relationship_name")) + ")";
+            self.linhas.append({
+                "kind": "timeline", "id": m["id"],
+                "user": str(m.get("username") or ""),
+                "nome": nome,
+                "tipo": "Timeline",
+                "data": str(m.get("modification_time") or m.get("creation_time") or ""),
+            });
         self.__reordenar__();
 
     def __reordenar__(self):
@@ -149,10 +163,27 @@ class DialogDiagramLoad(QDialog):
             if r.load( l["id"] ):
                 self.map = r;
                 self.close();
+                return;
+            self.__falhou__( r );
+        elif l["kind"] == "timeline":
+            t = Timeline();
+            if t.load( l["id"] ):
+                self.map = t;
+                self.close();
+                return;
+            self.__falhou__( t );
         else:
             o = OrganizationChart( l["organization_id"] );
             if o.load( l["id"] ):
                 self.map = o;
                 self.close();
+                return;
+            self.__falhou__( o );
+
+    def __falhou__(self, objeto):
+        # O erro do servidor so ia para o terminal; na tela o duplo clique parecia nao fazer
+        # nada. Falha de conexao com o banco no servidor e comum o bastante para merecer aviso.
+        QMessageBox.warning(self, "Abrir diagrama",
+            "Não foi possível abrir:\n\n" + str( getattr(objeto, "ultimo_erro", "") or "erro desconhecido" ));
 
 

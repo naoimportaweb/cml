@@ -64,10 +64,10 @@ class Entity(ConnectObject):
     def getDirt(self):
         return self._dirt;
     
-    def addReference(self, title, link1, link2 = "", link3 = "", id_=None, descricao = ""):
+    def addReference(self, title, link1, link2 = "", link3 = "", id_=None, descricao = "", start_date=None, end_date=None, format_date=None):
         if link1 == "":
             return None;
-        self.references.append( Reference( title, descricao, link1, link2, link3, id_=id_ ) );
+        self.references.append( Reference( title, descricao, link1, link2, link3, id_=id_, start_date=start_date, end_date=end_date, format_date=format_date ) );
         return self.references[-1];
 
     def addTimeSlice(self, text_label, date_start=None, date_end=None, id_=None):
@@ -205,7 +205,8 @@ class Entity(ConnectObject):
         buffer.small_label = js["small_label"];
         if js.get("references") != None:
             for reference in js["references"]:
-                buffer.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"], descricao=reference["descricao"]);
+                buffer.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"], descricao=reference["descricao"],
+                    start_date=reference.get("start_date"), end_date=reference.get("end_date"), format_date=reference.get("format_date"));
         if js.get("classification") != None:
             for classification in js["classification"]:
                 buffer.addClassification( classification["id"], classification["text_label"], classification["classification_item_id"], classification["text_label_choice"], classification["start_date"], classification["end_date"], classification["format_date"] );

@@ -7,10 +7,11 @@ sys.path.append(ROOT);
 
 from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence
-from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QMdiArea, QMessageBox, QTextEdit, QWidget, QHBoxLayout)
+from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QMdiArea, QMessageBox, QScrollArea, QTextEdit, QWidget, QHBoxLayout)
 
 from view.ui.mapa_relationship_engine import MapaRelationshipEngine;
 from view.ui.mapa_organization_chart_engine import MapaOrganizationChartEngine;
+from view.ui.mapa_timeline_engine import MapaTimelineEngine;
 from view.dialogentitylink import DialogEntityLink;
 from view.dialog_entity_organization import DialogEntityOrganization;
 from view.dialog_entity_person import DialogEntityPerson;
@@ -23,11 +24,22 @@ class MdiMap(QWidget):
         self.form_principal = form;
         if mapa.__class__.__name__ == "OrganizationChart":
             self.painter_widget = MapaOrganizationChartEngine(parent=form, mapa=mapa, form=self);
+        elif mapa.__class__.__name__ == "Timeline":
+            self.painter_widget = MapaTimelineEngine(parent=form, mapa=mapa, form=self);
         else:
             self.painter_widget = MapaRelationshipEngine(parent=None, mapa=mapa, form=self);
         self.mapa = mapa;
         layout = QHBoxLayout()
-        layout.addWidget( self.painter_widget );
+        # So a timeline entra numa area rolavel: a largura dela e o ZOOM do eixo (pode passar
+        # de dez mil px), enquanto o mapa e o organograma tem tamanho fixo e ja convivem com
+        # o corte ha muito tempo — embrulhar os tres mudaria o comportamento dos dois antigos.
+        if mapa.__class__.__name__ == "Timeline":
+            area = QScrollArea();
+            area.setWidget( self.painter_widget );
+            area.setWidgetResizable(False);
+            layout.addWidget( area );
+        else:
+            layout.addWidget( self.painter_widget );
         self.setLayout(layout)
         self.painter_widget.redraw();
         

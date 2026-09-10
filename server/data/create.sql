@@ -468,3 +468,72 @@ ALTER TABLE report_job ADD CONSTRAINT UQ_report_job_lock UNIQUE (lock_global);
 ALTER TABLE report_job ADD FOREIGN KEY (diagram_relationship_id) REFERENCES diagram_relationship(id);
 ALTER TABLE report_job ADD FOREIGN KEY (person_id) REFERENCES person(id);
 ALTER TABLE report_job ADD FOREIGN KEY (document_id) REFERENCES document(id);
+
+
+-- ============================================================================
+-- TIMELINE (terceiro tipo de diagrama).
+--
+-- A timeline E um documento, como o mapa e o organograma: tem nome, e criada, salva,
+-- aparece na lista de abrir e pertence a um usuario. O que ela NAO guarda e posicao de
+-- caixa — a posicao de um evento e a data dele.
+--
+-- diagram_relationship_id e OPCIONAL e define os dois modos de uso:
+--   preenchido -> a timeline PROJETA o mapa (vinculo, classificacao, entidade, caixa e
+--                 referencia com data) e soma os eventos proprios;
+--   NULL       -> timeline solta, so com os eventos que o analista marcar.
+-- ============================================================================
+create table diagram_timeline (
+    id VARCHAR(128) PRIMARY KEY,
+    text_label VARCHAR(255) NOT NULL,
+    keyword VARCHAR(255) DEFAULT NULL,
+    diagram_relationship_id VARCHAR(128) DEFAULT NULL,
+    person_id VARCHAR(128) NOT NULL,
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
+ALTER TABLE diagram_timeline ADD FOREIGN KEY (diagram_relationship_id) REFERENCES diagram_relationship(id);
+ALTER TABLE diagram_timeline ADD FOREIGN KEY (person_id) REFERENCES person(id);
+
+-- Acontecimento marcado a mao. Pertence a TIMELINE (nao ao mapa): a mesma investigacao pode
+-- ter varias linhas do tempo com recortes diferentes. entity_id e opcional — evento solto
+-- ("estouro da operacao") existe sem dono, e com entidade ganha o nome dela como subtitulo.
+create table diagram_timeline_event (
+    id VARCHAR(128) PRIMARY KEY,
+    diagram_timeline_id VARCHAR(128) NOT NULL,
+    entity_id VARCHAR(128) DEFAULT NULL,
+    person_id VARCHAR(128) DEFAULT NULL,
+    text_label VARCHAR(255) NOT NULL,
+    description TEXT DEFAULT NULL,
+    start_date         DATE DEFAULT NULL,
+    end_date           DATE DEFAULT NULL,
+    format_date        VARCHAR(255) DEFAULT 'yyyy-MM-dd',
+    creation_time      DATETIME DEFAULT   CURRENT_TIMESTAMP,
+    modification_time  DATETIME ON UPDATE CURRENT_TIMESTAMP
+);
+ALTER TABLE diagram_timeline_event ADD FOREIGN KEY (diagram_timeline_id) REFERENCES diagram_timeline(id);
+ALTER TABLE diagram_timeline_event ADD FOREIGN KEY (entity_id) REFERENCES entity(id);
+ALTER TABLE diagram_timeline_event ADD FOREIGN KEY (person_id) REFERENCES person(id);
+-- A timeline sempre carrega "os eventos deste documento, em ordem": indice pelo par.
+CREATE INDEX IX_diagram_timeline_event ON diagram_timeline_event (diagram_timeline_id, start_date);
+
+-- Referencia com data = ACONTECIMENTO. A referencia ja era a fonte ("o que diz que isso
+-- aconteceu"); com data ela vira tambem o fato datado que a timeline desenha. Sao as mesmas
+-- tres colunas de todo o resto do schema, entao vale pontual (so start) ou periodo.
+ALTER TABLE diagram_relationship_element_reference ADD COLUMN start_date  DATE DEFAULT NULL;
+ALTER TABLE diagram_relationship_element_reference ADD COLUMN end_date    DATE DEFAULT NULL;
+ALTER TABLE diagram_relationship_element_reference ADD COLUMN format_date VARCHAR(255) DEFAULT 'yyyy-MM-dd';
+
+-- ==========================================================================================
+-- MIGRACAO da timeline para bancos ja em producao (ex.: cyberwar). O deploy NAO altera
+-- bancos existentes (ver DEPLOY.md): rodar isto a mao, uma vez, por banco.
+--
+--   ALTER TABLE diagram_relationship_element_reference
+--       ADD COLUMN start_date  DATE DEFAULT NULL,
+--       ADD COLUMN end_date    DATE DEFAULT NULL,
+--       ADD COLUMN format_date VARCHAR(255) DEFAULT 'yyyy-MM-dd';
+--   -- mais as duas tabelas acima (diagram_timeline e diagram_timeline_event, com as FKs
+--   -- e o indice).
+--
+-- Sem a migracao: o load do mapa quebra no SELECT das referencias (coluna inexistente) e a
+-- timeline nao abre.
+-- ==========================================================================================

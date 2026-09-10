@@ -268,7 +268,7 @@ class Entity
 
     public static function appendData($entity_json, $domain){
         $mysql = new Mysql( $domain );
-        $entity_json["references"] = $mysql->DataTable("SELECT drer.id, drer.title, drer.link1, drer.link2, drer.link3, drer.description as descricao FROM diagram_relationship_element_reference AS drer where drer.entity_id = ?", [$entity_json["id"]]);
+        $entity_json["references"] = $mysql->DataTable("SELECT drer.id, drer.title, drer.link1, drer.link2, drer.link3, drer.description as descricao, drer.start_date as start_date, drer.end_date as end_date, drer.format_date as format_date FROM diagram_relationship_element_reference AS drer where drer.entity_id = ?", [$entity_json["id"]]);
 
         $entity_json["classification"] = $mysql->DataTable("select eci.format_date as format_date, eci.entity_id as entity_id, eci.start_date as start_date, eci.end_date as end_date, eci.id as id, clsi.text_label as text_label_choice, cls.text_label as text_label, clsi.id as classification_item_id from entity_classification_item as eci inner join classification_item as clsi on eci.classification_item_id = clsi.id inner join classification as cls on clsi.classification_id = cls.id where eci.entity_id = ?", [$entity_json["id"]]);
         return $entity_json;

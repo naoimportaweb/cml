@@ -49,8 +49,10 @@ class Link(MapRelationshipBox):
                 return True;
         self.to_entity.append( lentity );
 
-    def addFrom(self, entity):
-        lentity = LinkEntity(entity, None, None, "yyyy-MM-dd");
+    def addFrom(self, entity, start_date=None, end_date=None, format_date="yyyy-MM-dd"):
+        # As datas eram descartadas aqui (o addTo ja as recebia): a ponta "from" voltava do
+        # load sem periodo e o proximo save zerava a coluna no banco.
+        lentity = LinkEntity(entity, start_date, end_date, format_date or "yyyy-MM-dd");
         for buffer in self.from_entity:
             if buffer.entity.id == lentity.entity.id:
                 return True;

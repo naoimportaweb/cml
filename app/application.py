@@ -153,6 +153,11 @@ class MainWindow(QMainWindow):
     def open(self):
         f = DialogDiagramLoad(self);
         f.exec();
+        # Cancelar o dialogo, ou o load falhar, deixava f.map = None: o MdiMap montava um
+        # engine sem mapa e o desenho estourava DENTRO do painter, matando o processo
+        # ("Cannot destroy paint device that is being painted" + segfault).
+        if f.map == None:
+            return;
         child = MdiMap(self, f.map)
         self._mdi_area.addSubWindow(child);
         child.new_map()
@@ -172,25 +177,32 @@ class MainWindow(QMainWindow):
         #if self.active_mdi_child() and self.active_mdi_child().save():
         #    self.statusBar().showMessage("File saved", 2000)
 
-    def __mapa_ativo__(self):
+    def __mapa_ativo__(self, classe=None):
         # "(x and x).mapa" estoura quando nao ha janela ativa: (None and None) e None, e
         # .mapa em None da AttributeError antes do teste != None adiantar alguma coisa.
         child = self.active_mdi_child();
         if child == None or getattr(child, "mapa", None) == None:
             QMessageBox.information(self, "Mapa", "Abra um mapa antes.");
             return None;
+        # Sao tres tipos de diagrama na mesma janela MDI, e quase toda acao da barra so faz
+        # sentido so no mapa de relacionamento (Property, Check, Documents, Extrair).
+        # Sem esta checagem, com um organograma ou uma timeline em foco a acao estourava
+        # AttributeError la dentro do dialogo.
+        if classe != None and child.mapa.__class__.__name__ != classe:
+            QMessageBox.information(self, "Mapa", "Esta ação vale para o mapa de relacionamento.");
+            return None;
         return child.mapa;
 
     @Slot()
     def map_propert(self):
-        buffer = self.__mapa_ativo__();
+        buffer = self.__mapa_ativo__("MapRelationship");
         if buffer != None:
             f = DialogRelationshipEdit(self, buffer);
             f.exec();
 
     @Slot()
     def map_errors(self):
-        buffer = self.__mapa_ativo__();
+        buffer = self.__mapa_ativo__("MapRelationship");
         if buffer != None:
             f = DialogRelationshipCheck(self, buffer);
             f.exec();
@@ -208,7 +220,7 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def map_extrair(self):
-        buffer = self.__mapa_ativo__();
+        buffer = self.__mapa_ativo__("MapRelationship");
         if buffer == None:
             return;
         janela = self.active_mdi_child();   # quem sabe redesenhar e o MdiMap, nao o mapa
@@ -234,7 +246,7 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def map_documents(self):
-        buffer = self.__mapa_ativo__();
+        buffer = self.__mapa_ativo__("MapRelationship");
         if buffer != None:
             # Abrir os documentos e o "eu vi": limpa a marca, senao o "*" ficaria para
             # sempre depois do primeiro report.
@@ -271,7 +283,10 @@ class MainWindow(QMainWindow):
         has_mdi_child = (self.active_mdi_child() is not None)
         if self.active_mdi_child() is not None:
             buffer_area = self.active_mdi_child() and self.active_mdi_child();
-            title = "Relationship MAP: " + buffer_area.mapa.getName() ;
+            # O titulo dizia "Relationship MAP" para qualquer diagrama; com tres tipos isso
+            # passou a mentir na cara do usuario.
+            prefixos = {"OrganizationChart" : "Organization Chart", "Timeline" : "Timeline"};
+            title = prefixos.get( buffer_area.mapa.__class__.__name__, "Relationship MAP" ) + ": " + buffer_area.mapa.getName() ;
             if buffer_area.mapa.getLocked() and len(buffer_area.mapa.lock_list) > 0 :
                 title = title + " (ReadOnly at " + buffer_area.mapa.lock_list[-1]["lock_time"] + " ISO DATE)";
             self.setWindowTitle( title )
@@ -358,6 +373,7 @@ class MainWindow(QMainWindow):
         self._map_documents = QAction(icon, "Documents", self,
                                 statusTip="Documentos (PDF) do mapa",
                                 triggered=self.map_documents)
+
 
         icon = QIcon.fromTheme(QIcon.ThemeIcon.AddressBookNew);
         self._subtypes_act = QAction(icon, "Sub-tipos", self,

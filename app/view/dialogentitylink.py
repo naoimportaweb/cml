@@ -110,7 +110,7 @@ class DialogEntityLink(QDialog):
         btn_reference_add.clicked.connect(self.btn_reference_add_click);
         btn_reference_del.clicked.connect(self.btn_reference_del_click);
         CustomVLayout.widget_linha(self, self.page_ref, [btn_reference_add, btn_reference_del] );
-        self.table_reference = CustomVLayout.widget_tabela(self, ["Title"], tamanhos=[QHeaderView.Stretch], double_click=self.table_reference_click);
+        self.table_reference = CustomVLayout.widget_tabela(self, ["Title", "Acontecimento"], tamanhos=[QHeaderView.Stretch, QHeaderView.ResizeToContents], double_click=self.table_reference_click);
         self.page_ref.addWidget(self.table_reference);
 
         # Vinculo tambem tem lista de imagens, mas sem rosto (with_face=False).
@@ -128,6 +128,7 @@ class DialogEntityLink(QDialog):
         self.table_reference.setRowCount( len( self.link.entity.references ) );
         for i in range(len( self.link.entity.references )):
             self.table_reference.setItem( i, 0, QTableWidgetItem( self.link.entity.references[i].title ) );
+            self.table_reference.setItem( i, 1, QTableWidgetItem( self.link.entity.references[i].periodo_texto() ) );
     
     def table_reference_click(self):
         element = self.link.entity.references[ self.table_reference.index() ];

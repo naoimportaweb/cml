@@ -14,6 +14,7 @@ from view.ui.customvlayout import CustomVLayout;
 from classlib.server import Server;
 from view.ui.qeditorplus import QEditorPlus;
 from view.ui.qbot import QBot;
+from view.ui.qperiodo import QPeriodo;
 
 class DialogReference(QDialog):
     def __init__(self, form, element, reference):
@@ -75,13 +76,26 @@ class DialogReference(QDialog):
         self.txt_link3.setFont( Configuration.instancia().getFont() );
         layout.addWidget(self.txt_link3, 5, 1)
 
+        # Referencia COM data e um acontecimento: e o que a timeline do mapa desenha. Sem
+        # data, segue sendo so fonte — o campo e opcional de proposito.
+        lbl_data = QLabel("Acontecimento");
+        lbl_data.setFont( Configuration.instancia().getFont() );
+        lbl_data.setProperty("class", "normal");
+        layout.addWidget(lbl_data, 6, 0);
+        self.periodo = QPeriodo(self,
+            start_date  = getattr(self.reference, "start_date", None)  if self.reference != None else None,
+            end_date    = getattr(self.reference, "end_date", None)    if self.reference != None else None,
+            format_date = getattr(self.reference, "format_date", None) if self.reference != None else None,
+            rotulo_inicio="Data do fato:", rotulo_fim="Fim (opcional):");
+        layout.addWidget(self.periodo, 6, 1);
+
         if self.reference != None:
             qb = QBot(self, self.reference, "bot/brazil/wayback/config.json");
-            layout.addWidget(qb, 6, 1)
+            layout.addWidget(qb, 7, 1)
 
         btn_salvar = QPushButton("Save")
         btn_salvar.clicked.connect(self.btn_salvar_click)
-        layout.addWidget(btn_salvar, 7, 1);
+        layout.addWidget(btn_salvar, 8, 1);
         widget1 = QWidget();
         widget1.setLayout( layout );
         page.addWidget( widget1 );
@@ -113,14 +127,19 @@ class DialogReference(QDialog):
         self.txt_citacao.setPlainText(  self.reference.citation()  );
     
     def btn_salvar_click(self):
+        inicio, fim, formato = self.periodo.valores();
         if self.reference == None:
-            self.reference = self.element.addReference(self.txt_title.text(), self.txt_link1.text(), self.txt_link2.text(),  self.txt_link3.text(), descricao=self.txt_descricao.toPlainText() );
+            self.reference = self.element.addReference(self.txt_title.text(), self.txt_link1.text(), self.txt_link2.text(),  self.txt_link3.text(), descricao=self.txt_descricao.toPlainText(),
+                start_date=inicio, end_date=fim, format_date=formato );
         else:
             self.reference.title = self.txt_title.text();
             self.reference.link1 = self.txt_link1.text();
             self.reference.link2 = self.txt_link2.text();
             self.reference.link3 = self.txt_link3.text();
             self.reference.description = self.txt_descricao.toPlainText();
+            self.periodo.aplicar( self.reference );
+        # A data so vai para o banco no save do MAPA (a referencia viaja dentro do element),
+        # como ja acontece com titulo e links.
 
     def btn_close_click(self):
         self.close();

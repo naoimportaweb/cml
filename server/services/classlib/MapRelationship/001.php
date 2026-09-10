@@ -26,7 +26,10 @@ class MapRelationship
 
         for($i = 0; $i < count($buffer_elements); $i++ ) {
 
-            $buffer_elements[$i]["references"] = $mysql->DataTable("SELECT drer.id, drer.title, drer.link1, drer.link2, drer.link3, drer.description as descricao FROM diagram_relationship_element_reference AS drer where drer.entity_id = ?", [$buffer_elements[$i]["entity_id"]]);
+            // start_date/end_date/format_date: referencia com data e um ACONTECIMENTO, e a
+            // timeline do mapa desenha essas datas. Sem elas aqui o cliente as perderia no
+            // load e o proximo save gravaria NULL por cima.
+            $buffer_elements[$i]["references"] = $mysql->DataTable("SELECT drer.id, drer.title, drer.link1, drer.link2, drer.link3, drer.description as descricao, drer.start_date as start_date, drer.end_date as end_date, drer.format_date as format_date FROM diagram_relationship_element_reference AS drer where drer.entity_id = ?", [$buffer_elements[$i]["entity_id"]]);
 
             $buffer_elements[$i]["classification"] = $mysql->DataTable("select eci.format_date as format_date, eci.entity_id as entity_id, eci.start_date as start_date, eci.end_date as end_date, eci.id as id, clsi.text_label as text_label_choice, cls.text_label as text_label, clsi.id as classification_item_id from entity_classification_item as eci inner join classification_item as clsi on eci.classification_item_id = clsi.id inner join classification as cls on clsi.classification_id = cls.id where eci.entity_id = ?", [$buffer_elements[$i]["entity_id"]]);
 
@@ -166,8 +169,8 @@ class MapRelationship
             // referencia
             for($j = 0; $j < count($element["references"]); $j++){
                 $reference = $element["references"][$j];
-                array_push($sqls, "INSERT INTO diagram_relationship_element_reference (id, entity_id, title, link1, link2, link3, description ) VALUES(?, ?, ?, ?, ?, ?, ? )  ON DUPLICATE KEY UPDATE  title=?, link1=?, link2=?, link3=?, description=?");
-                array_push( $valuess, [ $reference["id"], $reference["entity_id"], $reference["title"], $reference["link1"], $reference["link2"], $reference["link3"], $reference["description"], $reference["title"], $reference["link1"], $reference["link2"], $reference["link3"], $reference["description"] ] );
+                array_push($sqls, "INSERT INTO diagram_relationship_element_reference (id, entity_id, title, link1, link2, link3, description, start_date, end_date, format_date ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ? )  ON DUPLICATE KEY UPDATE  title=?, link1=?, link2=?, link3=?, description=?, start_date=?, end_date=?, format_date=?");
+                array_push( $valuess, [ $reference["id"], $reference["entity_id"], $reference["title"], $reference["link1"], $reference["link2"], $reference["link3"], $reference["description"], $reference["start_date"], $reference["end_date"], $reference["format_date"], $reference["title"], $reference["link1"], $reference["link2"], $reference["link3"], $reference["description"], $reference["start_date"], $reference["end_date"], $reference["format_date"] ] );
             }
             if( array_key_exists("classification", $element) ) {
                 for($j = 0; $j < count($element["classification"]); $j++){

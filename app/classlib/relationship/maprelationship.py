@@ -96,7 +96,8 @@ class MapRelationship(ConnectObject):
             chave = str(r.link1 or "").strip();
             if chave != "" and chave in links_destino:
                 continue;
-            destino.addReference( r.title, r.link1, r.link2, r.link3, descricao=r.description );
+            destino.addReference( r.title, r.link1, r.link2, r.link3, descricao=r.description,
+                start_date=getattr(r, "start_date", None), end_date=getattr(r, "end_date", None), format_date=getattr(r, "format_date", None) );
             links_destino.add( chave );
 
         # 2) vinculos: reponta as pontas que eram 'origem' para 'destino'. As pontas em
@@ -179,7 +180,10 @@ class MapRelationship(ConnectObject):
                     if element['etype'] == "person":
                         buffer.doxxing = element["data_extra"];
                     for reference in element["references"]:
-                        buffer.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"], descricao= reference["descricao"]);
+                        # .get nas datas: servidor sem a migracao da timeline nao manda as
+                        # colunas, e a referencia continua valendo como fonte sem data.
+                        buffer.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"], descricao= reference["descricao"],
+                            start_date=reference.get("start_date"), end_date=reference.get("end_date"), format_date=reference.get("format_date") );
                     buffer.entity.full_description  = element["full_description"];
                     buffer.entity.classification    = element["classification"];
                     buffer.entity.small_label       = element["small_label"];
@@ -206,9 +210,10 @@ class MapRelationship(ConnectObject):
                     for to_ in element["to"]:
                         objeto.addTo( self.findById( self.elements, to_["id"] ), start_date=to_["start_date"], end_date=to_["end_date"], format_date=to_["format_date"] );
                     for from_ in element["from"]:
-                        objeto.addFrom( self.findById( self.elements, from_["id"] ) );
+                        objeto.addFrom( self.findById( self.elements, from_["id"] ), start_date=from_.get("start_date"), end_date=from_.get("end_date"), format_date=from_.get("format_date") );
                     for reference in element["references"]:
-                        objeto.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"], descricao= reference["descricao"]);
+                        objeto.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"], descricao= reference["descricao"],
+                            start_date=reference.get("start_date"), end_date=reference.get("end_date"), format_date=reference.get("format_date") );
         return True;
     
     def findById(self, lista, id_):
@@ -219,6 +224,12 @@ class MapRelationship(ConnectObject):
 
     def load(self, id):
         js = self.__execute__("MapRelationship", "load", {"id" : id });
+        # Erro do servidor (queda de conexao com o banco, sessao expirada) vem como
+        # status=False/return=None. Sem esta guarda o load_data estourava TypeError em cima
+        # do None — e o chamador seguia com um mapa vazio, que estoura de novo no desenho.
+        if not js.get("status") or js.get("return") == None:
+            self.ultimo_erro = js.get("error") or "O servidor não devolveu o mapa.";
+            return False;
         return self.load_data(js["return"]);
 
     def exists(self, name):
