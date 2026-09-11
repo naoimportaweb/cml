@@ -37,8 +37,14 @@ class Timeline(ConnectObject):
     TOPO         = 78;    # titulo (linha 1) + resumo e legenda (linha 2)
     RODAPE       = 30;
     ALT_BARRA    = 13;
+    # Piso do passo vertical de cada faixa. O passo REAL e calculado no recalc a partir da
+    # fonte (ver __passos__): com os 31/33 fixos, o rotulo de uma faixa encostava — e com
+    # fonte maior invadia — a faixa de cima, que e o "encavalamento" que o usuario via.
     NIVEL_BARRA  = 31;    # rotulo + barra + folga
     NIVEL_MARCO  = 33;
+    # Altura e barata: a timeline vive dentro de um QScrollArea (MdiMap), entao rolar
+    # vertical custa menos ao leitor do que faixa colada em faixa.
+    FOLGA_VERTICAL = 22;  # respiro entre duas faixas empilhadas
     FOLGA_NIVEL  = 16;    # respiro horizontal entre dois eventos do mesmo nivel
     BASE_LARGURA = 1500;  # px do eixo com zoom 1
     ALT_MINIMA   = 420;
@@ -71,6 +77,9 @@ class Timeline(ConnectObject):
         self.altura = self.ALT_MINIMA;
         self.niveis_barra = 0; self.niveis_marco = 0;
         self.ticks = [];
+        self.passo_barra = self.NIVEL_BARRA;
+        self.passo_marco = self.NIVEL_MARCO;
+        self.desloc_marco = 26;
 
     # ------------------------------------------------------------------ contrato de diagrama
     def getName(self):
@@ -276,8 +285,24 @@ class Timeline(ConnectObject):
         self.recalc();
         return ( int(self.MARGEM_ESQ + self.largura_eixo + self.folga_direita), int(self.altura) );
 
+    def __passos__(self, metrica):
+        """Altura de uma faixa empilhada, medida na fonte de verdade.
+
+        Uma faixa de barra ocupa o rotulo (acima) mais a barra; uma de marco ocupa o rotulo
+        centrado no pino. Somar a FOLGA_VERTICAL a isso e o que garante espaco em branco
+        entre uma faixa e a de cima em vez de texto colado em texto. Os antigos 31/33 fixos
+        viram apenas o piso: nenhum desenho fica mais apertado do que ja era."""
+        self.passo_barra = max( self.NIVEL_BARRA,
+            metrica.height() + 3 + self.ALT_BARRA + self.FOLGA_VERTICAL );
+        self.passo_marco = max( self.NIVEL_MARCO,
+            metrica.height() + 2 + self.FOLGA_VERTICAL );
+        # O primeiro nivel de marco tem de comecar ABAIXO dos rotulos do eixo (desenhados em
+        # eixo_y + 6): com 26 fixo, o rotulo do marco de nivel 0 passava por cima da data.
+        self.desloc_marco = max( 26, metrica.height() + 16 );
+
     def recalc(self):
         metrica = QFontMetrics( self.__fonte__() );
+        self.__passos__( metrica );
         self.largura_eixo = max( 400.0, self.BASE_LARGURA * self.zoom );
 
         if len(self.eventos) == 0:
@@ -331,7 +356,7 @@ class Timeline(ConnectObject):
                 evento.nivel = nivel;
                 evento.x = inicio_ocupado;
                 evento.w = max( 20, fim_ocupado - inicio_ocupado - self.FOLGA_NIVEL );
-                evento.h = 24;
+                evento.h = max( 24, metrica.height() + 4 );
             else:
                 x_fim = self.x_da_data( evento.fim );
                 fim_ocupado = max( x_fim, x_ini + largura_texto ) + self.FOLGA_NIVEL;
@@ -351,9 +376,9 @@ class Timeline(ConnectObject):
                 if fim > extremo:
                     extremo = fim;
         self.folga_direita = max( self.MARGEM_DIR, extremo - (self.MARGEM_ESQ + self.largura_eixo) + 20 );
-        self.eixo_y = self.TOPO + max(1, self.niveis_barra) * self.NIVEL_BARRA + 10;
+        self.eixo_y = self.TOPO + max(1, self.niveis_barra) * self.passo_barra + 10;
         self.altura = max( self.ALT_MINIMA,
-            self.eixo_y + 34 + max(1, self.niveis_marco) * self.NIVEL_MARCO + self.RODAPE );
+            self.eixo_y + self.desloc_marco + 8 + max(1, self.niveis_marco) * self.passo_marco + self.RODAPE );
 
         # Agora que o eixo tem y, cada evento recebe o seu.
         for evento in self.eventos:
@@ -372,10 +397,10 @@ class Timeline(ConnectObject):
 
     def __y_barra__(self, nivel):
         # nivel 0 encosta no eixo; os seguintes sobem.
-        return self.eixo_y - 12 - (nivel * self.NIVEL_BARRA) - self.ALT_BARRA;
+        return self.eixo_y - 12 - (nivel * self.passo_barra) - self.ALT_BARRA;
 
     def __y_marco__(self, nivel):
-        return self.eixo_y + 26 + (nivel * self.NIVEL_MARCO);
+        return self.eixo_y + self.desloc_marco + (nivel * self.passo_marco);
 
     def __dominio__(self):
         inicio = min( [e.inicio for e in self.eventos] );

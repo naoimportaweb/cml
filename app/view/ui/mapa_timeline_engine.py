@@ -1,6 +1,6 @@
 # CADA MAPA POSSUI UMA FORMA DE DESENHAR, CLICAR, SELECIONAR, ISSO FICA AQUI
 
-from PySide6.QtWidgets import (QFileDialog, QMenu, QToolTip, QWidget)
+from PySide6.QtWidgets import (QApplication, QFileDialog, QMenu, QScrollArea, QToolTip, QWidget)
 from PySide6.QtCore import Qt, QPoint
 from PySide6.QtGui import (QCursor, QMouseEvent, QPaintEvent, QPainter, QPixmap)
 
@@ -82,13 +82,31 @@ class MapaTimelineEngine(QWidget):
             self.__editar__( evento );
 
     def wheelEvent(self, event):
-        # Ctrl+roda = zoom, como em qualquer visualizador. Sem Ctrl, deixa o scroll da area
-        # rolar normalmente.
+        # Ctrl+roda = zoom, como em qualquer visualizador. Sem Ctrl, a roda ROLA a area: o
+        # desenho quase sempre e maior que a janela — a largura e o zoom do eixo e a altura
+        # cresce com o empilhamento das faixas. Encaminhar a roda na mao para a viewport, em
+        # vez de so ignore(), porque a propagacao automatica do wheel para o QScrollArea que
+        # embrulha o widget nao e garantida; assim rolar vertical funciona sempre (e o
+        # Shift+roda horizontal, que quem trata e a propria area).
         if event.modifiers() & Qt.ControlModifier:
             self.__zoom__( 1.25 if event.angleDelta().y() > 0 else 0.8 );
             event.accept();
             return;
+        area = self.__area_rolavel__();
+        if area != None:
+            QApplication.sendEvent( area.viewport(), event );
+            event.accept();
+            return;
         event.ignore();
+
+    def __area_rolavel__(self):
+        """O QScrollArea que o MdiMap poe em volta da timeline (so ela tem um)."""
+        w = self.parentWidget();
+        while w != None:
+            if isinstance(w, QScrollArea):
+                return w;
+            w = w.parentWidget();
+        return None;
 
     # ------------------------------------------------------------------ menu
     def menu_contexto(self, ponto):
