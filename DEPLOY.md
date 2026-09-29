@@ -267,6 +267,44 @@ hospedagem compartilhada. Passe as senhas por `--defaults-extra-file` com `umask
 em `argv` — numa máquina compartilhada o `ps` de outros usuários enxerga a linha de comando.
 Apague os `.cnf` ao terminar.
 
+## Passo 5 — segunda instalação na mesma conta (feito para `corrupcao`, 2026-09-22)
+
+Um "domain" novo do CML não é uma entrada a mais no `config.json` de quem já existe: cada
+entrada precisa do **próprio banco**, e o usuário MySQL de hospedagem compartilhada só enxerga
+o banco dele (`GRANT ALL ON <banco>.*`, `USAGE` no resto — sem `CREATE DATABASE`). O caminho
+que funcionou foi uma **instalação irmã**: `public_html/corrupcao/cml/` ao lado de
+`public_html/cyberwarfare/cml/`, servida em `https://<site>/corrupcao`, com `config.json`,
+`certs/` e banco próprios. Receita, na ordem:
+
+1. **Banco no hPanel** (MySQL Databases) — nasce com usuário e senha próprios. Registrar no
+   `~/.env` como projeto novo: `CML_PROJECTS=...,CORRUPCAO` e o bloco `CORRUPCAO_*` inteiro
+   (`DEPLOY_DIR` = a raiz nova, `DEPLOY_FLAG` = nome novo, `DB_*` do banco novo; `DB_HOST` e
+   `DB_HOST_REMOTO` iguais aos do CYBERWARFARE, é o mesmo MySQL). Com isso o MCP `cml-remoto`
+   passa a operar a instalação nova com `projeto=CORRUPCAO`.
+2. **Fontes**: `rsync -a --exclude data/ --exclude error_log <origem>/cml/ <nova>/cml/`.
+   O `data/` **nunca** é copiado — é lá que moram a senha, a chave privada e os PDFs.
+3. **`data/` novo**: `.htaccess` copiado, `certs/` e `documents/` vazios, e o `config.json`
+   montado por **`script/domain_add.php`** (roda no servidor com o `php` CLI; a senha entra por
+   stdin, nunca por `argv`) a partir de um esqueleto `{"domains":[],"default":"<domain>",
+   "connections":{},"federation":{},"crypto":{"path":"<nova>/cml/data/certs/"}}`. O script
+   recusa domain repetido, faz backup e grava `0600`. Ele também serve para acrescentar um
+   domain a um `config.json` já existente — mas aí vale o aviso do Passo 4: cada domain
+   listado é um banco alcançável pelo endpoint.
+4. **Schema** por `mysqldump --no-data --single-transaction --no-tablespaces --routines
+   --triggers --events` do banco de origem para o novo — o `create.sql` do repositório é
+   acumulativo (criações, migrações e drops no mesmo arquivo) e **não roda limpo**; o dump do
+   banco vivo é o schema de produção de fato. Depois, as **tabelas globais sem tela de
+   cadastro**: `classification`, `classification_item` e `sub_etype` (`--no-create-info`).
+   Sem elas o domain nasce sem classificações e sem subtipos.
+5. **Convites**: `INSERT INTO person_enter(id, key_enter) VALUES (UUID(), UUID())` × N — com
+   `restricted: true` o primeiro cadastro precisa de um. Entidades (MISP) e usuários **não**
+   foram copiados: o domain nasce vazio de propósito.
+6. **Flag**: a instalação nova só recebe `deploy` depois que o dono criar
+   `<DEPLOY_DIR>/<DEPLOY_FLAG>` na raiz — ninguém cria a flag por ele (regra acima).
+7. **Conferir por HTTPS**: `data/config.json` → 403; `Domain.list` → só o domain novo;
+   `Session.publickey` → chave pública (prova `certs/` gravável + banco vivo). E o
+   `Domain.list` da instalação **antiga** tem que continuar igual.
+
 ## Diagnóstico rápido
 
 | Sintoma | Causa provável |

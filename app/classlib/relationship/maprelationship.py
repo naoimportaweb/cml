@@ -214,6 +214,10 @@ class MapRelationship(ConnectObject):
                     for reference in element["references"]:
                         objeto.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"], descricao= reference["descricao"],
                             start_date=reference.get("start_date"), end_date=reference.get("end_date"), format_date=reference.get("format_date") );
+                    # A descricao do vinculo nao era carregada (so a das entidades, acima): o
+                    # DialogEntityLink abria vazio e o save seguinte gravava "" por cima do
+                    # que estava no banco.
+                    objeto.entity.full_description  = element.get("full_description");
         return True;
     
     def findById(self, lista, id_):
