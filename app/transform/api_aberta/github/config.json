@@ -1,0 +1,13 @@
+{
+  "id": "github.perfil",
+  "nome": "Perfil e organizações (GitHub)",
+  "versao": "1",
+  "entrada": ["person", "organization", "other"],
+  "saida": ["person", "organization", "other"],
+  "fonte": "api-aberta",
+  "rede": true,
+  "chave_env": null,
+  "ttl": 43200,
+  "path": "transform.py",
+  "class": "TransformGithub"
+}

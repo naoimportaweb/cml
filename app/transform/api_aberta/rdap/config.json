@@ -1,0 +1,13 @@
+{
+  "id": "rdap.registro",
+  "nome": "Registro (RDAP): domínio, IP ou ASN",
+  "versao": "1",
+  "entrada": ["other", "organization"],
+  "saida": ["organization", "other"],
+  "fonte": "api-aberta",
+  "rede": true,
+  "chave_env": null,
+  "ttl": 86400,
+  "path": "transform.py",
+  "class": "TransformRdap"
+}

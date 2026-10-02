@@ -1,0 +1,12 @@
+{
+  "id": "base.associadas",
+  "nome": "Associações globais (MISP e outras)",
+  "versao": "1",
+  "entrada": ["person", "organization", "other"],
+  "fonte": "base-propria",
+  "rede": false,
+  "chave_env": null,
+  "ttl": 0,
+  "path": "transform.py",
+  "class": "TransformAssociadas"
+}

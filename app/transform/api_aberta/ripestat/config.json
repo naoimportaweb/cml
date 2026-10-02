@@ -1,0 +1,13 @@
+{
+  "id": "ripestat.rede",
+  "nome": "ASN, prefixos e vizinhos BGP (RIPEstat)",
+  "versao": "1",
+  "entrada": ["other", "organization"],
+  "saida": ["other", "organization"],
+  "fonte": "api-aberta",
+  "rede": true,
+  "chave_env": null,
+  "ttl": 43200,
+  "path": "transform.py",
+  "class": "TransformRipestat"
+}

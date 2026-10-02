@@ -93,6 +93,14 @@ class MapaRelationshipEngine(QWidget):
                 self.form.entity_double_click( buffer );
             self.redraw();
 
+    def contextMenuEvent(self, event):
+        # Botao direito numa caixa: menu de transforms (estilo Maltego). So o mapa de vinculos
+        # tem; o form decide o que mostrar conforme o tipo da caixa.
+        pos = event.pos();
+        buffer = self.getElement(pos.x(), pos.y());
+        if buffer != None and self.form != None and hasattr(self.form, "menu_transforms"):
+            self.form.menu_transforms(buffer, event.globalPos());
+
     def mouseMoveEvent(self, event: QMouseEvent):
         current_pos = event.position().toPoint()
         QWidget.mouseMoveEvent(self, event);

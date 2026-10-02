@@ -35,7 +35,7 @@ ok "Libs de sistema instaladas."
 #    --break-system-packages porque o Debian 13 marca o ambiente externally-managed (PEP 668).
 info "Deps Python (pip)…"
 python3 -m pip install --break-system-packages \
-    requests PySide6 pycryptodome pyspellchecker beautifulsoup4 waybackpy
+    requests PySocks PySide6 pycryptodome pyspellchecker beautifulsoup4 waybackpy
 ok "Deps Python instaladas."
 
 echo

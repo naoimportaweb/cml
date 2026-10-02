@@ -171,6 +171,41 @@ O webapi ainda **não tem rota de alocação** de canal (é pendência do lado r
 
 **A "máquina 90" (o host do rolhama/ollama):** GPU **RTX 5060 16 GB**. Modelo default `qwen2.5:14b-instruct-q6_K` (`report.py`, sobrescrevível por `CML_REPORT_MODELO`; usado por report **e** bot de entidades) — q6_K + 16k de contexto ≈ ~15 GB, encaixa justo na 16 GB; se der OOM, baixar `ROLHAMA_OLLAMA_NUM_CTX` (12288/8192) no `~/.env` **da máquina 90** ou voltar ao Q4. O worker **serializa globalmente** (uma geração por vez na máquina), por isso o report manda um prompt só. Panorama de infra e fontes de dados em `docs/ARQUITETURA.md`.
 
+### Transforms (estilo Maltego) — `app/transform/`
+
+Botão direito numa caixa do mapa de vínculos → submenu **Transforms** (agrupado por fonte; os
+indisponíveis ficam visíveis com o motivo). Um transform é `(entidade) → entidades + vínculos`;
+o resultado **nunca grava direto**: abre o painel **Proposta** (`view/dialog_transform_proposta.py`),
+onde o analista marca, confere o tipo e escolhe *criar nova* ou *reaproveitar* a entidade que já
+está na base (busca antes de criar). Só então `transform/aplicar.py` insere no modelo, em círculo
+ao redor da caixa de origem; persistir é o save do mapa, como sempre. Contrato e decisões em
+**`SPEC.md`**; catálogo de fontes OSINT em `docs/OSINT.md`; servidor MCP em `docs/MCP.md`.
+
+- **Núcleo sem Qt** (`nucleo.py` registro/executor/`Resultado`; `contexto.py` HTTP, LLM, craudiowebot,
+  base) — testável com `python3` puro; a casca Qt é `view/ui/transform_manager.py` (singleton de
+  módulo com `QThread`, como o `ReportManager`) + o painel. **Os sinais do worker ligam em slots
+  do gerente, não em lambdas**: lambda sem objeto de contexto roda na thread do emissor e o
+  `thread.wait()` espera por si mesmo (deadlock).
+- **Transform novo** = pasta `app/transform/<fonte>/<nome>/` com `config.json` (`id`, `nome`,
+  `entrada` como `etype` ou `etype:sub_etype`, `fonte` ∈ base-propria|api-aberta|ia|scraping,
+  `rota`, `chave_env`, `ttl` do cache em segundos) e `transform.py` com subclasse de
+  `nucleo.Transform`. O `Registro` relê a cada menu: não precisa reiniciar. O `Resultado` é
+  validado pelo `Executor` depois de **todo** transform (limites, ponta solta, sem referência → aviso).
+- **Toda informação traz fonte**: `ctx.ref(título, url)`. A data de **coleta** vai na *descrição*
+  da referência, nunca em `start_date` — referência com data vira acontecimento na timeline.
+- **Rede**: `ctx.http()` sai com UA de Firefox corrente (`transform/contexto.py:UA`; atualizar a
+  cada uso, regra do dono) e pela rota do transform: `direta` ou `tor` (SOCKS5 `socks5h`, o DNS
+  também sai pelo Tor — por isso DNS é via DoH, nunca resolvedor local). Rota padrão: `CML_TX_ROTA_PADRAO`.
+- **LLM** via `ctx.llm()`: `rolhama` (padrão, canal **510**) ou `ollama` direto (opt-in:
+  `CML_LLM_BACKEND=ollama` + `CML_OLLAMA_URL`). ⚠️ O Ollama direto é **exceção** à lei do
+  workspace e perde o E2E; fica registrado no log. O `workspace/CLAUDE.md` não foi alterado.
+- **Cache e log são locais**: `~/.cml_cache/` (0700/0600). `transform.log` é a única trilha de
+  auditoria — a execução é no cliente, nada vai ao servidor.
+- `base.associadas` usa o método novo `Entity.associations` do servidor: **precisa de deploy**
+  (flag-portão do `DEPLOY.md`); sem ele o transform diz que o servidor não o conhece.
+- Teste headless: `QT_QPA_PLATFORM=offscreen` com um transform falso apontado por `_dir` no `cfg`
+  (o `Executor` aceita `cfg` solto; `HOME` apontado para um diretório temporário isola cache/log).
+
 ### App web (somente leitura)
 
 `server/webpage/` é um app PHP MVC próprio (não JSON-RPC) para **visualizar** mapas e baixar documentos pelo navegador. Entra por `server/webpage/index.php`, que escolhe o domain (reusa `Mysql::domains()` do `data/config.json`) e redireciona para a lista. É servido no caminho `.../cml/webpage/`. Estrutura clássica `controller/`/`model/`/`view/`/`service/`, com os assets em `public/`.

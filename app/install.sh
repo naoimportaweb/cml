@@ -32,6 +32,7 @@ if [ ! -f /etc/pip.conf ] ; then
     echo 'break-system-packages = true' >> /etc/pip.conf
 fi
 pip3 install requests
+pip3 install PySocks
 pip3 install PySide6
 pip3 install pycryptodome
 pip3 install pyspellchecker

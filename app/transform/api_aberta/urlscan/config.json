@@ -1,0 +1,13 @@
+{
+  "id": "urlscan.varreduras",
+  "nome": "Varreduras públicas (urlscan.io)",
+  "versao": "1",
+  "entrada": ["other", "organization"],
+  "saida": ["other"],
+  "fonte": "api-aberta",
+  "rede": true,
+  "chave_env": null,
+  "ttl": 21600,
+  "path": "transform.py",
+  "class": "TransformUrlscan"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "abusech.urlhaus_threatfox",
+  "nome": "Malware e IOCs (URLhaus + ThreatFox)",
+  "versao": "1",
+  "entrada": ["other", "organization"],
+  "saida": ["other"],
+  "fonte": "api-aberta",
+  "rede": true,
+  "chave_env": "CML_TX_ABUSECH_KEY",
+  "ttl": 21600,
+  "path": "transform.py",
+  "class": "TransformAbuseCh"
+}

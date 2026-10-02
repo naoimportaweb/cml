@@ -7,6 +7,14 @@
         "mcp/remoto_hostinger.py"
       ],
       "env": {}
+    },
+    "cml-transforms": {
+      "type": "stdio",
+      "command": "python3",
+      "args": [
+        "mcp/cml_transforms.py"
+      ],
+      "env": {}
     }
   }
 }

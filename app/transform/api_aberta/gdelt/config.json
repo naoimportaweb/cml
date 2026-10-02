@@ -1,0 +1,13 @@
+{
+  "id": "gdelt.noticias",
+  "nome": "Notícias recentes (GDELT)",
+  "versao": "1",
+  "entrada": ["person", "organization", "other"],
+  "saida": ["other"],
+  "fonte": "api-aberta",
+  "rede": true,
+  "chave_env": null,
+  "ttl": 21600,
+  "path": "transform.py",
+  "class": "TransformGdelt"
+}

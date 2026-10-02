@@ -1,0 +1,13 @@
+{
+  "id": "virustotal.relacoes",
+  "nome": "Resoluções e subdomínios (VirusTotal)",
+  "versao": "1",
+  "entrada": ["other", "organization"],
+  "saida": ["other"],
+  "fonte": "api-aberta",
+  "rede": true,
+  "chave_env": "CML_TX_VIRUSTOTAL_KEY",
+  "ttl": 43200,
+  "path": "transform.py",
+  "class": "TransformVirusTotal"
+}

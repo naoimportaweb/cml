@@ -1,0 +1,13 @@
+{
+  "id": "dns.registros",
+  "nome": "Registros DNS (DoH)",
+  "versao": "1",
+  "entrada": ["other", "organization"],
+  "saida": ["other"],
+  "fonte": "api-aberta",
+  "rede": true,
+  "chave_env": null,
+  "ttl": 3600,
+  "path": "transform.py",
+  "class": "TransformDns"
+}

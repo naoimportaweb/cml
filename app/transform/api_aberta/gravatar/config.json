@@ -1,0 +1,13 @@
+{
+  "id": "gravatar.perfil",
+  "nome": "E-mail → perfil público (Gravatar)",
+  "versao": "1",
+  "entrada": ["other", "person"],
+  "saida": ["person", "other"],
+  "fonte": "api-aberta",
+  "rede": true,
+  "chave_env": null,
+  "ttl": 604800,
+  "path": "transform.py",
+  "class": "TransformGravatar"
+}

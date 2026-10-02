@@ -1,0 +1,13 @@
+{
+  "id": "crtsh.subdominios",
+  "nome": "Subdomínios por certificado (crt.sh)",
+  "versao": "1",
+  "entrada": ["other", "organization"],
+  "saida": ["other"],
+  "fonte": "api-aberta",
+  "rede": true,
+  "chave_env": null,
+  "ttl": 86400,
+  "path": "transform.py",
+  "class": "TransformCrtsh"
+}

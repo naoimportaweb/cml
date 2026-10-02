@@ -1,0 +1,13 @@
+{
+  "id": "nominatim.lugar",
+  "nome": "Lugar → coordenadas e hierarquia (OpenStreetMap)",
+  "versao": "1",
+  "entrada": ["other", "organization"],
+  "saida": ["other"],
+  "fonte": "api-aberta",
+  "rede": true,
+  "chave_env": null,
+  "ttl": 2592000,
+  "path": "transform.py",
+  "class": "TransformNominatim"
+}

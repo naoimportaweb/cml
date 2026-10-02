@@ -108,6 +108,21 @@ class WorkerClient(_Http):
             raise RuntimeError(f"GET request {job} → {status}")
         return data
 
+    def recuperar(self) -> dict:
+        """Avisa o webapi que este worker subiu: todo job em `processing` é órfão.
+
+        Nada podia estar gerando enquanto este processo não existia, então o servidor
+        devolve esses jobs para a fila (ou os mata, se já bateram no teto de tentativas).
+        Devolve {refila, mortos} — ou {} se a rota não existir (webapi antigo).
+        """
+        status, data = self._do(self.key, "POST", "/work/recuperar", body=b"")
+        if status != 200:
+            return {}
+        try:
+            return json.loads(data)
+        except ValueError:
+            return {}
+
     def put_response(self, job: str, blob: bytes) -> int:
         status, _ = self._do(self.key, "PUT", f"/job/{job}/response", body=blob)
         return status   # 201 ok · 409 job não-ativo

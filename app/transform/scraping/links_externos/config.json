@@ -1,0 +1,13 @@
+{
+  "id": "scraping.links_externos",
+  "nome": "Domínios externos citados no site (craudiowebot)",
+  "versao": "1",
+  "entrada": ["person", "organization", "other"],
+  "fonte": "scraping",
+  "rede": true,
+  "rota": null,
+  "chave_env": null,
+  "ttl": 86400,
+  "path": "transform.py",
+  "class": "TransformLinksExternos"
+}

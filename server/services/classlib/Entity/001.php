@@ -116,6 +116,21 @@ class Entity
         return $elements;
     }
 
+    // Entidades ligadas a esta por entity_simple_association (nos dois sentidos). A tabela e
+    // alimentada pelo import do MISP Galaxy e nao tem verbo nem direcao semantica.
+    public function associations( $ip, $user, $post_data, $domain ) {
+        $mysql = new Mysql( $domain );
+        $id = $post_data["parameters"]["id"];
+        $sql = "SELECT DISTINCT ent.* from entity_simple_association as a " .
+               "INNER JOIN entity as ent ON ent.id = IF(a.entity_from_id = ?, a.entity_to_id, a.entity_from_id) " .
+               "WHERE (a.entity_from_id = ? OR a.entity_to_id = ?) AND ent.id <> ? LIMIT 200";
+        $elements = $mysql->DataTable($sql, [ $id, $id, $id, $id ]);
+        for($i = 0; $i < count($elements); $i++) {
+            $elements[$i] = Entity::appendData($elements[$i], $domain);
+        }
+        return $elements;
+    }
+
     public function duplicate( $ip, $user, $post_data, $domain ) {
         $mysql = new Mysql( $domain );
         $sql = "SELECT ent.* from entity as ent WHERE ent.etype = ? and ent.id <> ? and ent.text_label = ?  ";

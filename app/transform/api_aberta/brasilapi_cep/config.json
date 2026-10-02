@@ -1,0 +1,13 @@
+{
+  "id": "brasilapi.cep",
+  "nome": "CEP: endereço e coordenadas (BrasilAPI)",
+  "versao": "1",
+  "entrada": ["other", "organization", "person"],
+  "saida": ["other"],
+  "fonte": "api-aberta",
+  "rede": true,
+  "chave_env": null,
+  "ttl": 2592000,
+  "path": "transform.py",
+  "class": "TransformCep"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "internetdb.exposicao",
+  "nome": "Exposição de IP (Shodan InternetDB)",
+  "versao": "1",
+  "entrada": ["other", "organization"],
+  "saida": ["other"],
+  "fonte": "api-aberta",
+  "rede": true,
+  "chave_env": null,
+  "ttl": 43200,
+  "path": "transform.py",
+  "class": "TransformInternetDB"
+}

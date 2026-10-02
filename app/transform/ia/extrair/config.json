@@ -1,0 +1,13 @@
+{
+  "id": "ia.extrair",
+  "nome": "Extrair vínculos das fontes da entidade",
+  "versao": "1",
+  "entrada": ["person", "organization", "other"],
+  "fonte": "ia",
+  "rede": true,
+  "rota": "direta",
+  "chave_env": null,
+  "ttl": 604800,
+  "path": "transform.py",
+  "class": "TransformExtrair"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "wayback.historico",
+  "nome": "Histórico no Wayback Machine",
+  "versao": "1",
+  "entrada": ["other", "organization"],
+  "saida": ["other"],
+  "fonte": "api-aberta",
+  "rede": true,
+  "chave_env": null,
+  "ttl": 86400,
+  "path": "transform.py",
+  "class": "TransformWayback"
+}

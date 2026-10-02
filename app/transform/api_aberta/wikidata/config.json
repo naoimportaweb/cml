@@ -1,0 +1,13 @@
+{
+  "id": "wikidata.relacionados",
+  "nome": "Wikidata: relações da entidade",
+  "versao": "1",
+  "entrada": ["person", "organization", "other"],
+  "saida": ["person", "organization", "other"],
+  "fonte": "api-aberta",
+  "rede": true,
+  "chave_env": null,
+  "ttl": 604800,
+  "path": "transform.py",
+  "class": "TransformWikidata"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "hunter.emails",
+  "nome": "E-mails do domínio (Hunter.io)",
+  "versao": "1",
+  "entrada": ["organization", "other"],
+  "saida": ["person", "other"],
+  "fonte": "api-aberta",
+  "rede": true,
+  "chave_env": "CML_TX_HUNTER_KEY",
+  "ttl": 604800,
+  "path": "transform.py",
+  "class": "TransformHunter"
+}
