@@ -213,8 +213,10 @@ OSINT em `app/transform/api_aberta/` (ver `docs/OSINT.md`), servidor MCP `cml-tr
 2. **Deploy do servidor** (flag-portão do `DEPLOY.md`) para `Entity.associations`; testar `base.associadas`.
 3. Testar com serviços reais: `ia.extrair` (rolhama 510 — confirmar canal semeado e `.90` ligada) e
    `scraping.links_externos` (`browser.py --servir`).
-4. Rodar `app/transform/testes_osint.py` e conferir quais conectores passam; chaves faltantes
-   (`CML_TX_<FONTE>_KEY`) no `~/.env`.
+4. Conectores OSINT: 18 criados, 17 ok contra a rede sem chave (`python3 app/transform/testes_osint.py`).
+   Falta exercitar `abusech`, `virustotal` e `hunter` com chave real (`CML_TX_<FONTE>_KEY` no `~/.env`);
+   decidir se o aplicador cria subtipos de Other que faltam (hoje só avisa); `Http.post()` público e
+   corpo do erro não-200 (ex.: 429 do GDELT) no contexto.
 5. MCP: login no servidor do CML sem Qt, para os transforms de base funcionarem por ele.
 6. Fase 2 (layouts, peso de vínculo, filtros, seleção em massa, machines) e Fase 3 (§3, §4).
 7. Decidir se o Ollama direto vira regra no `workspace/CLAUDE.md` (hoje é exceção opt-in).
