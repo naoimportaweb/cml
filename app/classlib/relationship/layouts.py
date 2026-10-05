@@ -28,7 +28,8 @@ ESPACO_X = 60;      # respiro horizontal entre caixas
 ESPACO_Y = 110;     # altura de uma camada
 GRADE = 20;         # passo da grade do layout ortogonal
 ANEIS_VERBO = 8;    # quantos aneis o afastar_vinculos procura antes de desistir
-ESPACO_VERBO = 70;  # folga entre camadas no "espalhar": tem de caber a caixinha do verbo
+ESPACO_RAMO = 90;   # folga horizontal entre ramos no espalhar: e o que os faz respirar
+ESPACO_VERBO = 90;  # folga entre camadas no "espalhar": tem de caber a caixinha do verbo
 SEMENTE = 20261005; # posicao inicial do organico e sorteada: semente fixa = resultado repetivel
 GRAVIDADE = 6.0;    # divisor da gravidade do organico (ver comentario em __organico__)
 
@@ -334,44 +335,75 @@ def __ordenar_camadas__(camadas, boas, passadas=4):
 
 
 def __empacotar__(camadas, boas):
-    """Coloca x e y. Dentro da camada, encosta uma na outra com folga -- e o 'mais proximo
-    possivel' sem colisao, usando a largura REAL de cada caixa. Depois algumas passadas puxando
-    cada uma para perto de quem ela liga, sem deixar encostar."""
+    """Coloca x e y no estilo CACHOEIRA: cada ramo desce no seu proprio curso.
+
+    A primeira versao centralizava CADA camada em zero, independentemente. O resultado era uma
+    piramide com tudo amontoado no meio: aceitavel num mapa de brinquedo, ilegivel num real.
+    Agora o x nasce da familia -- filho sob a media dos pais, pai sobre a media dos filhos -- e
+    as passadas alternam de cima para baixo e de baixo para cima ate assentar. Ramos diferentes
+    ficam em correntes separadas, que e o que da a cara de cachoeira.
+
+    A colisao continua impossivel por construcao: depois de cada ajuste, a camada e varrida da
+    esquerda para a direita empurrando quem encostou."""
     indices = sorted(camadas.keys());
+    pais, filhos = {}, {};
+    for a, b in boas:
+        filhos.setdefault(a, []).append(b);
+        pais.setdefault(b, []).append(a);
+
     y = 0;
     for i in indices:
         linha = camadas[i];
-        x = 0;
         for caixa in linha:
-            caixa.setX(int(x));
             caixa.setY(int(y));
-            x = x + __largura__(caixa);
-        # Centraliza a camada em zero, para o desenho crescer dos dois lados.
-        largura = x - ESPACO_X;
-        for caixa in linha:
-            caixa.setX(int(caixa.x - largura / 2));
-        altura = max((c.h or 20) for c in linha);
-        # A folga vertical tem de caber a CAIXA DO VERBO, que vai para o meio das pontas.
-        y = y + altura + ESPACO_VERBO;
+        y = y + max((c.h or 20) for c in linha) + ESPACO_VERBO;
 
-    vizinhos = {};
-    for a, b in boas:
-        vizinhos.setdefault(a, []).append(b);
-        vizinhos.setdefault(b, []).append(a);
-    for _ in range(6):
-        for i in indices:
+    def largura(caixa):
+        return (caixa.w or 100) + ESPACO_RAMO;
+
+    def acomodar(linha):
+        # Empurra para a direita quem encostou no vizinho. E isto que garante o "sem colisao"
+        # depois de qualquer puxao -- a ordem da camada nunca muda aqui, so o espacamento.
+        for k in range(1, len(linha)):
+            minimo = linha[k - 1].x + largura(linha[k - 1]);
+            if linha[k].x < minimo:
+                linha[k].setX(int(minimo));
+
+    def centro(caixa):
+        return caixa.x + (caixa.w or 0) / 2.0;
+
+    # Posicao inicial: a primeira camada em fila, as demais sob a familia.
+    x = 0;
+    for caixa in camadas[indices[0]]:
+        caixa.setX(int(x));
+        x = x + largura(caixa);
+    for i in indices[1:]:
+        linha = camadas[i];
+        posicao = 0;
+        for caixa in linha:
+            familia = [p for p in pais.get(caixa, ()) if p not in linha];
+            alvo = (sum(centro(p) for p in familia) / len(familia) - (caixa.w or 0) / 2.0) \
+                   if len(familia) > 0 else posicao;
+            caixa.setX(int(alvo));
+            posicao = max(posicao, caixa.x + largura(caixa));
+        linha.sort(key=lambda c: c.x);
+        acomodar(linha);
+
+    # Assenta: desce puxando filho para debaixo dos pais, sobe puxando pai para cima dos filhos.
+    for passada in range(5):
+        descendo = passada % 2 == 0;
+        ordem = indices[1:] if descendo else list(reversed(indices[:-1]));
+        for i in ordem:
             linha = camadas[i];
-            for k in range(len(linha)):
-                caixa = linha[k];
-                ligados = [v for v in vizinhos.get(caixa, ()) if v not in linha];
-                if len(ligados) == 0:
+            vizinhanca = pais if descendo else filhos;
+            for caixa in linha:
+                familia = [v for v in vizinhanca.get(caixa, ()) if v not in linha];
+                if len(familia) == 0:
                     continue;
-                alvo = sum(v.x + (v.w or 0) / 2.0 for v in ligados) / len(ligados) - (caixa.w or 0) / 2.0;
-                # Os limites sao os vizinhos de camada: e isto que garante que puxar para perto
-                # NUNCA encosta uma caixa na outra.
-                menor = linha[k - 1].x + __largura__(linha[k - 1]) if k > 0 else alvo;
-                maior = linha[k + 1].x - __largura__(caixa) if k + 1 < len(linha) else alvo;
-                caixa.setX(int(max(menor, min(maior, alvo))));
+                alvo = sum(centro(v) for v in familia) / len(familia) - (caixa.w or 0) / 2.0;
+                caixa.setX(int(alvo));
+            linha.sort(key=lambda c: c.x);
+            acomodar(linha);
 
 
 def __colide__(a, b, folga=6):
@@ -423,10 +455,45 @@ def afastar_vinculos(mapa):
 
 def __espalhar__(mapa, lista):
     pares = arestas(mapa);
-    boas = __sem_ciclos__(lista, pares);
-    camadas = __camadas_dirigidas__(lista, boas);
-    camadas = __ordenar_camadas__(camadas, boas);
-    __empacotar__(camadas, boas);
+    ligadas = set();
+    for a, b in pares:
+        ligadas.add(a); ligadas.add(b);
+    correnteza = [c for c in lista if c in ligadas];
+    soltas = [c for c in lista if c not in ligadas];
+
+    if len(correnteza) > 0:
+        boas = __sem_ciclos__(correnteza, pares);
+        camadas = __camadas_dirigidas__(correnteza, boas);
+        camadas = __ordenar_camadas__(camadas, boas);
+        __empacotar__(camadas, boas);
+    __prateleira__(correnteza, soltas);
+
+
+def __prateleira__(correnteza, soltas):
+    """Caixa sem vinculo nenhum nao participa da cachoeira -- ela nao desce de lugar nenhum.
+
+    Deixa-las na primeira camada abria um vao enorme no desenho: elas ficavam na origem e o
+    resto da arvore se afastava para a direita durante o assentamento. Vao para uma prateleira
+    embaixo, empacotadas, que e tambem como o analista as le: material solto, ainda sem lugar."""
+    if len(soltas) == 0:
+        return;
+    if len(correnteza) == 0:
+        base_x, base_y, limite = 0, 0, 6;
+    else:
+        base_x = min(c.x for c in correnteza);
+        base_y = max(c.y + (c.h or 20) for c in correnteza) + ESPACO_VERBO;
+        largura_total = max(c.x + (c.w or 0) for c in correnteza) - base_x;
+        limite = max(1, int(largura_total / (160 + ESPACO_RAMO)));
+    x, y, na_linha = base_x, base_y, 0;
+    altura_linha = 0;
+    for caixa in soltas:
+        caixa.setX(int(x));
+        caixa.setY(int(y));
+        x = x + (caixa.w or 100) + ESPACO_RAMO;
+        altura_linha = max(altura_linha, caixa.h or 20);
+        na_linha = na_linha + 1;
+        if na_linha >= limite:
+            x = base_x; y = y + altura_linha + 30; na_linha = 0; altura_linha = 0;
 
 
 ALGORITMOS = {"espalhar": __espalhar__, "organico": __organico__, "hierarquico": __hierarquico__, "circular": __circular__,

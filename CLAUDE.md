@@ -391,10 +391,17 @@ O **Espalhar** é o único com promessa forte: **zero colisão** (contando as ca
 **aresta apontando para baixo**. Como mapa é grafo e grafo tem ciclo, uma busca em profundidade
 marca as **arestas de retorno** e as tira da conta das camadas — elas saem apontando para cima, e
 isso é proposital: inventar hierarquia onde não há seria pior que mostrar o ciclo. Depois vêm
-camadas por caminho mais longo, ordenação por baricentro (reduz cruzamento) e empacotamento pela
-**largura real** de cada caixa; na hora de puxar cada caixa para perto de quem ela liga, os
-limites são os vizinhos da mesma camada — é isso que faz "o mais próximo possível" nunca virar
-sobreposição. Só nele a caixinha do verbo também é afastada (`afastar_vinculos`), e só a caixa do
+camadas por caminho mais longo e ordenação por baricentro (reduz cruzamento).
+
+O posicionamento horizontal é em **cascata**, não por camada centralizada: o `x` nasce da família
+— filho sob a média dos pais, pai sobre a média dos filhos — com passadas alternando de cima para
+baixo e de baixo para cima até assentar. A primeira versão centralizava cada camada em zero e o
+resultado era uma pirâmide amontoada no meio, aceitável num mapa de brinquedo e ilegível num
+real. Depois de **cada** ajuste a camada é varrida da esquerda para a direita empurrando quem
+encostou, e é isso que faz "o mais próximo possível" nunca virar sobreposição. Caixa **sem
+vínculo nenhum** não entra na cascata (ela não desce de lugar algum): vai para uma **prateleira**
+embaixo, empacotada — deixá-la na primeira camada abria um vão enorme, porque ela ficava na
+origem enquanto a árvore se afastava para a direita durante o assentamento. Só nele a caixinha do verbo também é afastada (`afastar_vinculos`), e só a caixa do
 **verbo** se mexe: mover entidade ali desfaria o trabalho do algoritmo.
 
 **O texto do vínculo entra na briga da colisão como qualquer caixa** — e é ele quem mais se

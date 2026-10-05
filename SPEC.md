@@ -333,9 +333,12 @@ divergem calados.
   (A dirige B, B financia A), uma busca em profundidade marca as **arestas de retorno** e as tira
   da conta das camadas — essas poucas saem apontando para cima, o que é honesto: inventar
   hierarquia num caso que não tem seria pior. Depois: camadas por caminho mais longo, ordem por
-  **baricentro** (reduz cruzamento) e empacotamento pela **largura real** de cada caixa; ao puxar
-  cada uma para perto de quem ela liga, os limites são os vizinhos da mesma camada — é isso que
-  faz "o mais próximo possível" nunca virar sobreposição. É o único layout que também **afasta as
+  **baricentro** (reduz cruzamento) e posicionamento horizontal em **cascata** — o `x` nasce da
+  família (filho sob a média dos pais, pai sobre a média dos filhos), com passadas alternando até
+  assentar, em vez de centralizar cada camada em zero, que amontoava tudo no meio. Depois de cada
+  ajuste a camada é varrida da esquerda para a direita empurrando quem encostou, e é isso que faz
+  "o mais próximo possível" nunca virar sobreposição. Caixa **sem vínculo** vai para uma
+  prateleira embaixo: ela não desce de lugar nenhum, e na primeira camada abria um vão enorme. É o único layout que também **afasta as
   caixinhas de verbo**, e só o verbo se mexe.
 - **Espessura do vínculo pelo peso**, com valor editável **e** valor **derivado do número de
   referências** que o sustentam: vínculo com três fontes desenha mais grosso que o de uma. É o
