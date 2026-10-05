@@ -129,10 +129,7 @@ class DialogConnect(QDialog):
         self.ui_register();
         self.ui_login   ();
         self.layout_principal.disable("register");
-        if self.txt_login_username.text().strip() == "":
-            self.txt_login_username.setFocus()
-        elif self.txt_login_password.text().strip() == "":
-            self.txt_login_password.setFocus();
+        self.__focar_proximo_vazio__();
 
     def buffer_text(self):
         print("testado.....");
@@ -188,10 +185,11 @@ class DialogConnect(QDialog):
         # dois de azul -- a tela ficava com duas acoes principais e nenhuma.
         btn_register_navegar.setAutoDefault(False);
         btn_register_navegar.clicked.connect(self.btn_click_register_navegar)
-        btn_login_entrar = QPushButton("Entrar")
-        btn_login_entrar.setProperty("destaque", "sim");   # a acao principal da tela
-        btn_login_entrar.setDefault(True);
-        btn_login_entrar.clicked.connect(self.btn_click_login_entrar)
+        self.btn_login_entrar = QPushButton("Entrar")
+        self.btn_login_entrar.setProperty("destaque", "sim");   # a acao principal da tela
+        self.btn_login_entrar.setDefault(True);
+        self.btn_login_entrar.clicked.connect(self.btn_click_login_entrar)
+        btn_login_entrar = self.btn_login_entrar;
         linha = QHBoxLayout();
         linha.setContentsMargins(0, 10, 0, 0);
         linha.addWidget(btn_register_navegar);
@@ -213,6 +211,10 @@ class DialogConnect(QDialog):
         self.txt_register_token = QLineEdit()
         self.txt_register_token.setEchoMode(QLineEdit.EchoMode.Password)
         self.txt_register_token.setPlaceholderText("exigido apenas em domain restrito");
+        # Nasce desligado: ao abrir a janela nao ha domain escolhido. E nao da para contar com o
+        # currentIndexChanged para corrigir isso depois -- com placeholderText o Qt mantem o
+        # indice em -1 ao inserir itens, entao o sinal simplesmente nao chega a ser emitido.
+        self.txt_register_token.setEnabled( False );
         layout_register.addWidget(self.txt_register_token, 3, 0, 1, 2)
         layout_register.addWidget(self.__rotulo__("Senha"), 4, 0, 1, 2);
         self.txt_register_password = QLineEdit()
@@ -240,7 +242,16 @@ class DialogConnect(QDialog):
         self.layout_principal.addLayout( "register", layout_register );
 
     def combo_domains_changed(self):
-        self.txt_register_token.setEnabled( self.list_domains[ self.combo_domains.currentIndex() ]["restricted"] );
+        # currentIndex() e -1 enquanto nada esta escolhido (e o clear() emite esse -1). Em
+        # Python, lista[-1] e o ULTIMO item: sem esta guarda, limpar o combo ligava o campo de
+        # token conforme o ultimo domain da lista anterior.
+        indice = self.combo_domains.currentIndex();
+        if indice < 0 or indice >= len( self.list_domains ):
+            # Sem domain escolhido nao ha cadastro possivel: o campo fica desligado, em vez de
+            # herdar ligado da construcao e parecer que da para preencher.
+            self.txt_register_token.setEnabled( False );
+            return;
+        self.txt_register_token.setEnabled( self.list_domains[ indice ]["restricted"] );
 
     def btn_domains_click(self):
         server = Server.instancia();
@@ -256,7 +267,27 @@ class DialogConnect(QDialog):
         self.combo_domains.clear(); # sem isto cada clique reempilha os domains no combo
         for buffer in self.list_domains:
             self.combo_domains.addItem( buffer["name"] );
+        if len( self.list_domains ) == 1:
+            # Um domain so: nao ha o que escolher, entao escolhe e sai da frente.
+            self.combo_domains.setCurrentIndex( 0 );
+            self.__focar_proximo_vazio__();
+        else:
+            # Com mais de um, NAO escolhe por conta propria: domain errado e banco errado, e a
+            # senha ja teria sido enviada quando o erro aparecesse. O cursor vai para o combo,
+            # que e exatamente o que falta decidir -- da para escolher pelo teclado na hora.
+            self.combo_domains.setCurrentIndex( -1 );
+            self.combo_domains.setFocus();
         return;
+
+    def __focar_proximo_vazio__(self):
+        """Põe o cursor no primeiro campo que falta, nesta ordem: usuário, senha. Com os dois
+        preenchidos (o usuário volta do ~/.cml.json), o foco vai para o botão -- aí Enter entra."""
+        if self.txt_login_username.text().strip() == "":
+            self.txt_login_username.setFocus();
+        elif self.txt_login_password.text().strip() == "":
+            self.txt_login_password.setFocus();
+        else:
+            self.btn_login_entrar.setFocus();
 
     def btn_click_register_navegar(self):
         self.layout_principal.disable("login");
