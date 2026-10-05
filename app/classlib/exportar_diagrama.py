@@ -44,10 +44,17 @@ def nome_de_arquivo(mapa):
     return limpo or "diagrama";
 
 
-def __fonte__():
+def fonte_do_diagrama():
+    # Fonte do desenho, publica porque o canvas tambem precisa dela: o draw() dos elements NAO
+    # define fonte, entao quem abre o painter e que tem de definir. Dois lugares lendo a mesma
+    # configuracao e um lugar so onde ela muda.
     cfg = Configuration.instancia();
     # O nome do atributo tem typo desde sempre (relationshihp_); mexer nele e outra tarefa.
     return QFont(cfg.relationshihp_font_family, cfg.relationshihp_font_size);
+
+
+def __fonte__():
+    return fonte_do_diagrama();
 
 
 def __tipo__(mapa):

@@ -30,9 +30,10 @@ class MdiMap(QWidget):
             self.painter_widget = MapaRelationshipEngine(parent=None, mapa=mapa, form=self);
         self.mapa = mapa;
         layout = QHBoxLayout()
-        # So a timeline entra numa area rolavel: a largura dela e o ZOOM do eixo (pode passar
-        # de dez mil px), enquanto o mapa e o organograma tem tamanho fixo e ja convivem com
-        # o corte ha muito tempo — embrulhar os tres mudaria o comportamento dos dois antigos.
+        # A timeline entra numa QScrollArea porque e um QWidget que se redimensiona com o zoom
+        # do eixo (pode passar de dez mil px). O mapa de vinculos NAO precisa: virou um
+        # QGraphicsView, que ja e uma area rolavel com zoom proprio. O organograma segue sendo
+        # o unico ainda preso ao pixmap fixo, sem rolagem (SPEC.md §3.1).
         if mapa.__class__.__name__ == "Timeline":
             area = QScrollArea();
             area.setWidget( self.painter_widget );

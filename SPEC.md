@@ -245,6 +245,19 @@ Estado real do canvas de vínculos, verificado no código:
 
 ### 3.1 A decisão de fundo: do pixmap para `QGraphicsView`
 
+> ✅ **Implementado em 2026-10-05**, só no **mapa de vínculos** (organograma e timeline intactos,
+> como esta seção previa). Um `ItemElemento` por element: `boundingRect` é a área pintada,
+> `shape` é a área clicável, e no vínculo as duas diferem de propósito (pinta até as pontas,
+> recebe clique só na caixa do verbo). Ganhos: rolagem, zoom por Ctrl+roda, arrastar a tela no
+> vazio, menu de zoom no botão direito do vazio, antialiasing, e o fim do freio
+> `(y % 2) == 0` do arrasto — ele existia só para aliviar o repinte do pixmap de 57 MB e fazia
+> a caixa andar aos saltos. **Prova de que o desenho não mudou:** a cena renderizada bate
+> **pixel a pixel (0 de 153.920 diferentes)** com a saída do exportador, que desenha direto do
+> modelo sem passar pelo canvas. Teste: `QT_QPA_PLATFORM=offscreen python3
+> app/test/mapa_relationship_engine.py`. **Falta:** seleção em massa por laço (bloco C) — os
+> itens já nascem com `ItemIsSelectable`, então é ligar o `RubberBandDrag` sem conflitar com o
+> arrasto de caixa.
+
 Trocar o pixmap fixo por `QGraphicsView`/`QGraphicsScene`. Zoom, pan, minimap, seleção por laço,
 z-order, hit test por item, cache por item e export vetorial deixam de ser seis gambiarras
 separadas e passam a ser configuração do framework.
@@ -532,7 +545,8 @@ já está no banco, o que o `ia.extrair` fazia sobre texto da web — sem rede, 
 ## 9. Estado e próximos passos
 
 **Feito (2026-10-05):** export de diagrama em PDF, PNG e SVG (§3.2) — primeira entrega da
-Fase 2, e o primeiro caminho pelo qual trabalho feito sai do app desde que o report morreu.
+Fase 2, e o primeiro caminho pelo qual trabalho feito sai do app desde que o report morreu — e a
+migração do canvas do mapa de vínculos para `QGraphicsView` (§3.1), que destravou rolagem e zoom.
 
 **Feito (2026-10-02):** núcleo sem Qt (`app/transform/`), menu de contexto, painel Proposta,
 aplicar em círculo com dedup, gerente em thread, cache/log locais, transforms `base.parecidas`,
@@ -550,7 +564,7 @@ aplicar em círculo com dedup, gerente em thread, cache/log locais, transforms `
    botão do bot e no botão **Documents**. Sem isso, o usuário encontra exceção.
 4. **Fase 2 — os diagramas** (§3), que é a prioridade declarada do dono. Ordem revista na
    execução: **bloco A, export** (§3.2) ✅ **feito** — veio antes porque não depende da migração →
-   `QGraphicsView` (§3.1), que é o que destrava zoom, pan e seleção → endurecimento de imagem (§3.6) →
+   `QGraphicsView` (§3.1) ✅ **feito** → endurecimento de imagem (§3.6) →
    bloco B, legibilidade (§3.3) → bloco C, começando pela régua do tempo (§3.4). Nada disso
    depende de rede, de IA nem de deploy.
 5. **Fase 3 — o grafo vivo** (§4): `Entity.neighborhood` → janela Vizinhança → aba Onde aparece →
