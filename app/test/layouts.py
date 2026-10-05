@@ -100,6 +100,85 @@ def main():
         confere(all((c.x, c.y) == antes[c] for c in caixas),
                 "desfazer devolveu a posicao manual de todas as caixas");
 
+    print("\nespalhar: as promessas dele");
+
+    def retangulos(mapa):
+        return [(e, (e.x, e.y, e.w or 1, e.h or 1)) for e in mapa.elements];
+
+    def colisoes(mapa, folga=0):
+        pares = 0;
+        itens = retangulos(mapa);
+        for i in range(len(itens)):
+            for j in range(i + 1, len(itens)):
+                a1, b1 = itens[i][1], itens[j][1];
+                if not (a1[0] + a1[2] + folga <= b1[0] or b1[0] + b1[2] + folga <= a1[0] or
+                        a1[1] + a1[3] + folga <= b1[1] or b1[1] + b1[3] + folga <= a1[1]):
+                    pares = pares + 1;
+        return pares;
+
+    def arvore():
+        # DAG de verdade: raiz -> dois -> quatro. Aqui a regra "de cima aponta para baixo"
+        # tem de valer para TODA aresta.
+        mapa = MapRelationship();
+        mapa.name = "Árvore";
+        raiz = mapa.addEntity("organization", 0, 0, text="Holding"); raiz.w = 110; raiz.h = 20;
+        nivel1 = [];
+        for nome in ("Alfa", "Beta"):
+            caixa = mapa.addEntity("organization", 0, 0, text=nome); caixa.w = 90; caixa.h = 20;
+            elo = mapa.addEntity("link", 0, 0, text="controla"); elo.w = 70; elo.h = 20;
+            elo.addFrom(raiz); elo.addTo(caixa);
+            nivel1.append(caixa);
+        for i in range(4):
+            caixa = mapa.addEntity("person", 0, 0, text="Sócio %d" % i); caixa.w = 90; caixa.h = 20;
+            elo = mapa.addEntity("link", 0, 0, text="dirige"); elo.w = 60; elo.h = 20;
+            elo.addFrom(nivel1[i % 2]); elo.addTo(caixa);
+        mapa.desfazer.clear();
+        return mapa, raiz;
+
+    mapa, raiz = arvore();
+    layouts.aplicar(mapa, "espalhar");
+    confere(colisoes(mapa) == 0, "ZERO colisões, contando as caixinhas de verbo (%d)" % colisoes(mapa));
+
+    para_baixo = 0; total_arestas = 0;
+    for de, para in layouts.arestas(mapa):
+        total_arestas = total_arestas + 1;
+        if para.y > de.y:
+            para_baixo = para_baixo + 1;
+    confere(para_baixo == total_arestas, "num DAG, TODA aresta aponta para baixo (%d/%d)"
+            % (para_baixo, total_arestas));
+    confere(raiz.y == min(c.y for c in layouts.caixas(mapa)), "a raiz ficou na primeira camada");
+
+    print("\nespalhar é compacto");
+    mapa_e, _ = arvore(); layouts.aplicar(mapa_e, "espalhar");
+    mapa_c, _ = arvore(); layouts.aplicar(mapa_c, "circular");
+    def area(mapa):
+        cx = layouts.caixas(mapa);
+        return (max(c.x + c.w for c in cx) - min(c.x for c in cx)) * \
+               (max(c.y + c.h for c in cx) - min(c.y for c in cx));
+    confere(area(mapa_e) < area(mapa_c), "ocupa menos área que o circular (%d < %d)"
+            % (area(mapa_e), area(mapa_c)));
+
+    print("\nespalhar com ciclo (nem sempre dá para apontar para baixo)");
+    ciclo = MapRelationship();
+    ciclo.name = "Ciclo";
+    a1 = ciclo.addEntity("person", 0, 0, text="A"); a1.w = 60; a1.h = 20;
+    b1 = ciclo.addEntity("person", 0, 0, text="B"); b1.w = 60; b1.h = 20;
+    c1 = ciclo.addEntity("person", 0, 0, text="C"); c1.w = 60; c1.h = 20;
+    for de, para, verbo in ((a1, b1, "paga"), (b1, c1, "paga"), (c1, a1, "paga")):
+        elo = ciclo.addEntity("link", 0, 0, text=verbo); elo.w = 50; elo.h = 20;
+        elo.addFrom(de); elo.addTo(para);
+    ciclo.desfazer.clear();
+    layouts.aplicar(ciclo, "espalhar");
+    confere(colisoes(ciclo) == 0, "ciclo também sai sem colisão");
+    descendo = len([1 for de, para in layouts.arestas(ciclo) if para.y > de.y]);
+    confere(descendo == 2, "2 das 3 arestas descem; a que fecha o ciclo sobe (%d)" % descendo);
+
+    print("\nespalhar é repetível");
+    m1, _ = arvore(); layouts.aplicar(m1, "espalhar");
+    m2, _ = arvore(); layouts.aplicar(m2, "espalhar");
+    confere(all((a.x, a.y) == (b.x, b.y) for a, b in zip(m1.elements, m2.elements)),
+            "mesmo mapa, mesmo desenho");
+
     print("\nortogonal cai na grade");
     mapa, centro, folhas, solta = montar();
     layouts.aplicar(mapa, "ortogonal");

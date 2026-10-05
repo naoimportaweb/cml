@@ -105,7 +105,7 @@ nenhum deles é candidato a sair.
 | Menu de contexto por tipo de entidade | Maltego | **feito** | 1 |
 | **Zoom, pan e rolagem no mapa** | todos | **inexistente** — pixmap fixo 5000×3000, sem `QScrollArea` | **2** |
 | **Exportar o diagrama (PDF/PNG)** | todos | **inexistente** — `save(filename)` ignora o nome | **2** |
-| Layouts automáticos | Maltego, Obsidian, Siren | posição manual | 2 |
+| Layouts automáticos | Maltego, Obsidian, Siren | ✅ feito — 5 do Maltego + **Espalhar**, que eles não têm | 2 |
 | Peso de vínculo, tamanho por centralidade | Maltego, Siren | inexistente — `QPen` de largura fixa 1 | 2 |
 | Colapsar grupo de caixas | Maltego, Siren | ✅ feito | 2 |
 | Filtro, busca no canvas e seleção em massa | Maltego, Siren | ✅ feito | 2 |
@@ -320,9 +320,23 @@ divergem calados.
 
 ### 3.3 Bloco B — o diagrama legível
 
-- **Layouts automáticos como ação**, não modo permanente: orgânico (force-directed), hierárquico,
-  circular, bloco. Com desfazer — a posição manual do analista é dado, não enfeite. Mora no
-  modelo, como o layout da timeline.
+- ✅ **Layouts automáticos como ação** (feito em 2026-10-05), não modo permanente: os cinco do
+  Maltego — orgânico (Fruchterman-Reingold, com gravidade proporcional a *n* para a caixa sem
+  vínculo não voar), hierárquico, circular, bloco e **ortogonal** — mais o **Espalhar**. Cada um
+  entra como **um** passo de desfazer: a posição manual do analista é dado, não enfeite, e sem
+  isso o botão seria destrutivo. Mora no modelo, como o layout da timeline. O **vínculo não
+  participa**: a caixa do verbo vai para o meio das pontas depois que as caixas acharam lugar.
+- ✅ **Espalhar** (feito em 2026-10-05, pedido do dono; **não existe no Maltego**) — arruma **sem
+  colisão nenhuma**, o mais compacto possível, com **quem está em cima apontando para quem está
+  embaixo**. Difere do hierárquico, que usa distância em largura e ignora a direção do vínculo.
+  A regra da direção vale enquanto o mapa for acíclico; como mapa é **grafo** e grafo tem ciclo
+  (A dirige B, B financia A), uma busca em profundidade marca as **arestas de retorno** e as tira
+  da conta das camadas — essas poucas saem apontando para cima, o que é honesto: inventar
+  hierarquia num caso que não tem seria pior. Depois: camadas por caminho mais longo, ordem por
+  **baricentro** (reduz cruzamento) e empacotamento pela **largura real** de cada caixa; ao puxar
+  cada uma para perto de quem ela liga, os limites são os vizinhos da mesma camada — é isso que
+  faz "o mais próximo possível" nunca virar sobreposição. É o único layout que também **afasta as
+  caixinhas de verbo**, e só o verbo se mexe.
 - **Espessura do vínculo pelo peso**, com valor editável **e** valor **derivado do número de
   referências** que o sustentam: vínculo com três fontes desenha mais grosso que o de uma. É o
   eixo 1 (§1.3) virando desenho. ⚠️ **Exige migração de banco** (coluna nova em

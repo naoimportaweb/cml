@@ -385,7 +385,17 @@ clonar entidade inteira a cada clique.
 ### Layouts automáticos
 
 `app/classlib/relationship/layouts.py`, os cinco do Maltego (orgânico, hierárquico, circular,
-bloco, ortogonal), sem biblioteca externa. São **ação, não modo**: rodam uma vez, escrevem `x`/`y`
+bloco, ortogonal) mais o **Espalhar**, sem biblioteca externa.
+
+O **Espalhar** é o único com promessa forte: **zero colisão** (contando as caixinhas de verbo) e
+**aresta apontando para baixo**. Como mapa é grafo e grafo tem ciclo, uma busca em profundidade
+marca as **arestas de retorno** e as tira da conta das camadas — elas saem apontando para cima, e
+isso é proposital: inventar hierarquia onde não há seria pior que mostrar o ciclo. Depois vêm
+camadas por caminho mais longo, ordenação por baricentro (reduz cruzamento) e empacotamento pela
+**largura real** de cada caixa; na hora de puxar cada caixa para perto de quem ela liga, os
+limites são os vizinhos da mesma camada — é isso que faz "o mais próximo possível" nunca virar
+sobreposição. Só nele a caixinha do verbo também é afastada (`afastar_vinculos`), e só a caixa do
+**verbo** se mexe: mover entidade ali desfaria o trabalho do algoritmo. São **ação, não modo**: rodam uma vez, escrevem `x`/`y`
 e saem. Três coisas a não quebrar: cada layout entra como **um** passo de desfazer (sem isso o
 botão seria destrutivo, porque joga fora posicionamento manual); o **vínculo não participa** — é
 hiper-aresta, e a caixa do verbo vai para o meio das pontas *depois* que as caixas acharam lugar;
