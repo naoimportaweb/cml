@@ -8,7 +8,7 @@ from argparse import ArgumentParser, RawTextHelpFormatter
 from functools import partial
 
 
-from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings,
+from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QStandardPaths,
                             QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence
 from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow,
@@ -26,6 +26,7 @@ from view.dialog_import import DialogImport;
 from view.dialog_document import DialogDocument;
 from view.ui.report_manager import ReportManager;
 from classlib.server import Server;
+from classlib import exportar_diagrama;
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -176,6 +177,36 @@ class MainWindow(QMainWindow):
         self.active_mdi_child() and self.active_mdi_child().save();
         #if self.active_mdi_child() and self.active_mdi_child().save():
         #    self.statusBar().showMessage("File saved", 2000)
+
+    @Slot()
+    def export_diagram(self):
+        # Exporta o diagrama ABERTO para arquivo do analista. Vale para os tres tipos (mapa,
+        # organograma, timeline), por isso nao restringe a classe. Com o report morto, este e
+        # o caminho de a entrega sair do app -- ver SPEC.md §3.2.
+        mapa = self.__mapa_ativo__();
+        if mapa == None:
+            return;
+        filtros = "PDF vetorial (*.pdf);;PNG em alta (*.png);;SVG (*.svg)";
+        pasta = QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation);
+        sugestao = os.path.join(pasta, exportar_diagrama.nome_de_arquivo(mapa) + ".pdf");
+        caminho, filtro = QFileDialog.getSaveFileName(self, "Exportar diagrama", sugestao, filtros);
+        if caminho == None or caminho.strip() == "":
+            return;
+        formato = "png" if "*.png" in filtro else ("svg" if "*.svg" in filtro else "pdf");
+        # Extensao digitada a mao ganha do filtro: quem escreve "mapa.svg" quer SVG.
+        extensao = os.path.splitext(caminho)[1].lstrip(".").lower();
+        if extensao in exportar_diagrama.FORMATOS:
+            formato = extensao;
+        try:
+            destino = exportar_diagrama.exportar(mapa, caminho, formato=formato);
+        except exportar_diagrama.ErroExportacao as erro:
+            QMessageBox.warning(self, "Exportar diagrama", str(erro));
+            return;
+        except Exception as erro:
+            QMessageBox.critical(self, "Exportar diagrama",
+                                 "Não foi possível exportar: %s" % erro);
+            return;
+        self.statusBar().showMessage("Diagrama exportado em " + destino, 5000);
 
     def __mapa_ativo__(self, classe=None):
         # "(x and x).mapa" estoura quando nao ha janela ativa: (None and None) e None, e
@@ -336,6 +367,11 @@ class MainWindow(QMainWindow):
                                  shortcut=QKeySequence.Save,
                                  statusTip="Save the document to disk", triggered=self.save)
 
+        icon = QIcon.fromTheme(QIcon.ThemeIcon.DocumentSaveAs)
+        self._export_act = QAction(icon, "Exportar diagrama...", self,
+                                 statusTip="Exportar o diagrama aberto para PDF, PNG ou SVG",
+                                 triggered=self.export_diagram)
+
         #self._save_as_act = QAction("Save &As...", self,
         #                            shortcut=QKeySequence.SaveAs,
         #                            statusTip="Save the document under a new name",
@@ -435,6 +471,7 @@ class MainWindow(QMainWindow):
         self._file_menu.addAction(self._new_act)
         self._file_menu.addAction(self._open_act)
         self._file_menu.addAction(self._save_act)
+        self._file_menu.addAction(self._export_act)
         #self._file_menu.addAction(self._save_as_act)
         self._file_menu.addSeparator()
         self._file_menu.addAction(self._subtypes_act)
@@ -467,6 +504,7 @@ class MainWindow(QMainWindow):
         self._file_tool_bar.addAction(self._new_act)
         self._file_tool_bar.addAction(self._open_act)
         self._file_tool_bar.addAction(self._save_act)
+        self._file_tool_bar.addAction(self._export_act)
         self._map_tool_bar = self.addToolBar("Map")
         # Sem isto o QToolBar desenha SO o icone e o texto da acao — que e onde a marca de
         # "gerando" e "terminou" aparece — fica invisivel.
