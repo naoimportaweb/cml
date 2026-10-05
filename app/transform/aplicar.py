@@ -53,8 +53,18 @@ def aplicar(mapa, origem, resultado, escolhas_entidade, escolhas_vinculo, subtip
 
 def __aplicar__(mapa, origem, resultado, escolhas_entidade, escolhas_vinculo, subtipos_validos=None, aplicar_subtipo=None):
 
-    cx = origem.x + origem.w / 2.0;
-    cy = origem.y + origem.h / 2.0;
+    if origem != None:
+        cx = origem.x + origem.w / 2.0;
+        cy = origem.y + origem.h / 2.0;
+    else:
+        # Sem caixa de origem (e o caso da IMPORTACAO de arquivo): o circulo nasce no centro do
+        # que ja esta desenhado, ou num ponto qualquer se o mapa estiver vazio.
+        caixas_existentes = [e for e in mapa.elements if e.entity.etype != "link"];
+        if len(caixas_existentes) > 0:
+            cx = sum(e.x + (e.w or 0) / 2.0 for e in caixas_existentes) / len(caixas_existentes);
+            cy = sum(e.y + (e.h or 0) / 2.0 for e in caixas_existentes) / len(caixas_existentes);
+        else:
+            cx, cy = 420.0, 320.0;
 
     # O que ja esta no mapa, por id de entidade e por nome normalizado: aceitar o mesmo
     # resultado duas vezes (ou um resultado que cita algo ja desenhado) nao duplica caixa.
@@ -68,7 +78,9 @@ def __aplicar__(mapa, origem, resultado, escolhas_entidade, escolhas_vinculo, su
 
     aceitas = [e for e in resultado.entidades if escolhas_entidade.get(e["chave"], {}).get("aceitar")];
     total = len(aceitas);
-    caixas = {ENTRADA: origem};
+    # Sem origem, a chave ENTRADA nao existe: o laco de vinculos ja pula ponta que nao achou,
+    # entao vinculo que cite ENTRADA simplesmente nao e criado.
+    caixas = {ENTRADA: origem} if origem != None else {};
     rel = {"novas": 0, "reusadas": 0, "vinculos": 0, "vinculos_reusados": 0, "refs": 0, "sem_subtipo": []};
     novas_idx = 0;
     raio = 220 + 30 * (total // 10);

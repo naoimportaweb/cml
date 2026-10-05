@@ -269,6 +269,29 @@ Os bots ficam em `app/bot/<pais>/<nome>/`, cada um um `config.json` mais um mód
 
 O `app/view/ui/qbot.py` renderiza o botão e carrega a classe no momento do clique, via `importlib.util.spec_from_file_location`, instanciando como `cls(parent, obj)`, em que `obj` é a entity ou a reference que está sendo editada. Para adicionar um bot: crie o diretório e depois coloque um widget `QBot(self, <obj>, "bot/.../config.json")` em um diálogo (veja `dialog_entity_generic.py` e `dialogreference.py`).
 
+### Importar é proposta, nunca gravação
+
+`app/classlib/importar_dados.py` lê CSV e GraphML para um **`Resultado`** — a mesma estrutura que
+um transform devolve — e entrega ao painel **Proposta**. Isso não é rodeio: é o único jeito de
+importar sem furar duas regras ao mesmo tempo, "entidade é global" e "curadoria humana". Um
+importador próprio criaria uma entidade nova por linha da planilha, e 300 linhas virariam 300
+duplicatas para o `merge_to` limpar depois. As colunas são reconhecidas por **nome** (várias
+grafias, pt e en), o delimitador (`;` ou `,`) é detectado, e planilha só de vínculos cria também
+as entidades das pontas. Para isso o `transform/aplicar.py` passou a aceitar **origem `None`**:
+sem caixa de origem o círculo nasce no centro do que já está desenhado, e vínculo que cite
+`ENTRADA` simplesmente não é criado.
+
+### Colapsar grupo (collection)
+
+É **vista**, como o ocultar: o documento não sabe que existe grupo, nada entra no desfazer, nada é
+salvo. O `ItemGrupo` não é um element — é só desenho. Duas coisas que parecem detalhe e não são:
+ele **redesenha os vínculos que atravessam a fronteira** do grupo (sem isso o grupo aparece
+desligado do resto, e quem olha conclui que aquelas caixas não se ligam a nada), juntando numa
+linha só os que vão para o mesmo alvo pelo mesmo verbo, com a contagem; e a caixa do grupo
+**foge de quem ficou na tela** antes de se posicionar — o centro dos membros parece o lugar óbvio,
+mas numa topologia de estrela é exatamente onde está o hub, e como o grupo tem `zValue` maior ele
+engoliria a caixa mais importante do mapa.
+
 ### Copiar/colar: a entidade é global, a caixa não
 
 `app/classlib/relationship/transferencia.py` (Ctrl+C/Ctrl+V). O pedaço de mapa viaja como **texto

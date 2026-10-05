@@ -13,7 +13,7 @@
 
 from PySide6.QtWidgets import (QGraphicsItem, QGraphicsScene, QGraphicsView, QMenu);
 from PySide6.QtCore import Qt, QRectF;
-from PySide6.QtGui import (QMouseEvent, QPainter, QPainterPath, QPixmap, QTransform);
+from PySide6.QtGui import (QColor, QMouseEvent, QPainter, QPainterPath, QPen, QPixmap, QTransform);
 
 import os, sys, inspect;
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
@@ -109,6 +109,79 @@ class ItemElemento(QGraphicsItem):
         self.update();
 
 
+class ItemGrupo(QGraphicsItem):
+    """Caixa que representa um grupo colapsado (a *collection* do Maltego).
+
+    Nao e um element do mapa: e so desenho. O documento nao sabe que existe grupo, e por isso
+    colapsar nao entra no desfazer e nao e salvo -- e vista, como o ocultar.
+
+    Ela desenha tambem as linhas dos vinculos que ATRAVESSAM a fronteira do grupo. Sem isso o
+    grupo apareceria desligado do resto, que e pior que nao colapsar: o analista concluiria que
+    aquele punhado de caixas nao se liga a nada."""
+
+    LARGURA = 170;
+    ALTURA = 34;
+
+    def __init__(self, grupo, engine):
+        super().__init__();
+        self.grupo = grupo;
+        self.engine = engine;
+        self.setZValue(2);   # por cima das caixas e dos vinculos
+
+    def retangulo(self):
+        return QRectF(self.grupo["x"], self.grupo["y"], self.LARGURA, self.ALTURA);
+
+    def __externos__(self):
+        """(caixa_de_fora, verbo) para cada vinculo que cruza a fronteira do grupo."""
+        saida = [];
+        membros = self.grupo["membros"];
+        for elemento in self.engine.mapa.elements:
+            if elemento.entity.etype != "link":
+                continue;
+            pontas = [p.entity for p in list(elemento.to_entity) + list(elemento.from_entity) if p.entity != None];
+            dentro = [p for p in pontas if p in membros];
+            fora = [p for p in pontas if p not in membros and p not in self.engine.ocultos
+                    and not self.engine.__em_grupo__(p)];
+            if len(dentro) > 0 and len(fora) > 0:
+                for alvo in fora:
+                    saida.append((alvo, elemento.entity.text));
+        # Tres membros ligados ao mesmo alvo pelo mesmo verbo davam tres linhas identicas, uma
+        # por cima da outra. Vira uma linha dizendo quantas sao -- a informacao que se perderia.
+        contagem = {};
+        for alvo, verbo in saida:
+            chave = (id(alvo), str(verbo or ""));
+            contagem[chave] = (alvo, str(verbo or ""), contagem.get(chave, (None, None, 0))[2] + 1);
+        return [(alvo, verbo if quantos == 1 else "%s (%d)" % (verbo, quantos))
+                for alvo, verbo, quantos in contagem.values()];
+
+    def boundingRect(self):
+        retangulo = self.retangulo();
+        for alvo, _ in self.__externos__():
+            retangulo = retangulo.united(QRectF(alvo.x or 0, alvo.y or 0, alvo.w or 1, alvo.h or 1));
+        return retangulo.adjusted(-10, -10, 10, 10);
+
+    def shape(self):
+        caminho = QPainterPath();
+        caminho.addRect(self.retangulo());
+        return caminho;
+
+    def paint(self, painter, option, widget=None):
+        painter.setFont(fonte_do_diagrama());
+        retangulo = self.retangulo();
+        centro = retangulo.center();
+        painter.setPen(QPen(Qt.darkGray, 1, Qt.DashLine));
+        for alvo, verbo in self.__externos__():
+            destino = QRectF(alvo.x or 0, alvo.y or 0, alvo.w or 1, alvo.h or 1).center();
+            painter.drawLine(centro, destino);
+            meio = (centro + destino) / 2.0;
+            painter.drawText(meio, str(verbo or ""));
+        painter.setPen(QPen(Qt.black, 2));
+        painter.fillRect(retangulo, QColor(235, 235, 245));
+        painter.drawRect(retangulo);
+        painter.drawText(retangulo, Qt.AlignCenter,
+                         "%s (%d)" % (self.grupo["rotulo"], len(self.grupo["membros"])));
+
+
 class MapaRelationshipEngine(QGraphicsView):
     def __init__(self, parent=None, mapa=None, form=None, max_width=5000, max_height=3000):
         # max_width/max_height sobrevivem so por compatibilidade de assinatura: o tamanho agora
@@ -128,6 +201,7 @@ class MapaRelationshipEngine(QGraphicsView):
         self.viewlet = "nenhum";     # cor/tamanho por propriedade (SPEC §3.3)
         self.ocultos = set();        # ocultar sem apagar: estado de VISTA, nao do documento
         self.minimapa = None;        # criado sob demanda (alternar_minimapa)
+        self.grupos = [];            # colapsar: tambem e vista, nao documento
 
         self.cena = QGraphicsScene(self);
         self.setScene(self.cena);
@@ -194,6 +268,8 @@ class MapaRelationshipEngine(QGraphicsView):
             item.setZValue(0 if elemento.entity.etype == "link" else 1);
             self.cena.addItem(item);
             self.itens.append(item);
+        for grupo in self.grupos:
+            self.cena.addItem(ItemGrupo(grupo, self));
         self.__aplicar_viewlet__();
         self.__ajustar_cena__();
         self.viewport().update();
@@ -201,18 +277,84 @@ class MapaRelationshipEngine(QGraphicsView):
     def __visiveis__(self):
         """Elements que entram na cena. Vinculo com UMA ponta oculta tambem sai: senao ele
         desenharia a linha ate uma caixa que nao esta na tela, que e pior que esconder os dois."""
-        if len(self.ocultos) == 0:
+        if len(self.ocultos) == 0 and len(self.grupos) == 0:
             return list(self.mapa.elements);
         saida = [];
         for elemento in self.mapa.elements:
-            if elemento in self.ocultos:
+            if elemento in self.ocultos or self.__em_grupo__(elemento):
                 continue;
             if elemento.entity.etype == "link":
                 pontas = [p.entity for p in list(elemento.to_entity) + list(elemento.from_entity)];
-                if any(p in self.ocultos for p in pontas):
+                # Vinculo some se qualquer ponta sumiu -- oculta ou dentro de um grupo. O que
+                # atravessa a fronteira do grupo e redesenhado pelo ItemGrupo.
+                if any(p in self.ocultos or self.__em_grupo__(p) for p in pontas):
                     continue;
             saida.append(elemento);
         return saida;
+
+    def __em_grupo__(self, elemento):
+        for grupo in self.grupos:
+            if elemento in grupo["membros"]:
+                return True;
+        return False;
+
+    def __grupo_em__(self, x, y):
+        for grupo in reversed(self.grupos):
+            if grupo["x"] <= x <= grupo["x"] + ItemGrupo.LARGURA and \
+               grupo["y"] <= y <= grupo["y"] + ItemGrupo.ALTURA:
+                return grupo;
+        return None;
+
+    def colapsar_selecionados(self, rotulo=None):
+        """Junta as caixas selecionadas numa caixa so. Vista, nao documento: nao entra no
+        desfazer, nao e salvo, e expandir devolve tudo onde estava."""
+        membros = [e for e in self.selecionados() if e.entity.etype != "link"];
+        if len(membros) < 2:
+            raise Exception("Selecione pelo menos duas caixas para agrupar.");
+        meio_x = sum(e.x + (e.w or 0) / 2.0 for e in membros) / len(membros);
+        meio_y = sum(e.y + (e.h or 0) / 2.0 for e in membros) / len(membros);
+        x, y = self.__lugar_livre__(int(meio_x - ItemGrupo.LARGURA / 2),
+                                    int(meio_y - ItemGrupo.ALTURA / 2), membros);
+        self.grupos.append({"membros": set(membros), "rotulo": rotulo or "Grupo", "x": x, "y": y});
+        self.redraw();
+        return len(membros);
+
+    def __lugar_livre__(self, x, y, membros):
+        """Afasta a caixa do grupo de quem vai continuar na tela.
+
+        O centro dos membros parece o lugar obvio, mas numa estrela e exatamente onde esta o
+        hub -- e como o grupo desenha por cima (zValue maior), ele ENGOLE a caixa mais
+        importante do mapa. Sobe em degraus ate achar espaco."""
+        ocupadas = [];
+        for elemento in self.mapa.elements:
+            if elemento in membros or elemento in self.ocultos or self.__em_grupo__(elemento):
+                continue;
+            if elemento.entity.etype == "link":
+                continue;
+            ocupadas.append(QRectF(elemento.x or 0, elemento.y or 0, elemento.w or 1, elemento.h or 1));
+        for grupo in self.grupos:
+            ocupadas.append(QRectF(grupo["x"], grupo["y"], ItemGrupo.LARGURA, ItemGrupo.ALTURA));
+        passo = ItemGrupo.ALTURA + 16;
+        for tentativa in range(12):
+            # Alterna para cima e para baixo, para o grupo nao fugir sempre na mesma direcao.
+            candidato = y + (passo * ((tentativa + 1) // 2) * (1 if tentativa % 2 else -1));
+            alvo = QRectF(x, candidato, ItemGrupo.LARGURA, ItemGrupo.ALTURA).adjusted(-8, -8, 8, 8);
+            if not any(alvo.intersects(r) for r in ocupadas):
+                return (x, candidato);
+        return (x, y);
+
+    def expandir(self, grupo):
+        if grupo in self.grupos:
+            self.grupos.remove(grupo);
+            self.redraw();
+            return True;
+        return False;
+
+    def expandir_tudo(self):
+        quantos = len(self.grupos);
+        self.grupos = [];
+        self.redraw();
+        return quantos;
 
     def ocultar(self, elementos):
         for elemento in elementos:
@@ -419,6 +561,10 @@ class MapaRelationshipEngine(QGraphicsView):
 
     def mouseDoubleClickEvent(self, event):
         x, y = self.__posicao__(event.position().toPoint());
+        grupo = self.__grupo_em__(x, y);
+        if grupo != None:
+            self.expandir(grupo);
+            return;
         buffer = self.getElement(x, y);
         if self.form != None:
             if buffer == None:
@@ -505,6 +651,17 @@ class MapaRelationshipEngine(QGraphicsView):
             self.centerOn(primeiro.x + (primeiro.w or 0) / 2.0, primeiro.y + (primeiro.h or 0) / 2.0);
         return len(achados);
 
+    def __agrupar__(self):
+        from PySide6.QtWidgets import QInputDialog;
+        rotulo, ok = QInputDialog.getText(self, "Agrupar", "Nome do grupo:", text="Grupo");
+        if not ok:
+            return;
+        try:
+            self.colapsar_selecionados(rotulo);
+        except Exception as erro:
+            from PySide6.QtWidgets import QMessageBox;
+            QMessageBox.information(self, "Agrupar", str(erro));
+
     def keyPressEvent(self, event):
         if event.key() in (Qt.Key_Delete, Qt.Key_Backspace) and len(self.selecionados()) > 0:
             if self.form != None and hasattr(self.form, "apagar_selecionados"):
@@ -538,4 +695,10 @@ class MapaRelationshipEngine(QGraphicsView):
         acao_mostrar = menu.addAction("Mostrar tudo (%d oculta(s))" % self.quantidade_oculta(),
                                       self.mostrar_tudo);
         acao_mostrar.setEnabled(self.quantidade_oculta() > 0);
+        menu.addSeparator();
+        acao_grupo = menu.addAction("Agrupar selecionadas", self.__agrupar__);
+        acao_grupo.setEnabled(len([e for e in self.selecionados() if e.entity.etype != "link"]) >= 2);
+        acao_expandir = menu.addAction("Expandir todos os grupos (%d)" % len(self.grupos),
+                                       self.expandir_tudo);
+        acao_expandir.setEnabled(len(self.grupos) > 0);
         menu.exec(event.globalPos());

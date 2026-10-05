@@ -124,6 +124,43 @@ def main():
     confere(quantos >= 2 and engine.quantidade_oculta() == 0, "voltou tudo (%d)" % quantos);
     confere(len(engine.itens) == 10, "todos os elements de volta na tela");
 
+    print("\ncolapsar grupo");
+    mapa, hub, folhas, solta = montar();
+    engine = MapaRelationshipEngine(parent=None, mapa=mapa, form=None);
+    engine.resize(900, 700); engine.redraw();
+    total = len(engine.itens);
+    try:
+        engine.selecionar([folhas[0]]);
+        engine.colapsar_selecionados("X");
+        confere(False, "deveria exigir pelo menos duas caixas");
+    except Exception as erro:
+        confere("duas caixas" in str(erro), "uma caixa só não vira grupo: %s" % erro);
+
+    engine.selecionar([folhas[0], folhas[1]]);
+    confere(engine.colapsar_selecionados("Diretoria") == 2, "agrupou as duas");
+    confere(len(mapa.elements) == 10, "o documento continua inteiro (colapsar é vista)");
+    confere(mapa.desfazer.count() == 0, "e não entra no desfazer");
+    confere(len(engine.itens) == total - 4, "sumiram as 2 caixas e os 2 vínculos delas (%d)" % len(engine.itens));
+
+    grupos = [i for i in engine.cena.items() if i.__class__.__name__ == "ItemGrupo"];
+    confere(len(grupos) == 1, "há uma caixa de grupo na cena");
+    item = grupos[0];
+    externos = item._ItemGrupo__externos__() if hasattr(item, "_ItemGrupo__externos__") else item.__externos__();
+    confere(len(externos) == 1, "2 vínculos para o mesmo alvo viram UMA linha (%d)" % len(externos));
+    confere(externos[0][0] is hub, "e ela vai para o hub, que ficou de fora");
+    confere("(2)" in externos[0][1], "dizendo quantos são: %s" % externos[0][1]);
+    confere(item.boundingRect().width() > item.shape().boundingRect().width(),
+            "a área pintada cobre as linhas até os externos; a clicável é só a caixinha");
+
+    print("\nexpandir");
+    confere(engine.expandir(engine.grupos[0]), "expandiu");
+    confere(len(engine.itens) == total, "tudo de volta na tela (%d)" % len(engine.itens));
+    engine.selecionar([folhas[0], folhas[1]]); engine.colapsar_selecionados("A");
+    engine.selecionar([folhas[2], folhas[3]]); engine.colapsar_selecionados("B");
+    confere(len(engine.grupos) == 2, "dois grupos ao mesmo tempo");
+    confere(engine.expandir_tudo() == 2, "expandir tudo devolve os dois");
+    confere(len(engine.itens) == total, "e a tela volta ao normal");
+
     print("\n" + ("TODOS OS TESTES PASSARAM" if len(FALHAS) == 0 else "FALHAS: %d" % len(FALHAS)));
     return 1 if len(FALHAS) > 0 else 0;
 

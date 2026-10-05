@@ -117,6 +117,57 @@ def main():
     confere(dado(no_org, "referencias") == "2", "referencias viraram atributo do no");
     confere(dado(arestas[0], "verbo") != None, "a aresta carrega o verbo");
 
+    print("\nSTIX 2.1");
+    import json, re as _re;
+    mapa2 = MapRelationship();
+    mapa2.name = "CTI";
+    # id em formato UUID = origem MISP (convencao do projeto); o export tem de REAPROVEITA-lo
+    ator = mapa2.addEntity("other", 10, 10, text="APT-Exemplo");
+    ator.entity.id = "9f1c6f58-6c4e-4c2a-9a1e-1b2c3d4e5f60";
+    ator.entity.sub_etype_name = "threat actor";
+    ator.start_date = "2018-04-02";
+    praga = mapa2.addEntity("other", 200, 10, text="MalwareX");
+    praga.entity.sub_etype_name = "ransomware";
+    pessoa = mapa2.addEntity("person", 10, 200, text="Fulano");
+    elo = mapa2.addEntity("link", 100, 100, text="usa o");
+    elo.addFrom(ator, start_date="2020-01-01", end_date="2021-06-30"); elo.addTo(praga);
+
+    caminho = ed.exportar(mapa2, os.path.join(TEMP, "cti"), formato="stix")[0];
+    bundle = json.load(open(caminho, encoding="utf-8"));
+    confere(bundle["type"] == "bundle" and bundle["id"].startswith("bundle--"), "é um bundle STIX");
+    por_tipo = {};
+    for o in bundle["objects"]:
+        por_tipo.setdefault(o["type"], []).append(o);
+    confere("threat-actor" in por_tipo, "sub-tipo 'threat actor' virou threat-actor");
+    confere("malware" in por_tipo, "'ransomware' virou malware");
+    confere(por_tipo["malware"][0].get("is_family") is True, "malware tem is_family (obrigatório no 2.1)");
+    confere("identity" in por_tipo, "pessoa virou identity");
+    confere(por_tipo["identity"][0]["identity_class"] == "individual", "com identity_class individual");
+
+    objeto_ator = por_tipo["threat-actor"][0];
+    confere(objeto_ator["id"] == "threat-actor--9f1c6f58-6c4e-4c2a-9a1e-1b2c3d4e5f60",
+            "o UUID do MISP foi REAPROVEITADO no id STIX");
+    confere(objeto_ator.get("first_seen") == "2018-04-02T00:00:00.000Z", "data virou first_seen");
+    confere(all(o.get("spec_version") == "2.1" for o in bundle["objects"]), "todos marcam spec_version 2.1");
+
+    relacoes = por_tipo.get("relationship", []);
+    confere(len(relacoes) == 1, "um relationship (%d)" % len(relacoes));
+    confere(relacoes[0]["relationship_type"] == "usa-o", "verbo virou relationship_type válido: %s"
+            % relacoes[0]["relationship_type"]);
+    confere(relacoes[0]["start_time"] == "2020-01-01T00:00:00.000Z", "start_time da ponta");
+    confere(relacoes[0]["stop_time"] == "2021-06-30T00:00:00.000Z", "stop_time da ponta");
+    ids = set(o["id"] for o in bundle["objects"]);
+    confere(relacoes[0]["source_ref"] in ids and relacoes[0]["target_ref"] in ids,
+            "as duas pontas apontam para objetos do próprio bundle");
+    confere(all(_re.match(r"^[a-z0-9-]+--[0-9a-f-]{36}$", o["id"]) for o in bundle["objects"]),
+            "todo id no formato tipo--uuid");
+
+    print("\nSTIX é determinístico");
+    outro = ed.exportar(mapa2, os.path.join(TEMP, "cti2"), formato="stix")[0];
+    b2 = json.load(open(outro, encoding="utf-8"));
+    ids2 = set(o["id"] for o in b2["objects"]);
+    confere(ids == ids2, "exportar duas vezes dá os mesmos ids de objeto");
+
     print("\nrecusas");
     try:
         ed.exportar(mapa, os.path.join(TEMP, "x.xlsx"));

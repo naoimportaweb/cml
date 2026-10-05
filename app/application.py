@@ -28,6 +28,24 @@ from view.ui.report_manager import ReportManager;
 from classlib.server import Server;
 from classlib import exportar_diagrama;
 from classlib import exportar_dados;
+from classlib import importar_dados;
+
+class _JobImportacao:
+    """Faz o papel do Job de transform para o painel Proposta: o painel so precisa de resultado,
+    janela, um nome e a caixa de origem -- que na importacao nao existe (caixa=None)."""
+
+    def __init__(self, resultado, mdimap, arquivo):
+        self.resultado = resultado;
+        self.mdimap = mdimap;
+        self.caixa = None;
+        self.do_cache = False;
+        self.arquivo = arquivo;
+        self.cfg = {"fonte": "arquivo importado", "nome": "Importar"};
+        self.entrada = {"text_label": arquivo};
+
+    def nome(self):
+        return "Importar — " + self.arquivo;
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -213,6 +231,32 @@ class MainWindow(QMainWindow):
         self._redo_act.setText("Refazer" + ((" " + pilha.redoText()) if pode_refazer else ""));
 
     @Slot()
+    def import_data(self):
+        # Importar NAO grava: le o arquivo para um Resultado e entrega ao painel Proposta, que
+        # e quem faz "buscar antes de criar" e oferecer reaproveitar a entidade existente.
+        # Importador proprio criaria uma entidade nova por linha da planilha.
+        mapa = self.__mapa_ativo__("MapRelationship");
+        if mapa == None:
+            return;
+        janela = self.active_mdi_child();
+        filtros = "CSV (*.csv);;GraphML (*.graphml)";
+        pasta = QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation);
+        caminho, _ = QFileDialog.getOpenFileName(self, "Importar dados", pasta, filtros);
+        if caminho == None or caminho.strip() == "":
+            return;
+        try:
+            resultado = importar_dados.importar(caminho);
+        except importar_dados.ErroImportacao as erro:
+            QMessageBox.warning(self, "Importar dados", str(erro));
+            return;
+        except Exception as erro:
+            QMessageBox.critical(self, "Importar dados", "Não foi possível ler o arquivo: %s" % erro);
+            return;
+        from view.dialog_transform_proposta import DialogTransformProposta;
+        DialogTransformProposta(self, _JobImportacao(resultado, janela, os.path.basename(caminho))).exec();
+        janela.redesenhar();
+
+    @Slot()
     def copiar_selecao(self):
         from classlib.relationship import transferencia;
         if self.__mapa_ativo__("MapRelationship") == None:
@@ -255,13 +299,13 @@ class MainWindow(QMainWindow):
         mapa = self.__mapa_ativo__("MapRelationship");
         if mapa == None:
             return;
-        filtros = "CSV, dois arquivos (*.csv);;GraphML (*.graphml)";
+        filtros = "CSV, dois arquivos (*.csv);;GraphML (*.graphml);;STIX 2.1 (*.json)";
         pasta = QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation);
         sugestao = os.path.join(pasta, exportar_diagrama.nome_de_arquivo(mapa));
         caminho, filtro = QFileDialog.getSaveFileName(self, "Exportar dados", sugestao, filtros);
         if caminho == None or caminho.strip() == "":
             return;
-        formato = "graphml" if "*.graphml" in filtro else "csv";
+        formato = "graphml" if "*.graphml" in filtro else ("stix" if "*.json" in filtro else "csv");
         extensao = os.path.splitext(caminho)[1].lstrip(".").lower();
         if extensao in exportar_dados.FORMATOS:
             formato = extensao;
@@ -569,6 +613,11 @@ class MainWindow(QMainWindow):
                                  shortcut=QKeySequence.Save,
                                  statusTip="Save the document to disk", triggered=self.save)
 
+        icon = QIcon.fromTheme(QIcon.ThemeIcon.DocumentOpen)
+        self._import_dados_act = QAction(icon, "Importar dados...", self,
+                                 statusTip="Importar CSV ou GraphML — abre como proposta, não grava direto",
+                                 triggered=self.import_data)
+
         icon = QIcon.fromTheme(QIcon.ThemeIcon.DocumentSend)
         self._export_dados_act = QAction(icon, "Exportar dados...", self,
                                  statusTip="Exportar o mapa como dado (CSV ou GraphML) para outra ferramenta",
@@ -718,6 +767,7 @@ class MainWindow(QMainWindow):
         self._file_menu.addAction(self._save_act)
         self._file_menu.addAction(self._export_act)
         self._file_menu.addAction(self._export_dados_act)
+        self._file_menu.addAction(self._import_dados_act)
         #self._file_menu.addAction(self._save_as_act)
         self._file_menu.addSeparator()
         self._file_menu.addAction(self._subtypes_act)

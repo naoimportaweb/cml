@@ -107,7 +107,7 @@ nenhum deles é candidato a sair.
 | **Exportar o diagrama (PDF/PNG)** | todos | **inexistente** — `save(filename)` ignora o nome | **2** |
 | Layouts automáticos | Maltego, Obsidian, Siren | posição manual | 2 |
 | Peso de vínculo, tamanho por centralidade | Maltego, Siren | inexistente — `QPen` de largura fixa 1 | 2 |
-| Colapsar grupo de caixas | Maltego, Siren | inexistente | 2 |
+| Colapsar grupo de caixas | Maltego, Siren | ✅ feito | 2 |
 | Filtro, busca no canvas e seleção em massa | Maltego, Siren | ✅ feito | 2 |
 | Caminho entre duas entidades | Maltego, Siren | inexistente | 2 |
 | **Régua do tempo: diagrama reduzido a uma data** | **ninguém** | as datas já existem | **2** |
@@ -122,7 +122,7 @@ nenhum deles é candidato a sair.
 | Mapa geográfico | Siren | países com bandeira + transform `nominatim`, sem coordenada | 4 |
 | Alerta ("avise se mudar") | Siren | inexistente | 4 |
 | Auditoria de quem aceitou o quê | — | inexistente | 4 |
-| Importar/exportar CSV, GraphML, STIX 2.1 | Maltego, Siren | ✅ **exporta** CSV e GraphML; falta importar e o STIX | 5 |
+| Importar/exportar CSV, GraphML, STIX 2.1 | Maltego, Siren | ✅ feito (STIX só exporta) | 5 |
 | Vault Markdown (entra e sai) | Obsidian | inexistente | 5 |
 | Colaboração em tempo real | Siren | trava consultiva por mapa | 5 |
 | Extração de entidades por IA | Maltego (hub), Siren | **parado** — era `rolhama` | **8** |
@@ -330,7 +330,14 @@ divergem calados.
 - **Tamanho da caixa por centralidade** (grau), calculado no cliente, sem lib externa — como um
   viewlet, ver abaixo.
 - **Roteamento que não atravessa caixa** e **data da ponta desenhada na linha**.
-- **Colapsar grupo** numa caixa só — mapa com 200 caixas é ilegível (é a *collection* do Maltego).
+- ✅ **Colapsar grupo** (feito em 2026-10-05) — a *collection* do Maltego, para o mapa de 200
+  caixas deixar de ser ilegível. É **vista**, como o ocultar: o documento não sabe que existe
+  grupo, nada entra no desfazer e nada é salvo. A caixa do grupo **redesenha os vínculos que
+  atravessam a fronteira** — sem isso o grupo apareceria desligado do resto, e o analista
+  concluiria que aquele punhado de caixas não se liga a nada —, juntando numa linha só os que vão
+  para o mesmo alvo pelo mesmo verbo, com a contagem. E ela **foge de quem ficou na tela**: o
+  centro dos membros parece o lugar óbvio, mas numa estrela é exatamente onde está o hub, e como
+  o grupo desenha por cima ele engoliria a caixa mais importante do mapa. Duplo clique expande.
 - ✅ **List View** (feito em 2026-10-05): o mapa em **tabela**, alternando com o desenho na mesma
   janela (`view/ui/lista_diagrama.py`, botão **Lista**). Duas abas, porque no CML o vínculo também
   é element e as colunas dele são outras: **Entidades** (tipo·subtipo, nome, apelido, grau,
@@ -502,7 +509,7 @@ Depende da **seleção em massa** (§3.4), por isso vive aqui e não na fase dos
 
 ## 6. Fase 5 — Dados e colaboração
 
-- ✅ **Exportar CSV e GraphML** (feito em 2026-10-05) — `classlib/exportar_dados.py`, menu File →
+- ✅ **Exportar CSV, GraphML e STIX 2.1** (feito em 2026-10-05) — `classlib/exportar_dados.py`, menu File →
   **Exportar dados…**. O `exportar_diagrama.py` tira a figura; este tira a informação, que era o
   que faltava para levar a investigação a outra ferramenta (Gephi, yEd, Cytoscape, planilha).
   **CSV são dois arquivos** (entidades e vínculos), pela mesma razão das duas abas da List View.
@@ -511,7 +518,22 @@ Depende da **seleção em massa** (§3.4), por isso vive aqui e não na fase dos
   próprio arquivo quando aberto no Gephi. As datas e a contagem de referências vão como atributo:
   mapa sem data e sem fonte perde justamente o que o CML tem de diferente. CSV sai em `utf-8-sig`
   porque o destino número um é o Excel.
-- **Falta**: importar esses formatos, e **STIX 2.1** (que casa com a origem MISP).
+- ✅ **STIX 2.1** (feito em 2026-10-05): bundle com `identity`/`threat-actor`/`malware`/`tool`/
+  `location`/`vulnerability` conforme o **sub-tipo**, que é o que as entidades semeadas do MISP
+  Galaxy carregam; o que não é reconhecido vai como `identity`/`unknown`, válido e honesto —
+  inventar um tipo `x-cml-*` faria metade das ferramentas ignorar. **Entidade de origem MISP tem
+  `id` em formato UUID** (convenção do projeto), e esse UUID é **reaproveitado** no id STIX, então
+  o mesmo ator exportado daqui e de outra ferramenta casa pelo id; entidade nativa ganha `uuid5`
+  determinístico. Vínculo vira `relationship` com `start_time`/`stop_time` das pontas.
+- ✅ **Importar CSV e GraphML** (feito em 2026-10-05) — `classlib/importar_dados.py`. O arquivo
+  **não entra direto no mapa**: é lido para um `Resultado` (a mesma estrutura que um transform
+  devolve) e entregue ao painel **Proposta**, que já faz buscar-antes-de-criar e oferece
+  reaproveitar a entidade existente. Era o único jeito de importar sem furar duas regras de uma
+  vez — "entidade é global" e "curadoria humana": um importador próprio criaria uma entidade nova
+  por linha, e 300 linhas virariam 300 duplicatas para o `merge_to` limpar. As colunas são
+  reconhecidas por **nome** (várias grafias, pt e en), o delimitador é detectado, e planilha só de
+  vínculos cria também as pontas. O `aplicar` passou a aceitar **origem `None`** para isso.
+- **Falta**: importar STIX.
 - **Vault Markdown (Obsidian) nos dois sentidos**: importar um vault (nota → entidade,
   `[[wikilink]]` → vínculo, frontmatter → classificação) e exportar um mapa como vault. É como se
   traz quem já trabalha em Obsidian.

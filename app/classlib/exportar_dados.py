@@ -13,13 +13,30 @@
 #
 # Formatos que ainda faltam: STIX 2.1 (casa com a origem MISP) e JSON proprio.
 
-import csv, os, sys, inspect, re;
+import csv, datetime, json, os, re, sys, inspect, uuid;
 from xml.sax.saxutils import escape, quoteattr;
 
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
 sys.path.append(os.path.dirname(CURRENTDIR));
 
-FORMATOS = ("csv", "graphml");
+FORMATOS = ("csv", "graphml", "stix");
+
+# Como o etype/sub_etype do CML vira objeto STIX. O sub_etype manda quando a gente reconhece --
+# e o caso das entidades semeadas do MISP Galaxy, que e justamente de onde vem a maior parte do
+# banco. O que nao for reconhecido vai como identity/unknown, que e valido e nao mente sobre o
+# que a entidade e; inventar um tipo custom (x-cml-*) faria metade das ferramentas ignorarem.
+STIX_POR_SUBTIPO = {
+    "threat actor": "threat-actor", "threat-actor": "threat-actor", "ator": "threat-actor",
+    "malware": "malware", "ransomware": "malware", "rat": "malware", "backdoor": "malware",
+    "trojan": "malware", "worm": "malware", "stealer": "malware",
+    "tool": "tool", "ferramenta": "tool",
+    "campanha": "campaign", "campaign": "campaign",
+    "country": "location", "pais": "location", "país": "location", "local": "location",
+    "vulnerabilidade": "vulnerability", "vulnerability": "vulnerability", "cve": "vulnerability",
+};
+STIX_POR_ETYPE = {"person": "identity", "organization": "identity", "other": "identity"};
+NAMESPACE_CML = uuid.UUID("6f1e9f2a-5b42-4c37-9b1e-0c7a1d3e5f80");
+RE_UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.I);
 SUJO = ("", "0000-00-00", "none", "null");
 
 COLUNAS_ENTIDADE = ["id", "tipo", "sub_tipo", "nome", "apelido", "vinculos", "referencias",
@@ -190,6 +207,102 @@ def para_graphml(mapa, caminho):
     return [caminho];
 
 
+def __agora__():
+    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z");
+
+
+def __instante__(data):
+    """Data do CML (YYYY-MM-DD) para o timestamp que o STIX exige. Data suja nao vira campo."""
+    texto = data_limpa(data);
+    if not re.match(r"^\d{4}-\d{2}-\d{2}$", texto):
+        return None;
+    return texto + "T00:00:00.000Z";
+
+
+def __tipo_stix__(caixa):
+    sub = __texto__(caixa.entity.sub_etype_name).lower();
+    if sub in STIX_POR_SUBTIPO:
+        return STIX_POR_SUBTIPO[sub];
+    return STIX_POR_ETYPE.get(caixa.entity.etype, "identity");
+
+
+def __id_stix__(tipo, identificador):
+    """STIX exige 'tipo--uuid'. Entidade vinda do MISP ja tem id em formato UUID (convencao do
+    projeto: UUID = MISP, hex_hex_hex = nativa), entao o UUID dela e REAPROVEITADO -- o mesmo
+    ator exportado daqui e de outra ferramenta casa pelo id. Entidade nativa ganha um uuid5
+    deterministico, para exportar duas vezes dar o mesmo id."""
+    bruto = str(identificador or "");
+    if RE_UUID.match(bruto):
+        return "%s--%s" % (tipo, bruto.lower());
+    return "%s--%s" % (tipo, uuid.uuid5(NAMESPACE_CML, bruto));
+
+
+def __relacao_stix__(verbo):
+    # relationship_type do STIX e minusculo com hifens.
+    limpo = re.sub(r"[^a-z0-9]+", "-", __texto__(verbo).lower()).strip("-");
+    return limpo or "related-to";
+
+
+def para_stix(mapa, caminho):
+    """Bundle STIX 2.1. Casa com a origem MISP do banco de entidades (docs/MISP-GALAXY.md)."""
+    if not caminho.lower().endswith(".json"):
+        caminho = caminho + ".json";
+    agora = __agora__();
+    objetos = [];
+    id_por_caixa = {};
+    for caixa in caixas(mapa):
+        tipo = __tipo_stix__(caixa);
+        identificador = __id_stix__(tipo, caixa.entity.id);
+        id_por_caixa[caixa] = identificador;
+        objeto = {"type": tipo, "spec_version": "2.1", "id": identificador,
+                  "created": agora, "modified": agora,
+                  "name": __texto__(caixa.entity.text) or "(sem nome)"};
+        descricao = __texto__(caixa.entity.full_description);
+        if descricao != "":
+            objeto["description"] = descricao;
+        apelido = __texto__(caixa.entity.small_label);
+        if apelido != "":
+            # identity nao tem 'aliases' no STIX; so os SDO de ameaca tem.
+            if tipo in ("threat-actor", "malware", "tool", "campaign"):
+                objeto["aliases"] = [apelido];
+        if tipo == "identity":
+            objeto["identity_class"] = {"person": "individual",
+                                        "organization": "organization"}.get(caixa.entity.etype, "unknown");
+        if tipo == "malware":
+            objeto["is_family"] = True;    # obrigatorio no STIX 2.1
+        inicio = __instante__(caixa.start_date);
+        if inicio != None and tipo in ("threat-actor", "campaign"):
+            objeto["first_seen"] = inicio;
+        objetos.append(objeto);
+
+    for vinculo in vinculos(mapa):
+        for a, b in __pares__(vinculo):
+            origem = id_por_caixa.get(a.entity);
+            destino = id_por_caixa.get(b.entity);
+            if origem == None or destino == None:
+                continue;
+            relacao = {"type": "relationship", "spec_version": "2.1",
+                       "id": __id_stix__("relationship", "%s|%s|%s" % (a.entity.id, vinculo.id, b.entity.id)),
+                       "created": agora, "modified": agora,
+                       "relationship_type": __relacao_stix__(vinculo.entity.text),
+                       "source_ref": origem, "target_ref": destino};
+            inicio = __instante__(a.start_date) or __instante__(b.start_date);
+            fim = __instante__(a.end_date) or __instante__(b.end_date);
+            if inicio != None:
+                relacao["start_time"] = inicio;
+            if fim != None:
+                relacao["stop_time"] = fim;
+            objetos.append(relacao);
+
+    bundle = {"type": "bundle", "id": "bundle--%s" % uuid.uuid4(), "objects": objetos};
+    try:
+        with open(caminho, "w", encoding="utf-8") as arquivo:
+            json.dump(bundle, arquivo, ensure_ascii=False, indent=2);
+    except OSError as erro:
+        raise ErroExportacao("Não foi possível gravar o STIX: %s" % erro);
+    return [caminho];
+
+
 def exportar(mapa, caminho, formato=None):
     if mapa == None:
         raise ErroExportacao("Nenhum mapa aberto.");
@@ -199,5 +312,9 @@ def exportar(mapa, caminho, formato=None):
         formato = os.path.splitext(caminho)[1].lstrip(".").lower();
     formato = (formato or "").lower();
     if formato not in FORMATOS:
-        raise ErroExportacao("Formato não suportado: %s (use csv ou graphml)." % (formato or "?"));
-    return para_csv(mapa, caminho) if formato == "csv" else para_graphml(mapa, caminho);
+        raise ErroExportacao("Formato não suportado: %s (use csv, graphml ou stix)." % (formato or "?"));
+    if formato == "csv":
+        return para_csv(mapa, caminho);
+    if formato == "stix":
+        return para_stix(mapa, caminho);
+    return para_graphml(mapa, caminho);
