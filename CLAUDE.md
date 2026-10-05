@@ -395,7 +395,12 @@ camadas por caminho mais longo e ordenação por baricentro (reduz cruzamento).
 
 O posicionamento horizontal é em **cascata**, não por camada centralizada: o `x` nasce da família
 — filho sob a média dos pais, pai sobre a média dos filhos — com passadas alternando de cima para
-baixo e de baixo para cima até assentar. A primeira versão centralizava cada camada em zero e o
+baixo e de baixo para cima até assentar. O número de passadas é **par de propósito**, para a
+última ser de *subida*: terminando na descida, o pai fica onde estava e os filhos se amontoam
+debaixo dele — a raiz aparecia encostada na ponta esquerda com a árvore inteira pendurada à
+direita. As folgas (`ESPACO_RAMO`, `ESPACO_VERBO`) são **generosas de propósito**: o objetivo
+deste layout não é caber na tela, é ser **lido** — para caber existem o zoom, o ajustar-à-janela
+e o minimapa. A primeira versão centralizava cada camada em zero e o
 resultado era uma pirâmide amontoada no meio, aceitável num mapa de brinquedo e ilegível num
 real. Depois de **cada** ajuste a camada é varrida da esquerda para a direita empurrando quem
 encostou, e é isso que faz "o mais próximo possível" nunca virar sobreposição. Caixa **sem

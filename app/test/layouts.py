@@ -165,15 +165,27 @@ def main():
             % (para_baixo, total_arestas));
     confere(raiz.y == min(c.y for c in layouts.caixas(mapa)), "a raiz ficou na primeira camada");
 
-    print("\nespalhar é compacto");
-    mapa_e, _ = arvore(); layouts.aplicar(mapa_e, "espalhar");
-    mapa_c, _ = arvore(); layouts.aplicar(mapa_c, "circular");
-    def area(mapa):
-        cx = layouts.caixas(mapa);
-        return (max(c.x + c.w for c in cx) - min(c.x for c in cx)) * \
-               (max(c.y + c.h for c in cx) - min(c.y for c in cx));
-    confere(area(mapa_e) < area(mapa_c), "ocupa menos área que o circular (%d < %d)"
-            % (area(mapa_e), area(mapa_c)));
+    print("\nespalhar respeita a folga, sem sobrar nem faltar");
+    # O espalhar NAO busca a menor area -- ele busca ser legivel, e para caber na tela existem
+    # zoom, ajustar-a-janela e minimapa. O que ele promete e disciplina de folga: ninguem mais
+    # perto que ESPACO_RAMO (seria colisao) e, em algum lugar, alguem exatamente na folga
+    # minima (senao nao estaria "o mais proximo possivel", estaria so espalhado a esmo).
+    mapa_e, _ = arvore();
+    recalcular(mapa_e);
+    layouts.aplicar(mapa_e, "espalhar");
+    folgas = [];
+    por_linha = {};
+    for caixa in layouts.caixas(mapa_e):
+        por_linha.setdefault(caixa.y, []).append(caixa);
+    for linha in por_linha.values():
+        linha.sort(key=lambda c: c.x);
+        for k in range(1, len(linha)):
+            folgas.append(linha[k].x - (linha[k - 1].x + linha[k - 1].w));
+    confere(len(folgas) > 0 and min(folgas) >= layouts.ESPACO_RAMO,
+            "ninguém mais perto que a folga mínima (menor folga: %d >= %d)"
+            % (min(folgas), layouts.ESPACO_RAMO));
+    confere(min(folgas) == layouts.ESPACO_RAMO,
+            "e alguém está exatamente nela, então não é espalhamento a esmo");
 
     print("\nespalhar: o TEXTO DO VÍNCULO também entra na briga");
     # Vários vínculos entre AS MESMAS duas caixas: todos têm o mesmo ponto médio, então os

@@ -28,8 +28,12 @@ ESPACO_X = 60;      # respiro horizontal entre caixas
 ESPACO_Y = 110;     # altura de uma camada
 GRADE = 20;         # passo da grade do layout ortogonal
 ANEIS_VERBO = 8;    # quantos aneis o afastar_vinculos procura antes de desistir
-ESPACO_RAMO = 90;   # folga horizontal entre ramos no espalhar: e o que os faz respirar
-ESPACO_VERBO = 90;  # folga entre camadas no "espalhar": tem de caber a caixinha do verbo
+# Folgas do espalhar. Sao generosas de proposito: o objetivo dele nao e caber na tela, e ser
+# LIDO por uma pessoa -- e para caber na tela existem o zoom, o ajustar-a-janela e o minimapa.
+# Com folga pequena as diagonais entre camadas passam rente as caixas e os rotulos se espremem,
+# que foi o que o dono viu no mapa real.
+ESPACO_RAMO = 180;  # folga horizontal entre caixas vizinhas da mesma camada
+ESPACO_VERBO = 170;  # folga entre camadas no "espalhar": tem de caber a caixinha do verbo
 SEMENTE = 20261005; # posicao inicial do organico e sorteada: semente fixa = resultado repetivel
 GRAVIDADE = 6.0;    # divisor da gravidade do organico (ver comentario em __organico__)
 
@@ -390,7 +394,10 @@ def __empacotar__(camadas, boas):
         acomodar(linha);
 
     # Assenta: desce puxando filho para debaixo dos pais, sobe puxando pai para cima dos filhos.
-    for passada in range(5):
+    # O numero de passadas e PAR de proposito, para a ultima ser de SUBIDA: terminando na
+    # descida, o pai fica onde estava e os filhos se amontoam embaixo dele -- a raiz aparecia
+    # na ponta esquerda com a arvore inteira pendurada a direita.
+    for passada in range(6):
         descendo = passada % 2 == 0;
         ordem = indices[1:] if descendo else list(reversed(indices[:-1]));
         for i in ordem:
