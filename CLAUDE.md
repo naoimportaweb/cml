@@ -21,13 +21,15 @@ python3 app/application.py
 cd script && ./deploy.sh
 ```
 
-O `dependencias.sh` (raiz) é o bootstrap de **desenvolvimento**: instala as libs de sistema do plugin xcb do Qt6 — sem `libxcb-cursor0` o PySide6 ≥ 6.5 no Debian 13 morre com *"libxcb-cursor0 is needed to load the Qt xcb platform plugin"*, e o pip não traz essa lib — e depois as deps Python (`requests PySide6 pycryptodome pyspellchecker beautifulsoup4 waybackpy`, com `--break-system-packages` por causa do PEP 668). Não baixa nada do site nem exige servidor.
+O `dependencias.sh` (raiz) é o bootstrap de **desenvolvimento**: instala as libs de sistema do plugin xcb do Qt6 — sem `libxcb-cursor0` o PySide6 ≥ 6.5 no Debian 13 morre com *"libxcb-cursor0 is needed to load the Qt xcb platform plugin"*, e o pip não traz essa lib — e depois as deps Python (`requests PySocks PySide6 pycryptodome pyspellchecker beautifulsoup4 waybackpy`, com `--break-system-packages` por causa do PEP 668 — o `PySocks` é o que faz a rota `tor` dos transforms funcionar). Não baixa nada do site nem exige servidor.
 
 O `app/install.sh` é o instalador para o **usuário final**, não um comando de desenvolvimento: exige root, recebe a URL do site, baixa o `client.tar.gz` desse site, descompacta em `/opt/cml` e cria o symlink `/bin/cml`. A lista de deps Python vive nele e no `dependencias.sh` — mudou uma, mude a outra.
 
 ### Acesso ao servidor
 
-Prefira o servidor MCP `cml-remoto` (`mcp/remoto_hostinger.py`, registrado em `.mcp.json`) a montar `ssh`, `rsync` e `mysql` na mão: ele já carrega as regras do `DEPLOY.md`. `flag_confirmar` faz a checagem da flag antes de qualquer envio, `deploy` empacota e envia já com `--exclude data/` e sem `--delete`, `php`/`lint` usam o binário **8.5** (o `php` do PATH no SSH é 7.4 e **não** é o runtime de produção), `sql` manda a senha por stdin e recusa o irreversível, `log_ref` acha no `error_log` o SQL por trás de um erro que chegou ao usuário, e `ler_arquivo` recusa `.env`, chaves, certificados e o `data/config.json`. Lista das ferramentas em `DEPLOY.md`.
+O `.mcp.json` registra **dois** servidores MCP, de propósitos que não se misturam: `cml-remoto` (hospedagem: deploy, SQL, logs) e `cml-transforms` (descoberta de dados; ver `docs/MCP.md`). Os dois entram desligados pelo `disabledMcpjsonServers` do `.claude/settings.local.json` — habilite o que for usar antes de contar com as ferramentas.
+
+Prefira o servidor MCP `cml-remoto` (`mcp/remoto_hostinger.py`) a montar `ssh`, `rsync` e `mysql` na mão: ele já carrega as regras do `DEPLOY.md`. `flag_confirmar` faz a checagem da flag antes de qualquer envio, `deploy` empacota e envia já com `--exclude data/` e sem `--delete`, `php`/`lint` usam o binário **8.5** (o `php` do PATH no SSH é 7.4 e **não** é o runtime de produção), `sql` manda a senha por stdin e recusa o irreversível, `log_ref` acha no `error_log` o SQL por trás de um erro que chegou ao usuário, e `ler_arquivo` recusa `.env`, chaves, certificados e o `data/config.json`. Lista das ferramentas em `DEPLOY.md`.
 
 Credenciais vêm do `~/.env` da estação (`SSH_HOSTINGER_*`, `<PROJETO>_DEPLOY_*`, `<PROJETO>_DB_*`); **nunca** escreva segredo no `.mcp.json`, que é versionado. O servidor é o mesmo padrão do `aivalia-remoto` (`../aivalia/mcp/remoto_hostinger.py`) — a convenção do workspace é **copiar, não compartilhar** (como o `webapi.py`/`bdd.py` do rolhama), então os dois arquivos evoluem separados.
 
@@ -41,7 +43,22 @@ Para subir o servidor: Apache + PHP com o diretório `server/` servido no caminh
 
 ### Testes
 
-Não existe framework de testes. `app/test/user.py` e `app/bot/brazil/wikipedia/test.py` são scripts pontuais, executados direto com `python3`. Atenção: `app/bot/brazil/wikipedia/test.py` tem um caminho `/home/well/...` fixo no código, que precisa ser editado antes de rodar.
+Não existe framework de testes; o que existe são scripts rodados direto com `python3`.
+
+```bash
+# Conectores OSINT contra a rede de verdade (sem chave; os que exigem chave só conferem a
+# mensagem de erro). Sem argumento roda todos; com argumentos filtra por trecho do id.
+python3 app/transform/testes_osint.py
+python3 app/transform/testes_osint.py dns crtsh
+
+# Servidor MCP cml-transforms de ponta a ponta, falando o protocolo por stdin/stdout.
+# Não usa rede nem LLM; cria transforms de teste em diretório temporário.
+python3 mcp/teste_cml_transforms.py
+```
+
+Fonte pública oscila: no `testes_osint.py`, falha de rede é **AVISO** e falha de contrato é **ERRO** — só o segundo é defeito nosso.
+
+`app/test/user.py` e `app/bot/brazil/wikipedia/test.py` são scripts pontuais do código antigo. Atenção: `app/bot/brazil/wikipedia/test.py` tem um caminho `/home/well/...` fixo no código, que precisa ser editado antes de rodar.
 
 ## Arquitetura
 
@@ -153,7 +170,32 @@ Um cuidado que vale para todo o modelo: **toda ponta de data tem que sobreviver 
 
 O par de datas na interface é o widget `QPeriodo` (`app/view/ui/qperiodo.py`): dois `QDateEdit` com botão Enable/Disable — "sem data" é um valor legítimo, diferente de "hoje" — mais o combo de formato. O `DialogLinkEdit` e o `DialogClassification` têm a mesma UI escrita à mão, de antes do widget.
 
+### Lei do projeto: SVG só o que a gente gera
+
+**O risco é SVG de procedência desconhecida, não o formato** (decisão do dono, 2026-10-05, depois
+de eu ter generalizado para um banimento que estava errado). SVG é XML que pode carregar
+`<script>`, `<foreignObject>`, `xlink:href` remoto e expansão de entidade — mas o que o
+`QSvgGenerator` produz da nossa própria cena só tem `path`/`text`/`rect`. A linha fica assim:
+
+- **Export para arquivo local: PDF (`QPdfWriter`), PNG e SVG (`QSvgGenerator`).** SVG pode.
+- **`Document` anexado, que o app web serve: só PDF e PNG.** O diretório de `Document` não pode
+  virar endpoint que serve `image/svg+xml` — um SVG **de upload** cairia no mesmo lugar e
+  executaria na origem do CML (XSS armazenado). A validação é por **bytes mágicos**, não por
+  extensão, como o `%PDF-` que o `Document` já confere.
+- **Imagem de entidade (`entity_image`/`entity_face`): só raster.** Este é o caso literal de
+  upload de SVG. Já está seguro e deve continuar: o data URI do canvas JS tem MIME de **lista
+  fixa** (`server/webpage/view/relationship/relationship.php:156`) — jpeg ou png, **nunca**
+  `image/svg+xml`. Ponta a endurecer: `QPixmap.loadFromData` detecta formato pelo conteúdo, então
+  conferir bytes mágicos antes (ver `SPEC.md` §3.5).
+
 ### Reports em segundo plano (rolhama)
+
+> ⚠️ **O `rolhama` caiu em 2026-10-05 e, por decisão do dono, não volta.** Tudo nesta seção —
+> mais o bot `entidades` e o transform `ia.extrair` — está **parado**: o código fica no disco,
+> mas o caminho não funciona em runtime. O que cada ponto deve anunciar como indisponível (em
+> vez de estourar exceção) está em **`SPEC.md` §8**, junto do backend que substitui o rolhama
+> (Ollama local pelo app + OpenCode/MCP para trabalho conduzido). Documento de report já gerado continua abrindo e baixando.
+> A descrição abaixo vale como registro de como o caminho funciona.
 
 Um mapa gera um **relatório em PDF** a partir das suas fontes: `app/classlib/report.py` coleta os links das entidades — os da aba References **mais o site oficial (`default_url`) e a Wikipedia (`wikipedia`)** de cada entidade, quando forem URLs http(s), deduplicados —, baixa o texto (até `MAX_REFERENCIAS = 50`, o resto vai listado em "Demais referências"), monta **um único prompt** e manda ao LLM; a saída vira PDF via `QTextDocument`→`QPdfWriter` e é anexada como `Document`.
 
@@ -186,6 +228,10 @@ ao redor da caixa de origem; persistir é o save do mapa, como sempre. Contrato 
   módulo com `QThread`, como o `ReportManager`) + o painel. **Os sinais do worker ligam em slots
   do gerente, não em lambdas**: lambda sem objeto de contexto roda na thread do emissor e o
   `thread.wait()` espera por si mesmo (deadlock).
+- `app/transform/_osint.py` guarda os ajudantes compartilhados pelos conectores de `api_aberta/`
+  (achar o alvo — domínio/IP/ASN/CNPJ/CEP/e-mail — no `text_label`/`small_label`/`description`/`default_url`,
+  repetir requisição que falhou por instabilidade da fonte, cortar texto). Conector novo de OSINT
+  reusa dali em vez de reescrever o reconhecimento do alvo.
 - **Transform novo** = pasta `app/transform/<fonte>/<nome>/` com `config.json` (`id`, `nome`,
   `entrada` como `etype` ou `etype:sub_etype`, `fonte` ∈ base-propria|api-aberta|ia|scraping,
   `rota`, `chave_env`, `ttl` do cache em segundos) e `transform.py` com subclasse de
@@ -197,8 +243,9 @@ ao redor da caixa de origem; persistir é o save do mapa, como sempre. Contrato 
   cada uso, regra do dono) e pela rota do transform: `direta` ou `tor` (SOCKS5 `socks5h`, o DNS
   também sai pelo Tor — por isso DNS é via DoH, nunca resolvedor local). Rota padrão: `CML_TX_ROTA_PADRAO`.
 - **LLM** via `ctx.llm()`: `rolhama` (padrão, canal **510**) ou `ollama` direto (opt-in:
-  `CML_LLM_BACKEND=ollama` + `CML_OLLAMA_URL`). ⚠️ O Ollama direto é **exceção** à lei do
-  workspace e perde o E2E; fica registrado no log. O `workspace/CLAUDE.md` não foi alterado.
+  `CML_LLM_BACKEND=ollama` + `CML_OLLAMA_URL`). Desde **2026-10-05** o Ollama local é o caminho
+  **normal**, não exceção: a lei do `workspace/CLAUDE.md` foi reescrita ("LLM é local e sob
+  demanda") porque o `rolhama` custava manter ligado. O `rolhama` como backend não existe mais.
 - **Cache e log são locais**: `~/.cml_cache/` (0700/0600). `transform.log` é a única trilha de
   auditoria — a execução é no cliente, nada vai ao servidor.
 - `base.associadas` usa o método novo `Entity.associations` do servidor: **precisa de deploy**
