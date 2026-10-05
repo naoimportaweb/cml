@@ -395,7 +395,18 @@ camadas por caminho mais longo, ordenação por baricentro (reduz cruzamento) e 
 **largura real** de cada caixa; na hora de puxar cada caixa para perto de quem ela liga, os
 limites são os vizinhos da mesma camada — é isso que faz "o mais próximo possível" nunca virar
 sobreposição. Só nele a caixinha do verbo também é afastada (`afastar_vinculos`), e só a caixa do
-**verbo** se mexe: mover entidade ali desfaria o trabalho do algoritmo. São **ação, não modo**: rodam uma vez, escrevem `x`/`y`
+**verbo** se mexe: mover entidade ali desfaria o trabalho do algoritmo.
+
+**O texto do vínculo entra na briga da colisão como qualquer caixa** — e é ele quem mais se
+sobrepõe, porque vários vínculos entre as mesmas duas caixas têm o **mesmo ponto médio** e os
+rótulos nascem todos empilhados. A busca é em **anéis** a partir do ponto certo, com passo do
+tamanho do próprio rótulo, preferindo subir/descer (onde há folga entre camadas) antes de ir para
+os lados; os mais largos são colocados primeiro, enquanto ainda há espaço.
+
+> ⚠️ **Ao testar colisão, chame `recalc(painter)` antes de medir.** O `w`/`h` de uma caixa só vale
+> depois dele — sem painter, todas ficam com a largura padrão, o teste mede caixas de mentira e
+> passa. Foi exatamente o que escondeu o defeito dos rótulos empilhados até o mapa real mostrá-lo
+> na tela. São **ação, não modo**: rodam uma vez, escrevem `x`/`y`
 e saem. Três coisas a não quebrar: cada layout entra como **um** passo de desfazer (sem isso o
 botão seria destrutivo, porque joga fora posicionamento manual); o **vínculo não participa** — é
 hiper-aresta, e a caixa do verbo vai para o meio das pontas *depois* que as caixas acharam lugar;

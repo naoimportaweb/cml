@@ -27,6 +27,7 @@ MARGEM = 60;        # distancia da borda depois de normalizar
 ESPACO_X = 60;      # respiro horizontal entre caixas
 ESPACO_Y = 110;     # altura de uma camada
 GRADE = 20;         # passo da grade do layout ortogonal
+ANEIS_VERBO = 8;    # quantos aneis o afastar_vinculos procura antes de desistir
 ESPACO_VERBO = 70;  # folga entre camadas no "espalhar": tem de caber a caixinha do verbo
 SEMENTE = 20261005; # posicao inicial do organico e sorteada: semente fixa = resultado repetivel
 GRAVIDADE = 6.0;    # divisor da gravidade do organico (ver comentario em __organico__)
@@ -381,32 +382,43 @@ def __colide__(a, b, folga=6):
 def afastar_vinculos(mapa):
     """Tira a caixinha do verbo de cima de quem ja esta la.
 
-    O meio das pontas e o lugar certo, mas duas arestas vizinhas caem no mesmo ponto e os dois
-    verbos se escrevem um por cima do outro. Aqui SO a caixa do verbo se mexe -- as caixas de
-    entidade ficam onde o layout as pos, senao o 'sem colisao' de um vira a colisao do outro."""
+    O TEXTO DO VINCULO entra na briga da colisao igual a qualquer caixa -- e so olhando um mapa
+    denso para ver que e ele quem mais se sobrepoe: varios vinculos entre as mesmas duas caixas
+    tem o MESMO ponto medio, entao os rotulos nascem todos empilhados no mesmo lugar.
+
+    SO a caixa do verbo se mexe: as caixas de entidade ficam onde o layout as pos, senao o 'sem
+    colisao' de uma vira a colisao da outra. A procura e em aneis a partir do ponto certo, com
+    passo do tamanho do proprio rotulo, preferindo subir/descer (que e onde existe folga entre
+    camadas) antes de ir para os lados."""
     ocupadas = [(c.x, c.y, c.w or 1, c.h or 1) for c in caixas(mapa)];
-    for vinculo in vinculos(mapa):
-        atual = (vinculo.x, vinculo.y, vinculo.w or 1, vinculo.h or 1);
+    # Mais largo primeiro: quem e dificil de encaixar escolhe enquanto ha espaco.
+    for vinculo in sorted(vinculos(mapa), key=lambda v: -(v.w or 0)):
+        largura = vinculo.w or 60;
+        altura = vinculo.h or 20;
+        atual = (vinculo.x, vinculo.y, largura, altura);
         if not any(__colide__(atual, outra) for outra in ocupadas):
             ocupadas.append(atual);
             continue;
-        achou = False;
-        # Em espiral curta a partir do ponto certo: primeiro de lado (onde ha gap entre
-        # camadas), depois para cima e para baixo.
-        for raio in (18, 36, 54, 72):
-            for dx, dy in ((raio, 0), (-raio, 0), (0, raio), (0, -raio),
-                           (raio, raio), (-raio, raio), (raio, -raio), (-raio, -raio)):
-                tentativa = (vinculo.x + dx, vinculo.y + dy, atual[2], atual[3]);
-                if not any(__colide__(tentativa, outra) for outra in ocupadas):
-                    vinculo.setX(int(tentativa[0]));
-                    vinculo.setY(int(tentativa[1]));
-                    ocupadas.append(tentativa);
-                    achou = True;
-                    break;
-            if achou:
+        passo_x = largura + 14;
+        passo_y = altura + 8;
+        candidatos = [];
+        for anel in range(1, ANEIS_VERBO + 1):
+            for dy in range(-anel, anel + 1):
+                for dx in range(-anel, anel + 1):
+                    if max(abs(dx), abs(dy)) != anel:
+                        continue;   # so a borda do anel; o miolo ja foi tentado antes
+                    candidatos.append((abs(dy), abs(dx), anel, dx, dy));
+        candidatos.sort();   # perto antes de longe, e vertical antes de horizontal
+        for _, _, _, dx, dy in candidatos:
+            tentativa = (vinculo.x + dx * passo_x, vinculo.y + dy * passo_y, largura, altura);
+            if not any(__colide__(tentativa, outra) for outra in ocupadas):
+                vinculo.setX(int(tentativa[0]));
+                vinculo.setY(int(tentativa[1]));
+                ocupadas.append(tentativa);
                 break;
-        if not achou:
-            ocupadas.append(atual);   # desistiu: melhor sobrepor do que jogar longe da aresta
+        else:
+            # Nao deveria acontecer com ANEIS_VERBO aneis; fica registrado em vez de silencioso.
+            ocupadas.append(atual);
 
 
 def __espalhar__(mapa, lista):

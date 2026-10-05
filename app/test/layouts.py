@@ -22,8 +22,24 @@ os.environ["HOME"] = tempfile.mkdtemp(prefix="cml_layout_");
 
 from PySide6.QtWidgets import QApplication;
 
+from PySide6.QtGui import QPainter, QPixmap;
+
 from classlib.relationship.maprelationship import MapRelationship;
 from classlib.relationship import layouts;
+from classlib.exportar_diagrama import fonte_do_diagrama;
+
+
+def recalcular(mapa):
+    """Define w/h de cada caixa pela metrica da fonte, como o canvas faz antes de desenhar.
+    Sem isto todas ficam com a largura PADRAO e o teste de colisao mente -- foi o que me
+    escondeu o defeito dos rotulos empilhados."""
+    rascunho = QPixmap(1, 1);
+    painter = QPainter();
+    painter.begin(rascunho);
+    painter.setFont(fonte_do_diagrama());
+    for elemento in mapa.elements:
+        elemento.recalc(painter);
+    painter.end();
 
 FALHAS = [];
 
@@ -136,6 +152,7 @@ def main():
         return mapa, raiz;
 
     mapa, raiz = arvore();
+    recalcular(mapa);
     layouts.aplicar(mapa, "espalhar");
     confere(colisoes(mapa) == 0, "ZERO colisões, contando as caixinhas de verbo (%d)" % colisoes(mapa));
 
@@ -157,6 +174,24 @@ def main():
                (max(c.y + c.h for c in cx) - min(c.y for c in cx));
     confere(area(mapa_e) < area(mapa_c), "ocupa menos área que o circular (%d < %d)"
             % (area(mapa_e), area(mapa_c)));
+
+    print("\nespalhar: o TEXTO DO VÍNCULO também entra na briga");
+    # Vários vínculos entre AS MESMAS duas caixas: todos têm o mesmo ponto médio, então os
+    # rótulos nascem empilhados. É o pior caso, e é o que aparece em mapa denso de verdade.
+    for quantos in (6, 12):
+        paralelo = MapRelationship();
+        paralelo.name = "Paralelas";
+        alvo = paralelo.addEntity("organization", 0, 0, text="Empresa Alvo");
+        quem = paralelo.addEntity("person", 0, 0, text="Investigado Principal");
+        rotulos = ["Suspeito de receber de", "Apreendeu carros de", "Planejou com",
+                   "Sócio de", "Controlaram", "Deflagrou contra"];
+        for i in range(quantos):
+            elo = paralelo.addEntity("link", 0, 0, text="%s %d" % (rotulos[i % len(rotulos)], i));
+            elo.addFrom(alvo); elo.addTo(quem);
+        recalcular(paralelo);   # larguras REAIS do texto
+        layouts.aplicar(paralelo, "espalhar");
+        confere(colisoes(paralelo) == 0, "%d vínculos paralelos, nenhum rótulo por cima de outro (%d)"
+                % (quantos, colisoes(paralelo)));
 
     print("\nespalhar com ciclo (nem sempre dá para apontar para baixo)");
     ciclo = MapRelationship();
