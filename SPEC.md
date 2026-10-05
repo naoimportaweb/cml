@@ -280,9 +280,11 @@ funcionando, e mexer nos três canvas ao mesmo tempo é como se perde o controle
 > para `QGraphicsView`** — o modelo desenha com `draw(painter)`, e `QPdfWriter`/`QSvgGenerator`/
 > `QImage` são todos `QPainter`. Teste: `QT_QPA_PLATFORM=offscreen python3
 > app/test/exportar_diagrama.py` (monta mapa em memória, sem servidor; confere bytes mágicos e
-> que rótulo `<script>` sai escapado no SVG). **Falta do bloco A:** escala 1:1 paginada em N
-> páginas (hoje só "caber na página"), escolha de papel na interface (hoje fixo A4) e o PNG de
-> instantâneo anexado no save.
+> que rótulo `<script>` sai escapado no SVG). **Escala 1:1 paginada** e **escolha de papel na
+> interface** entraram depois, no mesmo dia: o PDF reparte o desenho em N folhas A4/A3/A2 com
+> marca "pág. 2/5" em cada uma, recortando o painter por página — sem o recorte o Qt desenharia
+> o mapa inteiro em *toda* folha, porque o desenho não sabe que foi paginado. **Falta do bloco
+> A:** o PNG de instantâneo anexado no save.
 
 > ⚠️ **A linha onde o SVG para** (decisão do dono, 2026-10-05): o perigo é SVG **de procedência
 > desconhecida**, não o formato. O que geramos da nossa cena só tem `path`/`text`/`rect` — e o
@@ -358,6 +360,16 @@ divergem calados.
   têm.
 - ✅ **Busca no canvas** (feito em 2026-10-05): Ctrl+F procura por nome, apelido ou sub-tipo,
   seleciona todos os achados e centraliza no primeiro.
+- ✅ **Minimapa** (feito em 2026-10-05): um segundo `QGraphicsView` sobre **a mesma cena** —
+  clonar os itens daria duas verdades sobre o desenho. Mostra o que está visível escurecendo o
+  resto (num mapa grande o contorno some, a sombra não) e clicar nele leva até o ponto.
+- ✅ **Copiar/colar entre mapas** (feito em 2026-10-05) — `classlib/relationship/transferencia.py`,
+  Ctrl+C/Ctrl+V. Viaja como **texto JSON** na área de transferência do sistema, com cabeçalho
+  próprio: funciona entre janelas e entre duas execuções do CML, e texto de outra origem é
+  recusado sem susto. **Colar não duplica a entidade** — cria caixa nova com o **mesmo
+  `entity_id`**, porque entidade é global; duplicar criaria um gêmeo para o `merge_to` juntar
+  depois. Vínculo só viaja com **as duas pontas** na seleção: meia aresta colada vira ponta
+  solta no destino. Tudo num passo de desfazer, e o que entrou fica selecionado.
 - ✅ **Ocultar sem apagar** (feito em 2026-10-05): estado de **vista**, não do documento — não
   entra no desfazer e não é salvo. Ocultar uma caixa esconde também os vínculos que a tocam
   (senão a linha iria até uma caixa fora da tela), o oculto não recebe clique "no escuro", e a

@@ -10,7 +10,7 @@
 # Nunca aceitar SVG de fora, nunca anexar SVG como Document, nunca servir SVG inline -- o
 # perigo e SVG de procedencia desconhecida, nao o formato.
 
-import os, sys, inspect, re, datetime;
+import os, sys, inspect, re, math, datetime;
 
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
 ROOT = os.path.dirname(CURRENTDIR);
@@ -235,7 +235,7 @@ def para_svg(mapa, caminho, legenda=True):
         painter.end();
 
 
-def para_pdf(mapa, caminho, papel="A4", legenda=True):
+def para_pdf(mapa, caminho, papel="A4", legenda=True, ajuste="caber"):
     if papel not in PAPEIS:
         raise ErroExportacao("Papel desconhecido: %s" % papel);
     conteudo, total = __area__(mapa, legenda);
@@ -252,17 +252,59 @@ def para_pdf(mapa, caminho, papel="A4", legenda=True):
     if not painter.begin(escritor):
         raise ErroExportacao("Não foi possível abrir o PDF para desenhar.");
     try:
-        # "Caber na página": nunca amplia, so reduz. Escala 1:1 em N paginas e pendencia do
-        # bloco A (SPEC.md §3.2) -- exige paginar o desenho, nao so escalar.
-        fator = min(1.0, pagina.width() / float(total.width()),
-                    pagina.height() / float(total.height()));
-        painter.scale(fator, fator);
-        __pintar__(mapa, painter, conteudo, total, legenda, False);
+        if ajuste == "1:1":
+            __paginar__(mapa, escritor, painter, conteudo, total, legenda, pagina);
+        else:
+            # "Caber na pagina": nunca amplia, so reduz.
+            fator = min(1.0, pagina.width() / float(total.width()),
+                        pagina.height() / float(total.height()));
+            painter.scale(fator, fator);
+            __pintar__(mapa, painter, conteudo, total, legenda, False);
     finally:
         painter.end();
 
 
-def exportar(mapa, caminho, formato=None, escala=2, papel="A4", legenda=True):
+def __paginar__(mapa, escritor, painter, conteudo, total, legenda, pagina):
+    """Escala 1:1 repartida em N paginas. Cada pagina desenha o mapa inteiro deslocado e
+    recortado na sua faixa -- e o mesmo truque de imprimir planta grande em folhas A4 e colar.
+
+    O recorte e obrigatorio: sem ele o Qt desenharia o mapa inteiro em TODA pagina, porque o
+    desenho nao sabe que foi paginado."""
+    colunas = max(1, int(math.ceil(total.width() / float(pagina.width()))));
+    linhas = max(1, int(math.ceil(total.height() / float(pagina.height()))));
+    primeira = True;
+    for linha in range(linhas):
+        for coluna in range(colunas):
+            if not primeira and not escritor.newPage():
+                return;
+            primeira = False;
+            painter.save();
+            try:
+                painter.setClipRect(0, 0, pagina.width(), pagina.height());
+                painter.translate(-coluna * pagina.width(), -linha * pagina.height());
+                __pintar__(mapa, painter, conteudo, total, legenda, False);
+                painter.resetTransform();
+                painter.setClipping(False);
+                __marca_pagina__(painter, pagina, linha * colunas + coluna + 1, linhas * colunas);
+            finally:
+                painter.restore();
+
+
+def __marca_pagina__(painter, pagina, numero, total_paginas):
+    # Quem imprime em N folhas precisa saber a ordem para colar.
+    painter.save();
+    try:
+        fonte = QFont(fonte_do_diagrama());
+        fonte.setPointSize(max(6, fonte.pointSize() - 2));
+        painter.setFont(fonte);
+        painter.setPen(QPen(QColor(140, 140, 140)));
+        painter.drawText(pagina.width() - 90, pagina.height() - 4,
+                         "pág. %d/%d" % (numero, total_paginas));
+    finally:
+        painter.restore();
+
+
+def exportar(mapa, caminho, formato=None, escala=2, papel="A4", legenda=True, ajuste="caber"):
     # Ponto de entrada unico. Sem formato, decide pela extensao do caminho.
     if mapa == None:
         raise ErroExportacao("Nenhum diagrama aberto.");
@@ -278,5 +320,5 @@ def exportar(mapa, caminho, formato=None, escala=2, papel="A4", legenda=True):
     elif formato == "svg":
         para_svg(mapa, caminho, legenda=legenda);
     else:
-        para_pdf(mapa, caminho, papel=papel, legenda=legenda);
+        para_pdf(mapa, caminho, papel=papel, legenda=legenda, ajuste=ajuste);
     return caminho;

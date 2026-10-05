@@ -127,6 +127,7 @@ class MapaRelationshipEngine(QGraphicsView):
         self.pan_inicio = None;      # botao do meio: arrastar a tela
         self.viewlet = "nenhum";     # cor/tamanho por propriedade (SPEC §3.3)
         self.ocultos = set();        # ocultar sem apagar: estado de VISTA, nao do documento
+        self.minimapa = None;        # criado sob demanda (alternar_minimapa)
 
         self.cena = QGraphicsScene(self);
         self.setScene(self.cena);
@@ -256,6 +257,41 @@ class MapaRelationshipEngine(QGraphicsView):
         if area.isEmpty():
             area = QRectF(0, 0, 800, 600);
         self.cena.setSceneRect(area.adjusted(-FOLGA_CENA, -FOLGA_CENA, FOLGA_CENA, FOLGA_CENA));
+        if self.minimapa != None:
+            self.minimapa.acompanhar();
+
+    # ---------------------------------------------------------------- minimapa
+
+    def alternar_minimapa(self):
+        """Liga/desliga a miniatura no canto. Devolve True se ficou ligada."""
+        from view.ui.minimapa import Minimapa;
+        if self.minimapa != None:
+            self.minimapa.setParent(None);
+            self.minimapa.deleteLater();
+            self.minimapa = None;
+            return False;
+        self.minimapa = Minimapa(self);
+        self.__posicionar_minimapa__();
+        self.minimapa.acompanhar();
+        self.minimapa.show();
+        return True;
+
+    def __posicionar_minimapa__(self):
+        if self.minimapa == None:
+            return;
+        margem = 12;
+        self.minimapa.move(self.viewport().width() - self.minimapa.width() - margem,
+                           self.viewport().height() - self.minimapa.height() - margem);
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event);
+        self.__posicionar_minimapa__();
+
+    def scrollContentsBy(self, dx, dy):
+        # Rolou ou deu zoom: o retangulo do minimapa precisa acompanhar.
+        super().scrollContentsBy(dx, dy);
+        if self.minimapa != None:
+            self.minimapa.viewport().update();
 
     def clear(self):
         self.cena.clear();
@@ -267,6 +303,8 @@ class MapaRelationshipEngine(QGraphicsView):
     def __aplicar_zoom__(self, escala):
         self.escala = max(ZOOM_MIN, min(ZOOM_MAX, escala));
         self.setTransform(QTransform().scale(self.escala, self.escala));
+        if self.minimapa != None:
+            self.minimapa.viewport().update();
 
     def zoom_mais(self):
         self.__aplicar_zoom__(self.escala * ZOOM_PASSO);
@@ -490,6 +528,7 @@ class MapaRelationshipEngine(QGraphicsView):
         menu.addAction("Zoom −", self.zoom_menos);
         menu.addAction("Zoom 100%", self.zoom_normal);
         menu.addAction("Ajustar à janela", self.ajustar_a_janela);
+        menu.addAction("Minimapa (liga/desliga)", self.alternar_minimapa);
         menu.addSeparator();
         menu.addAction("Selecionar tudo", self.selecionar_todos);
         menu.addAction("Limpar seleção", self.cena.clearSelection);

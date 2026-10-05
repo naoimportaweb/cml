@@ -269,6 +269,25 @@ Os bots ficam em `app/bot/<pais>/<nome>/`, cada um um `config.json` mais um mód
 
 O `app/view/ui/qbot.py` renderiza o botão e carrega a classe no momento do clique, via `importlib.util.spec_from_file_location`, instanciando como `cls(parent, obj)`, em que `obj` é a entity ou a reference que está sendo editada. Para adicionar um bot: crie o diretório e depois coloque um widget `QBot(self, <obj>, "bot/.../config.json")` em um diálogo (veja `dialog_entity_generic.py` e `dialogreference.py`).
 
+### Copiar/colar: a entidade é global, a caixa não
+
+`app/classlib/relationship/transferencia.py` (Ctrl+C/Ctrl+V). O pedaço de mapa viaja como **texto
+JSON** na área de transferência do sistema, com cabeçalho `CML-MAPA-1` — assim funciona entre
+janelas e entre duas execuções do CML, e colar texto de qualquer outra origem é recusado sem
+susto. A regra que manda: **colar não duplica a entidade**, cria uma **caixa** nova apontando
+para o **mesmo `entity_id`**. Duplicar a entidade criaria um gêmeo que o `merge_to` teria de
+juntar depois. Por isso colar o mesmo pedaço no mesmo mapa gera duas caixas da mesma entidade, e
+isso é legítimo. Vínculo só viaja se **as duas pontas** estiverem na seleção — meia aresta colada
+viraria ponta solta no destino.
+
+### Minimapa
+
+`app/view/ui/minimapa.py`: um segundo `QGraphicsView` sobre **a mesma `QGraphicsScene`** do
+canvas. Clonar os itens daria duas verdades sobre o desenho e obrigaria a aplicar cada mudança
+nos dois. Ele é `setInteractive(False)` — clicar ali é "me leve até lá", nunca "selecione" — e
+marca o visível **escurecendo o que está fora**, porque num mapa grande um contorno fino some. A
+borda usa caneta de largura 0 (um pixel de tela, sem escalar junto com a miniatura reduzida).
+
 ### Exportar: figura e dado são dois caminhos
 
 `app/classlib/exportar_diagrama.py` tira a **figura** (PDF/PNG/SVG, os três diagramas);

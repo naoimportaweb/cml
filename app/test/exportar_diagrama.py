@@ -73,6 +73,19 @@ def main():
     confere("foreignobject" not in texto.lower(), "nenhum <foreignObject>");
     confere("xlink:href=\"http" not in texto.lower(), "nenhuma referencia externa http");
 
+    print("\nPDF 1:1 em várias páginas");
+    import re;
+    largo = MapRelationship();
+    largo.name = "Largo";
+    for i in range(14):
+        largo.addEntity("person", i * 320, (i % 3) * 260, text="Pessoa %d" % i);
+    def paginas(caminho):
+        return len(re.findall(rb"/Type\s*/Page[^s]", open(caminho, "rb").read()));
+    um = ex.exportar(largo, os.path.join(TEMP, "cabe"), formato="pdf", ajuste="caber");
+    varias = ex.exportar(largo, os.path.join(TEMP, "um_para_um"), formato="pdf", ajuste="1:1");
+    confere(paginas(um) == 1, "'caber' cabe em uma página (%d)" % paginas(um));
+    confere(paginas(varias) > 1, "'1:1' reparte em várias (%d)" % paginas(varias));
+
     print("\nformato invalido");
     try:
         ex.exportar(mapa, os.path.join(TEMP, "mapa.bmp"));

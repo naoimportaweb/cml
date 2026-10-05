@@ -213,6 +213,42 @@ class MainWindow(QMainWindow):
         self._redo_act.setText("Refazer" + ((" " + pilha.redoText()) if pode_refazer else ""));
 
     @Slot()
+    def copiar_selecao(self):
+        from classlib.relationship import transferencia;
+        if self.__mapa_ativo__("MapRelationship") == None:
+            return;
+        canvas = self.active_mdi_child().painter_widget;
+        try:
+            texto = transferencia.copiar(canvas.selecionados());
+        except transferencia.ErroTransferencia as erro:
+            self.statusBar().showMessage(str(erro), 5000);
+            return;
+        QApplication.clipboard().setText(texto);
+        self.statusBar().showMessage("Copiado. Cole em qualquer mapa com Ctrl+V.", 5000);
+
+    @Slot()
+    def colar_selecao(self):
+        from classlib.relationship import transferencia;
+        from classlib.relationship.comandos import Operacao;
+        mapa = self.__mapa_ativo__("MapRelationship");
+        if mapa == None:
+            return;
+        janela = self.active_mdi_child();
+        texto = QApplication.clipboard().text();
+        try:
+            with Operacao(mapa, "Colar"):
+                caixas, vinculos, novos = transferencia.colar(mapa, texto);
+        except transferencia.ErroTransferencia as erro:
+            QMessageBox.warning(self, "Colar", str(erro));
+            return;
+        janela.redesenhar();
+        # Deixa o que acabou de entrar selecionado: e o que a pessoa vai querer arrastar em
+        # seguida, e mostra sem ambiguidade o que foi colado.
+        janela.painter_widget.selecionar(novos);
+        self.statusBar().showMessage(
+            "Coladas %d caixa(s) e %d vínculo(s) — as entidades são as mesmas, não cópias" % (caixas, vinculos), 8000);
+
+    @Slot()
     def export_data(self):
         # Exporta o MAPA como dado, nao como figura: e o caminho de levar a investigacao para
         # outra ferramenta (Gephi, yEd, planilha). So o mapa de relacionamento tem grafo.
@@ -347,8 +383,20 @@ class MainWindow(QMainWindow):
         extensao = os.path.splitext(caminho)[1].lstrip(".").lower();
         if extensao in exportar_diagrama.FORMATOS:
             formato = extensao;
+        papel, ajuste = "A4", "caber";
+        if formato == "pdf":
+            # Papel e ajuste so fazem sentido no PDF; um menu so em vez de dois dialogos.
+            from PySide6.QtWidgets import QInputDialog;
+            opcoes = ["%s · caber na página" % p for p in ("A4", "A3", "A2")] + \
+                     ["%s · escala 1:1 em várias páginas" % p for p in ("A4", "A3", "A2")];
+            escolha, ok = QInputDialog.getItem(self, "PDF", "Papel e ajuste:", opcoes, 0, False);
+            if not ok:
+                return;
+            papel = escolha.split(" ")[0];
+            ajuste = "1:1" if "1:1" in escolha else "caber";
         try:
-            destino = exportar_diagrama.exportar(mapa, caminho, formato=formato);
+            destino = exportar_diagrama.exportar(mapa, caminho, formato=formato,
+                                                 papel=papel, ajuste=ajuste);
         except exportar_diagrama.ErroExportacao as erro:
             QMessageBox.warning(self, "Exportar diagrama", str(erro));
             return;
@@ -570,6 +618,15 @@ class MainWindow(QMainWindow):
                                 triggered=self.map_documents)
 
 
+        icon = QIcon.fromTheme(QIcon.ThemeIcon.EditCopy)
+        self._copiar_act = QAction(icon, "Copiar", self, shortcut=QKeySequence.Copy,
+                                statusTip="Copiar as caixas selecionadas (e os vínculos entre elas)",
+                                triggered=self.copiar_selecao)
+        icon = QIcon.fromTheme(QIcon.ThemeIcon.EditPaste)
+        self._colar_act = QAction(icon, "Colar", self, shortcut=QKeySequence.Paste,
+                                statusTip="Colar aqui o pedaço de mapa copiado",
+                                triggered=self.colar_selecao)
+
         icon = QIcon.fromTheme(QIcon.ThemeIcon.EditUndo)
         self._undo_act = QAction(icon, "Desfazer", self, shortcut=QKeySequence.Undo,
                                 statusTip="Desfazer a última alteração do mapa",
@@ -698,6 +755,9 @@ class MainWindow(QMainWindow):
         # Sem isto o QToolBar desenha SO o icone e o texto da acao — que e onde a marca de
         # "gerando" e "terminou" aparece — fica invisivel.
         self._map_tool_bar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon);
+        self._map_tool_bar.addAction(self._copiar_act);
+        self._map_tool_bar.addAction(self._colar_act);
+        self._map_tool_bar.addSeparator();
         self._map_tool_bar.addAction(self._undo_act);
         self._map_tool_bar.addAction(self._redo_act);
         self._map_tool_bar.addSeparator();
