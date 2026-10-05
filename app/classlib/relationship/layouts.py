@@ -27,6 +27,7 @@ ESPACO_X = 60;      # respiro horizontal entre caixas
 ESPACO_Y = 110;     # altura de uma camada
 GRADE = 20;         # passo da grade do layout ortogonal
 SEMENTE = 20261005; # posicao inicial do organico e sorteada: semente fixa = resultado repetivel
+GRAVIDADE = 6.0;    # divisor da gravidade do organico (ver comentario em __organico__)
 
 
 def caixas(mapa):
@@ -137,7 +138,16 @@ def __organico__(mapa, lista):
             ux, uy = dx / dist, dy / dist;
             desloc[a][0] -= ux * forca; desloc[a][1] -= uy * forca;
             desloc[b][0] += ux * forca; desloc[b][1] += uy * forca;
+        # Gravidade: mola fraca puxando tudo para o centro. Sem ela, caixa SEM VINCULO so
+        # sente repulsao e voa para fora -- um mapa com meia duzia de soltas vira um aglomerado
+        # no meio e lixo nas bordas, e o "ajustar a janela" deixa tudo ilegivel. A constante
+        # cresce com o numero de nos porque a repulsao sobre a caixa solta tambem cresce: no
+        # equilibrio, (n-1)k²/d = g·d, entao g ~ n deixa a distancia final proporcional a k em
+        # vez de explodir com o tamanho do mapa.
+        gravidade = max(0.3, n / GRAVIDADE);
         for caixa in lista:
+            desloc[caixa][0] -= pos[caixa][0] * gravidade;
+            desloc[caixa][1] -= pos[caixa][1] * gravidade;
             dx, dy = desloc[caixa];
             tamanho = math.sqrt(dx * dx + dy * dy) or 0.01;
             # O passo nunca passa da temperatura: e o que faz o desenho assentar em vez de

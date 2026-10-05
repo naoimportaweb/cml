@@ -37,7 +37,26 @@ class ItemElemento(QGraphicsItem):
     def __init__(self, elemento):
         super().__init__();
         self.elemento = elemento;
+        self.escala = 1.0;    # viewlet de tamanho
+        self.cor = None;      # viewlet de cor: moldura atras da caixa
         self.setFlag(QGraphicsItem.ItemIsSelectable, True);
+
+    def ajustar_viewlet(self, escala, cor):
+        self.prepareGeometryChange();
+        self.escala = escala or 1.0;
+        self.cor = cor;
+        self.update();
+
+    def __ampliar__(self, retangulo):
+        # A ampliacao do viewlet acontece EM VOLTA DO CENTRO da caixa, e tem de valer tambem
+        # para a area clicavel -- senao a caixa aparece grande e so recebe clique no tamanho
+        # antigo, que e o defeito classico de desenhar com transform e esquecer o hit test.
+        if self.escala == 1.0:
+            return retangulo;
+        centro = retangulo.center();
+        largura = retangulo.width() * self.escala;
+        altura = retangulo.height() * self.escala;
+        return QRectF(centro.x() - largura / 2.0, centro.y() - altura / 2.0, largura, altura);
 
     def __retangulo__(self):
         e = self.elemento;
@@ -53,20 +72,37 @@ class ItemElemento(QGraphicsItem):
                 if alvo == None or alvo.w == None or alvo.h == None:
                     continue;
                 retangulo = retangulo.united(QRectF(alvo.x or 0, alvo.y or 0, alvo.w, alvo.h));
-        return retangulo.adjusted(-8, -8, 8, 8);
+        return self.__ampliar__(retangulo).adjusted(-10, -10, 10, 10);
 
     def shape(self):
         # Area CLICAVEL: so o retangulo do proprio element, inclusive para o vinculo (clica-se
         # na caixa do verbo, nao na linha). E o mesmo criterio do getElement de antes -- se
         # fosse o boundingRect, o vinculo engoliria o clique de tudo que esta entre as pontas.
         caminho = QPainterPath();
-        caminho.addRect(self.__retangulo__());
+        caminho.addRect(self.__ampliar__(self.__retangulo__()));
         return caminho;
 
     def paint(self, painter, option, widget=None):
         # O draw() do modelo nao define fonte: quem abre o painter e que define.
         painter.setFont(fonte_do_diagrama());
-        self.elemento.draw(painter);
+        if self.escala == 1.0 and self.cor == None:
+            self.elemento.draw(painter);
+            return;
+        retangulo = self.__retangulo__();
+        centro = retangulo.center();
+        painter.save();
+        try:
+            if self.escala != 1.0:
+                painter.translate(centro);
+                painter.scale(self.escala, self.escala);
+                painter.translate(-centro);
+            if self.cor != None:
+                # Moldura ATRAS: o draw de cada tipo preenche o proprio retangulo (branco ou
+                # amarelo), entao cor por tras e o jeito de colorir sem mexer no modelo.
+                painter.fillRect(retangulo.adjusted(-4, -4, 4, 4), self.cor);
+            self.elemento.draw(painter);
+        finally:
+            painter.restore();
 
     def atualizar(self):
         self.prepareGeometryChange();
@@ -89,6 +125,8 @@ class MapaRelationshipEngine(QGraphicsView):
         self.arrasto_origem = {};    # element -> (x, y) no inicio do arrasto
         self.arrasto_inicio = None;  # ponto de cena onde o arrasto comecou
         self.pan_inicio = None;      # botao do meio: arrastar a tela
+        self.viewlet = "nenhum";     # cor/tamanho por propriedade (SPEC §3.3)
+        self.ocultos = set();        # ocultar sem apagar: estado de VISTA, nao do documento
 
         self.cena = QGraphicsScene(self);
         self.setScene(self.cena);
@@ -108,7 +146,8 @@ class MapaRelationshipEngine(QGraphicsView):
     # ---------------------------------------------------------------- modelo
 
     def getElement(self, x, y):
-        for element in reversed(self.mapa.elements):
+        # So o que esta na tela recebe clique: caixa oculta nao pode ser pega "no escuro".
+        for element in reversed(self.__visiveis__()):
             if element.x < x and element.x + element.w > x and element.y < y and element.y + element.h > y:
                 return element;
         return None;
@@ -147,12 +186,68 @@ class MapaRelationshipEngine(QGraphicsView):
         self.__recalcular__();
         self.cena.clear();
         self.itens = [];
-        for elemento in self.mapa.elements:
+        visiveis = self.__visiveis__();
+        for elemento in visiveis:
             item = ItemElemento(elemento);
             # Vinculo por baixo, caixa por cima: mesma ordem dos dois lacos do redraw antigo.
             item.setZValue(0 if elemento.entity.etype == "link" else 1);
             self.cena.addItem(item);
             self.itens.append(item);
+        self.__aplicar_viewlet__();
+        self.__ajustar_cena__();
+        self.viewport().update();
+
+    def __visiveis__(self):
+        """Elements que entram na cena. Vinculo com UMA ponta oculta tambem sai: senao ele
+        desenharia a linha ate uma caixa que nao esta na tela, que e pior que esconder os dois."""
+        if len(self.ocultos) == 0:
+            return list(self.mapa.elements);
+        saida = [];
+        for elemento in self.mapa.elements:
+            if elemento in self.ocultos:
+                continue;
+            if elemento.entity.etype == "link":
+                pontas = [p.entity for p in list(elemento.to_entity) + list(elemento.from_entity)];
+                if any(p in self.ocultos for p in pontas):
+                    continue;
+            saida.append(elemento);
+        return saida;
+
+    def ocultar(self, elementos):
+        for elemento in elementos:
+            self.ocultos.add(elemento);
+        self.redraw();
+        return len(self.ocultos);
+
+    def ocultar_selecionados(self):
+        return self.ocultar(self.selecionados());
+
+    def ocultar_por_tipo(self, etypes):
+        """Oculta todas as caixas cujo etype esta na lista. Filtro grosso, que e o que resolve
+        o mapa poluido de 'Other' solto."""
+        alvo = [e for e in self.mapa.elements if e.entity.etype in etypes];
+        return self.ocultar(alvo);
+
+    def mostrar_tudo(self):
+        quantos = len(self.ocultos);
+        self.ocultos = set();
+        self.redraw();
+        return quantos;
+
+    def quantidade_oculta(self):
+        return len(self.ocultos);
+
+    def __aplicar_viewlet__(self):
+        from classlib.relationship import viewlets;
+        tabela = viewlets.calcular(self.mapa, self.viewlet);
+        for item in self.itens:
+            escala, cor = tabela.get(item.elemento, (1.0, None));
+            item.ajustar_viewlet(escala, cor);
+
+    def aplicar_viewlet(self, nome):
+        """Troca o viewlet e redesenha. E vista: nao mexe no documento, nao entra no desfazer."""
+        self.viewlet = nome or "nenhum";
+        self.__aplicar_viewlet__();
         self.__ajustar_cena__();
         self.viewport().update();
 
@@ -359,6 +454,13 @@ class MapaRelationshipEngine(QGraphicsView):
             campos = [entidade.text, entidade.small_label, entidade.sub_etype_name];
             if any(alvo in str(c or "").lower() for c in campos):
                 achados.append(elemento);
+        # Se o achado estiver oculto por filtro, revela: buscar e nao mostrar seria pior que
+        # nao achar -- o analista concluiria que a caixa nao existe.
+        revelar = [e for e in achados if e in self.ocultos];
+        if len(revelar) > 0:
+            for elemento in revelar:
+                self.ocultos.discard(elemento);
+            self.redraw();
         self.selecionar(achados);
         if len(achados) > 0:
             primeiro = achados[0];
@@ -391,4 +493,10 @@ class MapaRelationshipEngine(QGraphicsView):
         menu.addSeparator();
         menu.addAction("Selecionar tudo", self.selecionar_todos);
         menu.addAction("Limpar seleção", self.cena.clearSelection);
+        menu.addSeparator();
+        acao_ocultar = menu.addAction("Ocultar selecionadas", self.ocultar_selecionados);
+        acao_ocultar.setEnabled(len(self.selecionados()) > 0);
+        acao_mostrar = menu.addAction("Mostrar tudo (%d oculta(s))" % self.quantidade_oculta(),
+                                      self.mostrar_tudo);
+        acao_mostrar.setEnabled(self.quantidade_oculta() > 0);
         menu.exec(event.globalPos());

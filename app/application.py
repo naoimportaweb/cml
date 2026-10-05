@@ -212,6 +212,42 @@ class MainWindow(QMainWindow):
         self._redo_act.setText("Refazer" + ((" " + pilha.redoText()) if pode_refazer else ""));
 
     @Slot()
+    def menu_viewlet(self):
+        # Menu na hora do clique: os viewlets de cor/tamanho mais ocultar/mostrar, que sao as
+        # duas coisas que mudam a VISTA sem mexer no documento (nao entram no desfazer).
+        from PySide6.QtWidgets import QMenu;
+        from classlib.relationship import viewlets;
+        if self.__mapa_ativo__("MapRelationship") == None:
+            return;
+        janela = self.active_mdi_child();
+        canvas = janela.painter_widget;
+        menu = QMenu(self);
+        escolhido = [None];
+        for nome, texto in viewlets.VIEWLETS:
+            acao = menu.addAction(texto);
+            acao.setCheckable(True);
+            acao.setChecked(canvas.viewlet == nome);
+            acao.triggered.connect(lambda _=False, n=nome: escolhido.__setitem__(0, ("viewlet", n)));
+        menu.addSeparator();
+        acao = menu.addAction("Ocultar selecionadas");
+        acao.setEnabled(len(canvas.selecionados()) > 0);
+        acao.triggered.connect(lambda _=False: escolhido.__setitem__(0, ("ocultar", None)));
+        acao = menu.addAction("Mostrar tudo (%d oculta(s))" % canvas.quantidade_oculta());
+        acao.setEnabled(canvas.quantidade_oculta() > 0);
+        acao.triggered.connect(lambda _=False: escolhido.__setitem__(0, ("mostrar", None)));
+        menu.exec(self._map_tool_bar.mapToGlobal(self._map_tool_bar.rect().bottomLeft()));
+        if escolhido[0] == None:
+            return;
+        acao, valor = escolhido[0];
+        if acao == "viewlet":
+            canvas.aplicar_viewlet(valor);
+            self.statusBar().showMessage("Vista: " + viewlets.rotulo(valor), 5000);
+        elif acao == "ocultar":
+            self.statusBar().showMessage("%d oculta(s) — nada foi apagado" % canvas.ocultar_selecionados(), 5000);
+        else:
+            self.statusBar().showMessage("%d voltou(aram) a aparecer" % canvas.mostrar_tudo(), 5000);
+
+    @Slot()
     def buscar_no_mapa(self):
         from PySide6.QtWidgets import QInputDialog;
         if self.__mapa_ativo__("MapRelationship") == None:
@@ -510,6 +546,11 @@ class MainWindow(QMainWindow):
                                 statusTip="Refazer a alteração desfeita",
                                 triggered=self.refazer)
 
+        icon = QIcon.fromTheme(QIcon.ThemeIcon.ViewFullscreen)
+        self._viewlet_act = QAction(icon, "Vista", self,
+                                statusTip="Cor e tamanho das caixas por uma propriedade do mapa",
+                                triggered=self.menu_viewlet)
+
         icon = QIcon.fromTheme(QIcon.ThemeIcon.EditFind)
         self._buscar_act = QAction(icon, "Buscar", self, shortcut=QKeySequence.Find,
                                 statusTip="Procurar caixas pelo nome no mapa aberto",
@@ -631,6 +672,7 @@ class MainWindow(QMainWindow):
         self._map_tool_bar.addAction(self._import_data);
         self._map_tool_bar.addAction(self._map_documents);
         self._map_tool_bar.addAction(self._map_extrair);
+        self._map_tool_bar.addAction(self._viewlet_act);
         self._map_tool_bar.addAction(self._buscar_act);
         self._map_tool_bar.addAction(self._layout_act);
         self._map_tool_bar.addAction(self._lista_act);

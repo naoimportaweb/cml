@@ -108,7 +108,7 @@ nenhum deles é candidato a sair.
 | Layouts automáticos | Maltego, Obsidian, Siren | posição manual | 2 |
 | Peso de vínculo, tamanho por centralidade | Maltego, Siren | inexistente — `QPen` de largura fixa 1 | 2 |
 | Colapsar grupo de caixas | Maltego, Siren | inexistente | 2 |
-| Filtro, busca no canvas e seleção em massa | Maltego, Siren | inexistente | 2 |
+| Filtro, busca no canvas e seleção em massa | Maltego, Siren | ✅ feito | 2 |
 | Caminho entre duas entidades | Maltego, Siren | inexistente | 2 |
 | **Régua do tempo: diagrama reduzido a uma data** | **ninguém** | as datas já existem | **2** |
 | Grafo local (vizinhança de profundidade N) | Obsidian, Siren | inexistente — `entity_simple_association` **sem UI** | 3 |
@@ -336,10 +336,14 @@ divergem calados.
   ponta**). Ordena por valor nas colunas de número, começa pelos **mais ligados**, duplo clique
   abre o diálogo do objeto, e data suja (`0000-00-00`) vira célula vazia em vez de célula
   mentirosa. É vista, não editor: não grava nada.
-- **Viewlets em vez de uma regra fixa** (a ideia é do Maltego, que tem sete): uma regrinha que
-  mapeia uma propriedade para **cor e tamanho** da caixa, de onde saem "tamanho por grau",
-  "por *entity rank*" (vínculos próprios + soma dos vínculos dos vizinhos) e, nosso, **tamanho
-  pelo número de referências** — a procedência virando desenho.
+- ✅ **Viewlets** (feito em 2026-10-05) — `classlib/relationship/viewlets.py`, botão **Vista**.
+  Mecanismo, não lista de regras no meio do desenho: cada viewlet devolve, por caixa,
+  `(escala, cor)`. Saem dele *tamanho por vínculos*, *por **entity rank*** (os próprios mais a
+  soma dos vizinhos — acha quem liga poucos mas importantes), *por referências* (a procedência
+  virando desenho), *cor por tipo* e **cor: sem fonte**, que é a regra do `EDITORIAL.md` virando
+  cor. A cor é pintada como **moldura atrás** da caixa, porque o `draw` de cada tipo já preenche
+  o próprio retângulo; e a ampliação vale também para a **área clicável**, senão a caixa cresce e
+  só recebe clique no tamanho antigo.
 - **Layout ortogonal** além dos quatro acima: entidades alinhadas em grade, que é o que o Graph
   Browser novo do Maltego pôs no lugar do *block*. É o que melhor serve a mapa impresso.
 - **Ocultar sem apagar.**
@@ -353,7 +357,12 @@ divergem calados.
 - **Caminho entre duas entidades** realçado — pergunta clássica de investigador; Maltego e Siren
   têm.
 - ✅ **Busca no canvas** (feito em 2026-10-05): Ctrl+F procura por nome, apelido ou sub-tipo,
-  seleciona todos os achados e centraliza no primeiro. **Filtro** (ocultar sem apagar) ainda falta.
+  seleciona todos os achados e centraliza no primeiro.
+- ✅ **Ocultar sem apagar** (feito em 2026-10-05): estado de **vista**, não do documento — não
+  entra no desfazer e não é salvo. Ocultar uma caixa esconde também os vínculos que a tocam
+  (senão a linha iria até uma caixa fora da tela), o oculto não recebe clique "no escuro", e a
+  **busca revela** o que estiver escondido — achar e não mostrar faria o analista concluir que a
+  caixa não existe.
 - ✅ **Seleção em massa** (feito em 2026-10-05), que é a base do transform em lote (Fase 3):
   laço com o botão esquerdo no vazio, Shift para somar, arrastar move o **grupo inteiro** em um
   passo de desfazer, Delete apaga a seleção. Arrastar a tela mudou para o **botão do meio**,

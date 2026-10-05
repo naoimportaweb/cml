@@ -269,6 +269,23 @@ Os bots ficam em `app/bot/<pais>/<nome>/`, cada um um `config.json` mais um mód
 
 O `app/view/ui/qbot.py` renderiza o botão e carrega a classe no momento do clique, via `importlib.util.spec_from_file_location`, instanciando como `cls(parent, obj)`, em que `obj` é a entity ou a reference que está sendo editada. Para adicionar um bot: crie o diretório e depois coloque um widget `QBot(self, <obj>, "bot/.../config.json")` em um diálogo (veja `dialog_entity_generic.py` e `dialogreference.py`).
 
+### Viewlets e ocultar: as duas coisas que mudam a vista, não o documento
+
+**Viewlets** (`app/classlib/relationship/viewlets.py`, botão **Vista**) são um mecanismo, não uma
+regra fixa: cada um devolve, por caixa, `(escala, cor)`. Daí saem tamanho por vínculos, por
+*entity rank* (os próprios mais a soma dos vizinhos), por referências, cor por tipo e
+**cor: sem fonte** — a regra do `EDITORIAL.md` virando cor. Dois cuidados no canvas: a cor é
+pintada como **moldura atrás** da caixa (o `draw` de cada tipo já preenche o próprio retângulo de
+branco ou amarelo, então pintar por cima não adiantaria), e a ampliação é aplicada **também ao
+`shape()`** — desenhar com transform e esquecer o hit test faz a caixa crescer e continuar
+recebendo clique no tamanho antigo.
+
+**Ocultar sem apagar** é estado de vista: fica em `engine.ocultos`, **não entra no desfazer** e
+não é salvo. Três regras: ocultar uma caixa esconde também os vínculos que a tocam (senão a
+linha vai até uma caixa fora da tela); `getElement` só enxerga o visível, para não pegar caixa
+"no escuro"; e a **busca revela** o que estiver oculto, porque achar sem mostrar faria o analista
+concluir que a caixa não existe.
+
 ### Seleção, busca e apagar em massa no canvas
 
 Laço com o **botão esquerdo** no vazio (`RubberBandDrag`), Shift soma à seleção, e arrastar
