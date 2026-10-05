@@ -187,7 +187,9 @@ class DialogEntityLink(QDialog):
         self.table_from_load();
     
     def btn_remover_click(self):
-        self.link.mapa.delEntity(self.link);
+        from classlib.relationship.comandos import Operacao;
+        with Operacao(self.link.mapa, "Apagar vínculo"):
+            self.link.mapa.delEntity(self.link);
         self.close();
     
     def tbl_to_double(self):

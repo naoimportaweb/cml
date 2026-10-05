@@ -199,7 +199,9 @@ class DialogEntityGeneric(QDialog):
         if resp != QMessageBox.Yes:
             return;
         try:
-            self.obj.mapa.incorporate( self.obj, alvo );
+            from classlib.relationship.comandos import Operacao;
+            with Operacao(self.obj.mapa, "Incorporar"):
+                self.obj.mapa.incorporate( self.obj, alvo );
         except Exception as e:
             QMessageBox.warning(self, "Falha", str(e));
             return;
@@ -293,7 +295,9 @@ class DialogEntityGeneric(QDialog):
         self.obj.doxxing = self.txt_doxxing.toPlainText();
     
     def btn_remover_click(self):
-        self.obj.mapa.delEntity(self.obj);
+        from classlib.relationship.comandos import Operacao;
+        with Operacao(self.obj.mapa, "Apagar caixa"):
+            self.obj.mapa.delEntity(self.obj);
         self.close();
 
     def btn_alterar_type_click(self):

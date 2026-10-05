@@ -21,6 +21,7 @@ sys.path.append( os.path.dirname( os.path.dirname( CURRENTDIR ) ) );
 
 from classlib.entity import Entity;
 from classlib.exportar_diagrama import fonte_do_diagrama;
+from classlib.relationship.comandos import ComandoMapa, mudou, tirar_instantaneo;
 
 ZOOM_MIN = 0.15;
 ZOOM_MAX = 4.0;
@@ -84,6 +85,7 @@ class MapaRelationshipEngine(QGraphicsView):
         self.selected_element = None;
         self.previous_pos = None;
         self.diff = [0, 0];
+        self.antes_arrasto = None;
 
         self.cena = QGraphicsScene(self);
         self.setScene(self.cena);
@@ -202,6 +204,9 @@ class MapaRelationshipEngine(QGraphicsView):
         self.selected_element = self.getElement(x, y);
         if self.selected_element != None:
             self.diff = [x - self.selected_element.x, y - self.selected_element.y];
+            # Um arrasto inteiro = UM passo de desfazer, por isso o antes e tirado aqui e o
+            # passo so e empilhado ao soltar (e nao a cada pixel do mouseMove).
+            self.antes_arrasto = tirar_instantaneo(self.mapa);
             return;
         # Clique no vazio arrasta a tela (a maozinha do Qt), em vez de nao fazer nada.
         self.setDragMode(QGraphicsView.ScrollHandDrag);
@@ -227,9 +232,18 @@ class MapaRelationshipEngine(QGraphicsView):
         self.previous_pos = None;
         if self.selected_element != None:
             self.__ajustar_cena__();
+            self.__empilhar_arrasto__();
         self.selected_element = None;
         super().mouseReleaseEvent(event);
         self.setDragMode(QGraphicsView.NoDrag);
+
+    def __empilhar_arrasto__(self):
+        if self.antes_arrasto == None:
+            return;
+        depois = tirar_instantaneo(self.mapa);
+        if mudou(self.antes_arrasto, depois):
+            self.mapa.desfazer.push(ComandoMapa(self.mapa, self.antes_arrasto, depois, "Mover caixa"));
+        self.antes_arrasto = None;
 
     def mouseDoubleClickEvent(self, event):
         x, y = self.__posicao__(event.position().toPoint());

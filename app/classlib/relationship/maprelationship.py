@@ -4,7 +4,10 @@ import os, sys, inspect;
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
 sys.path.append( os.path.dirname(  os.path.dirname( CURRENTDIR ) ) );
 
+from PySide6.QtGui import QUndoStack;
+
 from classlib.connectobject import ConnectObject;
+from classlib.relationship.comandos import LIMITE_PILHA;
 
 from classlib.relationship.person import Person
 from classlib.relationship.organization import Organization
@@ -25,6 +28,11 @@ class MapRelationship(ConnectObject):
         self.default_reference = None;
         self.language = "en";   # idioma do report e do bot de entidades (default: ingles)
         self.show_face = False;    # desenhar o PNG de rosto nas caixas do mapa
+        # Desfazer/refazer pertence ao DOCUMENTO, nao a janela: toda mutacao do mapa (canvas,
+        # dialogos, incorporate, aplicador de transform) ja tem o mapa em maos, e assim nenhuma
+        # delas precisa saber qual janela esta aberta. Quem redesenha escuta indexChanged.
+        self.desfazer = QUndoStack();
+        self.desfazer.setUndoLimit(LIMITE_PILHA);
     
     def getErros(self):
         arr = [];

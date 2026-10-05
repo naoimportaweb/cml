@@ -269,6 +269,36 @@ Os bots ficam em `app/bot/<pais>/<nome>/`, cada um um `config.json` mais um mód
 
 O `app/view/ui/qbot.py` renderiza o botão e carrega a classe no momento do clique, via `importlib.util.spec_from_file_location`, instanciando como `cls(parent, obj)`, em que `obj` é a entity ou a reference que está sendo editada. Para adicionar um bot: crie o diretório e depois coloque um widget `QBot(self, <obj>, "bot/.../config.json")` em um diálogo (veja `dialog_entity_generic.py` e `dialogreference.py`).
 
+### Desfazer/refazer: a pilha mora no documento
+
+`app/classlib/relationship/comandos.py`. O mapa é mexido em **cinco** lugares bem diferentes
+(arrastar no canvas, criar pelo duplo clique, apagar por `dialog_entity_generic`/`dialogentitylink`,
+`incorporate`, e o `transform/aplicar.py`), então em vez de um comando com inverso por operação
+— cinco chances de errar, e o inverso do `incorporate` é o pior deles — há **um instantâneo** de
+**estrutura e posição**: quais elements estão no mapa e em que ordem, o `x`/`y` de cada um, e as
+duas listas de ponta de cada vínculo (que é o que o `incorporate` reaponta). Nada é clonado: os
+objetos seguem os mesmos, então diálogo aberto e referência guardada por aí não viram ponteiro
+para lixo depois de um desfazer, e `mapa.elements` continua sendo **a mesma lista** (a reposição
+é por fatia, `elements[:] = ...`).
+
+Quem mexe no mapa envolve a mutação em `with Operacao(mapa, "Apagar caixa"):` — e só empilha se
+algo mudou de fato, nada se a operação estourar no meio. A pilha é `mapa.desfazer`
+(`QUndoStack`) e mora no **documento**, não na janela: toda rotina que muda o mapa já tem o mapa
+em mãos, e nenhuma precisa saber qual janela está aberta. O `MdiMap` só escuta `indexChanged`
+para redesenhar. **O que ele não desfaz, de propósito:** edição *dentro* de um objeto (nome,
+descrição, referência, data) — isso tem Cancelar no próprio diálogo, e guardar aqui exigiria
+clonar entidade inteira a cada clique.
+
+### Layouts automáticos
+
+`app/classlib/relationship/layouts.py`, os cinco do Maltego (orgânico, hierárquico, circular,
+bloco, ortogonal), sem biblioteca externa. São **ação, não modo**: rodam uma vez, escrevem `x`/`y`
+e saem. Três coisas a não quebrar: cada layout entra como **um** passo de desfazer (sem isso o
+botão seria destrutivo, porque joga fora posicionamento manual); o **vínculo não participa** — é
+hiper-aresta, e a caixa do verbo vai para o meio das pontas *depois* que as caixas acharam lugar;
+e tudo é normalizado para coordenada **positiva** no fim, porque o modelo e o banco nunca
+trabalharam com `x`/`y` negativo. O orgânico tem **semente fixa**: mesmo mapa, mesmo desenho.
+
 ### A List View — o mapa em tabela
 
 O mapa de vínculos tem **duas vistas na mesma janela**: o desenho e uma **tabela**

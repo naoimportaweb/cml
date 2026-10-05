@@ -178,6 +178,67 @@ class MainWindow(QMainWindow):
         #if self.active_mdi_child() and self.active_mdi_child().save():
         #    self.statusBar().showMessage("File saved", 2000)
 
+    def __pilha_desfazer__(self):
+        # A pilha pertence ao mapa aberto, nao a janela principal: trocar de janela troca de
+        # historico, que e o que o usuario espera de documentos separados.
+        janela = self.active_mdi_child();
+        if janela == None or getattr(janela, "mapa", None) == None:
+            return None;
+        return getattr(janela.mapa, "desfazer", None);
+
+    @Slot()
+    def desfazer(self):
+        pilha = self.__pilha_desfazer__();
+        if pilha != None and pilha.canUndo():
+            pilha.undo();
+        self.__atualizar_desfazer__();
+
+    @Slot()
+    def refazer(self):
+        pilha = self.__pilha_desfazer__();
+        if pilha != None and pilha.canRedo():
+            pilha.redo();
+        self.__atualizar_desfazer__();
+
+    def __atualizar_desfazer__(self):
+        # Rotulo que diz O QUE vai ser desfeito ("Desfazer Mover caixa") em vez de so
+        # "Desfazer": num mapa, lembrar qual foi a ultima acao e metade do problema.
+        pilha = self.__pilha_desfazer__();
+        pode_desfazer = pilha != None and pilha.canUndo();
+        pode_refazer = pilha != None and pilha.canRedo();
+        self._undo_act.setEnabled(pode_desfazer);
+        self._redo_act.setEnabled(pode_refazer);
+        self._undo_act.setText("Desfazer" + ((" " + pilha.undoText()) if pode_desfazer else ""));
+        self._redo_act.setText("Refazer" + ((" " + pilha.redoText()) if pode_refazer else ""));
+
+    @Slot()
+    def menu_layout(self):
+        # Menu na hora do clique, em vez de cinco botoes na barra.
+        from PySide6.QtWidgets import QMenu;
+        from classlib.relationship import layouts;
+        mapa = self.__mapa_ativo__("MapRelationship");
+        if mapa == None:
+            return;
+        menu = QMenu(self);
+        escolhido = [None];
+        for nome, texto in layouts.LAYOUTS:
+            acao = menu.addAction(texto);
+            acao.triggered.connect(lambda _=False, n=nome: escolhido.__setitem__(0, n));
+        posicao = self._map_tool_bar.mapToGlobal(self._map_tool_bar.rect().bottomLeft());
+        menu.exec(posicao);
+        if escolhido[0] == None:
+            return;
+        try:
+            quantas = layouts.aplicar(mapa, escolhido[0]);
+        except Exception as erro:
+            QMessageBox.warning(self, "Layout", str(erro));
+            return;
+        janela = self.active_mdi_child();
+        if janela != None:
+            janela.redesenhar();
+        self.statusBar().showMessage("Layout %s aplicado a %d caixas (Ctrl+Z desfaz)"
+                                     % (layouts.rotulo(escolhido[0]), quantas), 5000);
+
     @Slot()
     def alternar_lista(self):
         # Desenho <-> tabela, na mesma janela. So o mapa de relacionamento tem lista, e o
@@ -334,6 +395,7 @@ class MainWindow(QMainWindow):
             # A marca do botao Lista pertence a JANELA, nao a barra: sem isto ele continuaria
             # marcado ao trocar para outro mapa que esta no desenho.
             self._lista_act.setChecked( getattr(buffer_area, "mostrando_lista", lambda: False)() );
+            self.__atualizar_desfazer__();
 
     @Slot()
     def update_window_menu(self):
@@ -423,6 +485,20 @@ class MainWindow(QMainWindow):
                                 statusTip="Documentos (PDF) do mapa",
                                 triggered=self.map_documents)
 
+
+        icon = QIcon.fromTheme(QIcon.ThemeIcon.EditUndo)
+        self._undo_act = QAction(icon, "Desfazer", self, shortcut=QKeySequence.Undo,
+                                statusTip="Desfazer a última alteração do mapa",
+                                triggered=self.desfazer)
+        icon = QIcon.fromTheme(QIcon.ThemeIcon.EditRedo)
+        self._redo_act = QAction(icon, "Refazer", self, shortcut=QKeySequence.Redo,
+                                statusTip="Refazer a alteração desfeita",
+                                triggered=self.refazer)
+
+        icon = QIcon.fromTheme(QIcon.ThemeIcon.ViewRefresh)
+        self._layout_act = QAction(icon, "Layout", self,
+                                statusTip="Arrumar as caixas automaticamente (um passo de desfazer)",
+                                triggered=self.menu_layout)
 
         icon = QIcon.fromTheme(QIcon.ThemeIcon.FormatJustifyFill);
         self._lista_act = QAction(icon, "Lista", self, checkable=True,
@@ -527,11 +603,15 @@ class MainWindow(QMainWindow):
         # Sem isto o QToolBar desenha SO o icone e o texto da acao — que e onde a marca de
         # "gerando" e "terminou" aparece — fica invisivel.
         self._map_tool_bar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon);
+        self._map_tool_bar.addAction(self._undo_act);
+        self._map_tool_bar.addAction(self._redo_act);
+        self._map_tool_bar.addSeparator();
         self._map_tool_bar.addAction(self._map_edit_act);
         self._map_tool_bar.addAction(self._map_edit_check);
         self._map_tool_bar.addAction(self._import_data);
         self._map_tool_bar.addAction(self._map_documents);
         self._map_tool_bar.addAction(self._map_extrair);
+        self._map_tool_bar.addAction(self._layout_act);
         self._map_tool_bar.addAction(self._lista_act);
         self._map_tool_bar.addAction(self._subtypes_act);
         #self._edit_tool_bar.addAction(self._copy_act)

@@ -10,6 +10,7 @@ CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 sys.path.append( os.path.dirname( CURRENTDIR ) );
 
 from transform.nucleo import ENTRADA, norm;
+from classlib.relationship.comandos import Operacao;
 
 CAMPOS_ENTIDADE = ["id", "etype", "text_label", "description", "default_url", "data_extra", "wikipedia", "small_label", "icon"];
 
@@ -43,6 +44,14 @@ def aplicar(mapa, origem, resultado, escolhas_entidade, escolhas_vinculo, subtip
     Devolve um dict-relatorio (novas, reusadas, vinculos, refs, sem_subtipo)."""
     if mapa.getLocked():
         raise Exception("O mapa está travado (somente leitura).");
+    # Um transform aceito pode trazer dezenas de caixas e vinculos de uma vez: tem de sair da
+    # tela com UM desfazer, nao com trinta.
+    with Operacao(mapa, "Aplicar transform"):
+        return __aplicar__(mapa, origem, resultado, escolhas_entidade, escolhas_vinculo,
+                           subtipos_validos, aplicar_subtipo);
+
+
+def __aplicar__(mapa, origem, resultado, escolhas_entidade, escolhas_vinculo, subtipos_validos=None, aplicar_subtipo=None):
 
     cx = origem.x + origem.w / 2.0;
     cy = origem.y + origem.h / 2.0;

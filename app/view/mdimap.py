@@ -18,6 +18,7 @@ from view.dialog_entity_person import DialogEntityPerson;
 from view.dialog_entity_other import DialogEntityOther;
 from view.dialogchoice import DialogChoiceEntity;
 from view.ui.lista_diagrama import ListaDiagrama;
+from classlib.relationship.comandos import Operacao;
 
 class MdiMap(QWidget):
     def __init__(self, form, mapa):
@@ -54,6 +55,10 @@ class MdiMap(QWidget):
             self.pilha.addWidget( self.lista );
         layout.addWidget( self.pilha );
         self.setLayout(layout)
+        # A pilha de desfazer e do DOCUMENTO; a janela so escuta para redesenhar. Assim
+        # nenhuma das cinco rotinas que mexem no mapa precisa saber que ha uma janela aberta.
+        if getattr(mapa, "desfazer", None) != None:
+            mapa.desfazer.indexChanged.connect( self.redesenhar );
         self.painter_widget.redraw();
         
 
@@ -72,10 +77,12 @@ class MdiMap(QWidget):
         form = DialogChoiceEntity(self.form_principal);
         form.exec();
         if form.ptype != None:  # NOVO ITEM É AQUI
-            map.addEntity( form.ptype, x, y );
+            with Operacao(self.mapa, "Criar caixa"):
+                map.addEntity( form.ptype, x, y );
         else:                   # ITEM EXISTENTE É AQUI
             if form.search_entity != None:
-                map.addExistEntity(form.search_entity, x, y);
+                with Operacao(self.mapa, "Trazer entidade para o mapa"):
+                    map.addExistEntity(form.search_entity, x, y);
 
     def menu_transforms(self, caixa, pos_global):
         """Botao direito numa caixa: lista os transforms que aceitam o tipo dela, agrupados por
@@ -146,6 +153,11 @@ class MdiMap(QWidget):
         # mostra o mapa de antes da alteracao.
         if self.lista != None:
             self.lista.atualizar();
+        # O rotulo de Desfazer/Refazer na barra mostra QUAL acao sera desfeita, entao precisa
+        # acompanhar o que acabou de acontecer na janela, nao so a troca de janela.
+        atualizar = getattr(self.form_principal, "__atualizar_desfazer__", None);
+        if atualizar != None:
+            atualizar();
 
     def new_map(self):
         return;
