@@ -212,6 +212,21 @@ class MainWindow(QMainWindow):
         self._redo_act.setText("Refazer" + ((" " + pilha.redoText()) if pode_refazer else ""));
 
     @Slot()
+    def buscar_no_mapa(self):
+        from PySide6.QtWidgets import QInputDialog;
+        if self.__mapa_ativo__("MapRelationship") == None:
+            return;
+        janela = self.active_mdi_child();
+        texto, ok = QInputDialog.getText(self, "Buscar no mapa", "Nome, apelido ou sub-tipo:");
+        if not ok or texto.strip() == "":
+            return;
+        quantas = janela.painter_widget.buscar(texto);
+        if quantas == 0:
+            self.statusBar().showMessage("Nada encontrado para \"%s\"" % texto, 5000);
+        else:
+            self.statusBar().showMessage("%d encontrada(s) e selecionada(s)" % quantas, 5000);
+
+    @Slot()
     def menu_layout(self):
         # Menu na hora do clique, em vez de cinco botoes na barra.
         from PySide6.QtWidgets import QMenu;
@@ -495,6 +510,11 @@ class MainWindow(QMainWindow):
                                 statusTip="Refazer a alteração desfeita",
                                 triggered=self.refazer)
 
+        icon = QIcon.fromTheme(QIcon.ThemeIcon.EditFind)
+        self._buscar_act = QAction(icon, "Buscar", self, shortcut=QKeySequence.Find,
+                                statusTip="Procurar caixas pelo nome no mapa aberto",
+                                triggered=self.buscar_no_mapa)
+
         icon = QIcon.fromTheme(QIcon.ThemeIcon.ViewRefresh)
         self._layout_act = QAction(icon, "Layout", self,
                                 statusTip="Arrumar as caixas automaticamente (um passo de desfazer)",
@@ -611,6 +631,7 @@ class MainWindow(QMainWindow):
         self._map_tool_bar.addAction(self._import_data);
         self._map_tool_bar.addAction(self._map_documents);
         self._map_tool_bar.addAction(self._map_extrair);
+        self._map_tool_bar.addAction(self._buscar_act);
         self._map_tool_bar.addAction(self._layout_act);
         self._map_tool_bar.addAction(self._lista_act);
         self._map_tool_bar.addAction(self._subtypes_act);

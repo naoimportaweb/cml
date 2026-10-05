@@ -352,8 +352,15 @@ divergem calados.
   **com marcação de "sem data"**: ocultar calado o que não tem data é mentir sobre o mapa.
 - **Caminho entre duas entidades** realçado — pergunta clássica de investigador; Maltego e Siren
   têm.
-- **Filtro e busca no canvas.**
-- **Seleção em massa**, que é a base do transform em lote (Fase 3).
+- ✅ **Busca no canvas** (feito em 2026-10-05): Ctrl+F procura por nome, apelido ou sub-tipo,
+  seleciona todos os achados e centraliza no primeiro. **Filtro** (ocultar sem apagar) ainda falta.
+- ✅ **Seleção em massa** (feito em 2026-10-05), que é a base do transform em lote (Fase 3):
+  laço com o botão esquerdo no vazio, Shift para somar, arrastar move o **grupo inteiro** em um
+  passo de desfazer, Delete apaga a seleção. Arrastar a tela mudou para o **botão do meio**,
+  porque o laço vale mais no esquerdo. Apagar vai em **ordem de dependência dentro da seleção**:
+  os vínculos escolhidos perdem as pontas e saem primeiro, depois as caixas que nenhum vínculo
+  restante referencia; caixa presa a vínculo que ficou **fora** da seleção é barrada e contada,
+  nunca apagada por tabela.
 
 ### 3.5 Toda alteração de banco vem com script de migração
 

@@ -71,13 +71,15 @@ class MapRelationship(ConnectObject):
     def delEntity(self, element):
         if element.entity.etype == "link" and (len(element.to_entity) > 0 or len(element.from_entity)):
             raise Exception("O relacionamento possui links para entidades.");
+        # A comparacao era buffer_ref.entity.id == element.entity.id: o lado esquerdo e o id da
+        # CAIXA (LinkEntity.entity e o element) e o direito o id da ENTITY de dentro dela. Sao
+        # espacos de id diferentes, nunca batiam, e a guarda nunca disparava -- apagar uma caixa
+        # que participa de vinculo saia calado, deixando o vinculo apontando para uma caixa que
+        # nao esta mais no mapa (linha desenhada para o nada, e ponta solta no save).
         for k in range(len(self.elements)):
             if self.elements[k].entity.etype == "link":
-                for buffer_ref in self.elements[k].to_entity:
-                    if buffer_ref.entity.id == element.entity.id:
-                       raise Exception("O elemento existe em um relacionamento, exclua o relacionamento."); 
-                for buffer_ref in self.elements[k].from_entity:
-                    if buffer_ref.entity.id == element.entity.id:
+                for buffer_ref in list(self.elements[k].to_entity) + list(self.elements[k].from_entity):
+                    if buffer_ref.entity != None and buffer_ref.entity.id == element.id:
                        raise Exception("O elemento existe em um relacionamento, exclua o relacionamento."); 
 
         for i in range(len(self.elements)):

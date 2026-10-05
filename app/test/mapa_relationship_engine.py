@@ -133,6 +133,68 @@ def main():
     confere(len(vazio.itens) == 0 and not vazio.cena.sceneRect().isEmpty(),
             "mapa sem caixa redesenha e tem cena com tamanho");
 
+    print("\nselecao em massa");
+    mapa, pessoa, org, vinculo = montar();
+    engine = MapaRelationshipEngine(parent=None, mapa=mapa, form=None);
+    engine.resize(900, 700); engine.redraw();
+    confere(engine.selecionados() == [], "comeca sem nada selecionado");
+    confere(engine.selecionar_todos() == 3, "selecionar tudo pega os 3");
+    confere(len(engine.selecionados()) == 3, "e selecionados() concorda");
+    engine.selecionar([pessoa]);
+    confere(engine.selecionados() == [pessoa], "selecionar() troca a selecao");
+
+    print("\narrastar move o GRUPO");
+    engine.selecionar([pessoa, org]);
+    px, py, ox, oy = pessoa.x, pessoa.y, org.x, org.y;
+    engine.mousePressEvent(evento(engine, QEvent.MouseButtonPress, px + 5, py + 5));
+    engine.mouseMoveEvent(evento(engine, QEvent.MouseMove, px + 55, py + 25));
+    engine.mouseReleaseEvent(evento(engine, QEvent.MouseButtonRelease, px + 55, py + 25));
+    confere(pessoa.x == px + 50 and pessoa.y == py + 20, "a caixa clicada andou");
+    confere(org.x == ox + 50 and org.y == oy + 20, "a OUTRA selecionada andou igual");
+    confere(mapa.desfazer.count() == 1, "o grupo inteiro = um passo de desfazer");
+    mapa.desfazer.undo();
+    confere(pessoa.x == px and org.x == ox, "desfazer devolveu as duas");
+
+    print("\nclicar em caixa fora da selecao recomeca a selecao");
+    engine.selecionar([org]);
+    engine.mousePressEvent(evento(engine, QEvent.MouseButtonPress, pessoa.x + 5, pessoa.y + 5));
+    confere(engine.selecionados() == [pessoa], "so a clicada ficou selecionada");
+    engine.mouseReleaseEvent(evento(engine, QEvent.MouseButtonRelease, pessoa.x + 5, pessoa.y + 5));
+
+    print("\nbuscar no mapa");
+    mapa, pessoa, org, vinculo = montar();
+    engine = MapaRelationshipEngine(parent=None, mapa=mapa, form=None);
+    engine.resize(900, 700); engine.redraw();
+    confere(engine.buscar("empresa") == 1, "acha por nome, sem diferenciar maiuscula");
+    confere(engine.selecionados() == [org], "e deixa o achado selecionado");
+    confere(engine.buscar("inexistente") == 0, "nao acha o que nao existe");
+    confere(engine.buscar("") == 0, "busca vazia nao seleciona o mapa inteiro");
+
+    print("\napagar selecionados em ordem de dependencia");
+    mapa, pessoa, org, vinculo = montar();
+    engine = MapaRelationshipEngine(parent=None, mapa=mapa, form=None);
+    engine.resize(900, 700); engine.redraw();
+    engine.selecionar([pessoa]);   # caixa presa a um vinculo que ficou de fora
+    apagados, barrados = engine.apagar_selecionados();
+    confere((apagados, barrados) == (0, 1), "caixa presa a vinculo de fora e BARRADA, nao apagada por tabela");
+    confere(pessoa in mapa.elements, "e continua no mapa");
+    engine.selecionar([pessoa, vinculo, org]);
+    apagados, barrados = engine.apagar_selecionados();
+    confere(apagados == 3 and barrados == 0, "com o vinculo junto, sai tudo (%d/%d)" % (apagados, barrados));
+    confere(len(mapa.elements) == 0, "mapa ficou vazio");
+    mapa.desfazer.undo();
+    confere(len(mapa.elements) == 3, "um desfazer trouxe os tres de volta");
+
+    print("\nmapa travado nao apaga");
+    mapa.locked = True;
+    engine.redraw(); engine.selecionar_todos();
+    try:
+        engine.apagar_selecionados();
+        confere(False, "deveria recusar");
+    except Exception as erro:
+        confere("travado" in str(erro), "recusou: %s" % erro);
+    mapa.locked = False;
+
     print("\n" + ("TODOS OS TESTES PASSARAM" if len(FALHAS) == 0 else "FALHAS: %d" % len(FALHAS)));
     return 1 if len(FALHAS) > 0 else 0;
 

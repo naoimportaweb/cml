@@ -127,6 +127,29 @@ class MdiMap(QWidget):
         from view.ui.transform_manager import TransformManager;
         TransformManager.instancia().iniciar(cfg, self.entrada_transform(caixa), self, caixa);
 
+    def apagar_selecionados(self):
+        """Apaga as caixas/vinculos selecionados no canvas, avisando o que foi barrado."""
+        if self.lista != None and self.mostrando_lista():
+            return;
+        selecionados = self.painter_widget.selecionados();
+        if len(selecionados) == 0:
+            return;
+        resposta = QMessageBox.question(self, "Apagar",
+                                        "Apagar %d item(ns) selecionado(s) do mapa?" % len(selecionados),
+                                        QMessageBox.Yes | QMessageBox.No, QMessageBox.No);
+        if resposta != QMessageBox.Yes:
+            return;
+        try:
+            apagados, barrados = self.painter_widget.apagar_selecionados();
+        except Exception as erro:
+            QMessageBox.warning(self, "Apagar", str(erro));
+            return;
+        self.redesenhar();
+        if barrados > 0:
+            QMessageBox.information(self, "Apagar",
+                "%d apagado(s). %d não foi/foram apagado(s) por participar(em) de vínculo que ficou "
+                "fora da seleção — selecione o vínculo junto, ou apague-o primeiro." % (apagados, barrados));
+
     def mostrando_lista(self):
         return self.lista != None and self.pilha.currentWidget() is self.lista;
 

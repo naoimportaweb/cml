@@ -269,6 +269,28 @@ Os bots ficam em `app/bot/<pais>/<nome>/`, cada um um `config.json` mais um mód
 
 O `app/view/ui/qbot.py` renderiza o botão e carrega a classe no momento do clique, via `importlib.util.spec_from_file_location`, instanciando como `cls(parent, obj)`, em que `obj` é a entity ou a reference que está sendo editada. Para adicionar um bot: crie o diretório e depois coloque um widget `QBot(self, <obj>, "bot/.../config.json")` em um diálogo (veja `dialog_entity_generic.py` e `dialogreference.py`).
 
+### Seleção, busca e apagar em massa no canvas
+
+Laço com o **botão esquerdo** no vazio (`RubberBandDrag`), Shift soma à seleção, e arrastar
+qualquer caixa selecionada move **o grupo inteiro** em um passo de desfazer. Clicar numa caixa
+*fora* da seleção recomeça a seleção nela — senão arrastar uma caixa qualquer sairia levando
+junto um grupo que o analista não lembra ter feito. Por causa do laço, **arrastar a tela passou
+para o botão do meio** (mais as barras de rolagem e a roda). Ctrl+F busca por nome, apelido ou
+sub-tipo, seleciona os achados e centraliza no primeiro.
+
+`apagar_selecionados()` vai em **ordem de dependência dentro da seleção**: os vínculos escolhidos
+perdem as pontas e saem primeiro, depois as caixas que nenhum vínculo restante referencia. Caixa
+presa a um vínculo que ficou **fora** da seleção é barrada e contada, nunca apagada por tabela —
+a cascata é explícita e limitada ao que o analista marcou.
+
+> ⚠️ **Defeito corrigido em 2026-10-05, achado pelo teste:** a guarda do `MapRelationship.delEntity`
+> comparava `buffer_ref.entity.id == element.entity.id`. O lado esquerdo é o id da **caixa**
+> (`LinkEntity.entity` *é* o element) e o direito o id da **`Entity`** de dentro dela — espaços de
+> id diferentes, que nunca batiam. A guarda documentada ("apagar caixa em vínculo lança exceção
+> em vez de fazer cascata") **nunca disparou**: a caixa saía calada e o vínculo ficava apontando
+> para algo fora do mapa, desenhando linha para o nada e salvando ponta solta. Agora compara com
+> `element.id`.
+
 ### Desfazer/refazer: a pilha mora no documento
 
 `app/classlib/relationship/comandos.py`. O mapa é mexido em **cinco** lugares bem diferentes
