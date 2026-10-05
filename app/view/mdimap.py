@@ -7,7 +7,7 @@ sys.path.append(ROOT);
 
 from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSettings, QSaveFile, QTextStream, Qt, Slot)
 from PySide6.QtGui import QAction, QIcon, QKeySequence
-from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QMdiArea, QMessageBox, QScrollArea, QTextEdit, QWidget, QHBoxLayout)
+from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow, QMdiArea, QMessageBox, QScrollArea, QTextEdit, QWidget, QHBoxLayout, QStackedWidget)
 
 from view.ui.mapa_relationship_engine import MapaRelationshipEngine;
 from view.ui.mapa_organization_chart_engine import MapaOrganizationChartEngine;
@@ -17,6 +17,7 @@ from view.dialog_entity_organization import DialogEntityOrganization;
 from view.dialog_entity_person import DialogEntityPerson;
 from view.dialog_entity_other import DialogEntityOther;
 from view.dialogchoice import DialogChoiceEntity;
+from view.ui.lista_diagrama import ListaDiagrama;
 
 class MdiMap(QWidget):
     def __init__(self, form, mapa):
@@ -38,9 +39,20 @@ class MdiMap(QWidget):
             area = QScrollArea();
             area.setWidget( self.painter_widget );
             area.setWidgetResizable(False);
-            layout.addWidget( area );
+            desenho = area;
         else:
-            layout.addWidget( self.painter_widget );
+            desenho = self.painter_widget;
+        # Desenho e lista sao duas VISTAS do mesmo mapa (a List View do Maltego, SPEC.md §3.3),
+        # por isso uma pilha na mesma janela em vez de um dialogo separado: alternar nao fecha
+        # nada nem perde o que estava aberto. A lista so existe para o mapa de vinculos --
+        # organograma e timeline tem outra estrutura.
+        self.pilha = QStackedWidget();
+        self.pilha.addWidget( desenho );
+        self.lista = None;
+        if mapa.__class__.__name__ == "MapRelationship":
+            self.lista = ListaDiagrama( self, mapa );
+            self.pilha.addWidget( self.lista );
+        layout.addWidget( self.pilha );
         self.setLayout(layout)
         self.painter_widget.redraw();
         
@@ -108,6 +120,21 @@ class MdiMap(QWidget):
         from view.ui.transform_manager import TransformManager;
         TransformManager.instancia().iniciar(cfg, self.entrada_transform(caixa), self, caixa);
 
+    def mostrando_lista(self):
+        return self.lista != None and self.pilha.currentWidget() is self.lista;
+
+    def alternar_lista(self):
+        """Troca entre o desenho e a tabela. Devolve True se ficou na tabela, para a acao da
+        barra saber em que estado marcar o botao."""
+        if self.lista == None:
+            return False;
+        if self.mostrando_lista():
+            self.pilha.setCurrentIndex(0);
+            return False;
+        self.lista.atualizar();
+        self.pilha.setCurrentWidget( self.lista );
+        return True;
+
     def redesenhar(self):
         """Refaz o pixmap a partir do modelo. Quem mexe no mapa por fora de um evento de
         mouse (os bots, por exemplo) precisa chamar isto: o redraw() so acontece na
@@ -115,6 +142,10 @@ class MdiMap(QWidget):
         no modelo e a tela nao mostra nada."""
         self.painter_widget.redraw();
         self.painter_widget.update();
+        # A lista le o modelo na hora de montar, entao tem de ser refeita junto -- senao ela
+        # mostra o mapa de antes da alteracao.
+        if self.lista != None:
+            self.lista.atualizar();
 
     def new_map(self):
         return;

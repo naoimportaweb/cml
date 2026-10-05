@@ -179,6 +179,16 @@ class MainWindow(QMainWindow):
         #    self.statusBar().showMessage("File saved", 2000)
 
     @Slot()
+    def alternar_lista(self):
+        # Desenho <-> tabela, na mesma janela. So o mapa de relacionamento tem lista, e o
+        # __mapa_ativo__ ja avisa quando a janela em foco e outra coisa.
+        if self.__mapa_ativo__("MapRelationship") == None:
+            self._lista_act.setChecked(False);
+            return;
+        janela = self.active_mdi_child();
+        self._lista_act.setChecked( janela.alternar_lista() );
+
+    @Slot()
     def export_diagram(self):
         # Exporta o diagrama ABERTO para arquivo do analista. Vale para os tres tipos (mapa,
         # organograma, timeline), por isso nao restringe a classe. Com o report morto, este e
@@ -321,6 +331,9 @@ class MainWindow(QMainWindow):
             if buffer_area.mapa.getLocked() and len(buffer_area.mapa.lock_list) > 0 :
                 title = title + " (ReadOnly at " + buffer_area.mapa.lock_list[-1]["lock_time"] + " ISO DATE)";
             self.setWindowTitle( title )
+            # A marca do botao Lista pertence a JANELA, nao a barra: sem isto ele continuaria
+            # marcado ao trocar para outro mapa que esta no desenho.
+            self._lista_act.setChecked( getattr(buffer_area, "mostrando_lista", lambda: False)() );
 
     @Slot()
     def update_window_menu(self):
@@ -410,6 +423,11 @@ class MainWindow(QMainWindow):
                                 statusTip="Documentos (PDF) do mapa",
                                 triggered=self.map_documents)
 
+
+        icon = QIcon.fromTheme(QIcon.ThemeIcon.FormatJustifyFill);
+        self._lista_act = QAction(icon, "Lista", self, checkable=True,
+                                statusTip="Ver o mapa em tabela (entidades e vínculos) em vez de desenho",
+                                triggered=self.alternar_lista)
 
         icon = QIcon.fromTheme(QIcon.ThemeIcon.AddressBookNew);
         self._subtypes_act = QAction(icon, "Sub-tipos", self,
@@ -514,6 +532,7 @@ class MainWindow(QMainWindow):
         self._map_tool_bar.addAction(self._import_data);
         self._map_tool_bar.addAction(self._map_documents);
         self._map_tool_bar.addAction(self._map_extrair);
+        self._map_tool_bar.addAction(self._lista_act);
         self._map_tool_bar.addAction(self._subtypes_act);
         #self._edit_tool_bar.addAction(self._copy_act)
         #self._edit_tool_bar.addAction(self._paste_act)

@@ -325,9 +325,23 @@ divergem calados.
   referências** que o sustentam: vínculo com três fontes desenha mais grosso que o de uma. É o
   eixo 1 (§1.3) virando desenho. ⚠️ **Exige migração de banco** (coluna nova em
   `diagram_relationship_link`) — ver a regra abaixo.
-- **Tamanho da caixa por centralidade** (grau), calculado no cliente, sem lib externa.
+- **Tamanho da caixa por centralidade** (grau), calculado no cliente, sem lib externa — como um
+  viewlet, ver abaixo.
 - **Roteamento que não atravessa caixa** e **data da ponta desenhada na linha**.
 - **Colapsar grupo** numa caixa só — mapa com 200 caixas é ilegível (é a *collection* do Maltego).
+- ✅ **List View** (feito em 2026-10-05): o mapa em **tabela**, alternando com o desenho na mesma
+  janela (`view/ui/lista_diagrama.py`, botão **Lista**). Duas abas, porque no CML o vínculo também
+  é element e as colunas dele são outras: **Entidades** (tipo·subtipo, nome, apelido, grau,
+  período, refs, classificações, descrição) e **Vínculos** (verbo, de, para e um **período por
+  ponta**). Ordena por valor nas colunas de número, começa pelos **mais ligados**, duplo clique
+  abre o diálogo do objeto, e data suja (`0000-00-00`) vira célula vazia em vez de célula
+  mentirosa. É vista, não editor: não grava nada.
+- **Viewlets em vez de uma regra fixa** (a ideia é do Maltego, que tem sete): uma regrinha que
+  mapeia uma propriedade para **cor e tamanho** da caixa, de onde saem "tamanho por grau",
+  "por *entity rank*" (vínculos próprios + soma dos vínculos dos vizinhos) e, nosso, **tamanho
+  pelo número de referências** — a procedência virando desenho.
+- **Layout ortogonal** além dos quatro acima: entidades alinhadas em grade, que é o que o Graph
+  Browser novo do Maltego pôs no lugar do *block*. É o que melhor serve a mapa impresso.
 - **Ocultar sem apagar.**
 
 ### 3.4 Bloco C — o diagrama que pensa

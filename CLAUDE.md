@@ -269,6 +269,22 @@ Os bots ficam em `app/bot/<pais>/<nome>/`, cada um um `config.json` mais um mód
 
 O `app/view/ui/qbot.py` renderiza o botão e carrega a classe no momento do clique, via `importlib.util.spec_from_file_location`, instanciando como `cls(parent, obj)`, em que `obj` é a entity ou a reference que está sendo editada. Para adicionar um bot: crie o diretório e depois coloque um widget `QBot(self, <obj>, "bot/.../config.json")` em um diálogo (veja `dialog_entity_generic.py` e `dialogreference.py`).
 
+### A List View — o mapa em tabela
+
+O mapa de vínculos tem **duas vistas na mesma janela**: o desenho e uma **tabela**
+(`app/view/ui/lista_diagrama.py`, botão **Lista** na barra Map). O `MdiMap` guarda as duas num
+`QStackedWidget` — alternar não fecha nada. É **vista, não documento**: lê os mesmos `elements`,
+não guarda cópia e não grava; quem edita é o diálogo que o duplo clique abre, igual ao duplo
+clique no canvas.
+
+São duas abas porque **o vínculo também é element** e as colunas dele são outras: *Entidades*
+(tipo·subtipo, nome, apelido, grau, período da caixa, refs, classificações, descrição) e
+*Vínculos* (verbo, de, para, e um **período por ponta**). Três detalhes que são armadilha se
+alguém mexer: as colunas de número guardam **número** no `DisplayRole` (com texto, "10" ordena
+antes de "9"); o índice do element vai no `Qt.UserRole` da primeira célula, porque **com a tabela
+ordenada o número da linha não é o índice no modelo**; e o `setSortingEnabled` é desligado
+durante o preenchimento, senão as linhas se embaralham enquanto entram.
+
 ### Shell da interface
 
 O `application.py` executa o `DialogConnect` **antes** de criar a janela principal e encerra a menos que o `Server.status` esteja setado. A janela principal é um `QMdiArea` cujos filhos são instâncias de `MdiMap`; os menus e toolbars são construídos, mas várias ações estão comentadas. Os diálogos ficam em `app/view/`, como `dialog_*.py`, e os widgets reutilizáveis em `app/view/ui/`.
