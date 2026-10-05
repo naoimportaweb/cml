@@ -269,6 +269,18 @@ Os bots ficam em `app/bot/<pais>/<nome>/`, cada um um `config.json` mais um mód
 
 O `app/view/ui/qbot.py` renderiza o botão e carrega a classe no momento do clique, via `importlib.util.spec_from_file_location`, instanciando como `cls(parent, obj)`, em que `obj` é a entity ou a reference que está sendo editada. Para adicionar um bot: crie o diretório e depois coloque um widget `QBot(self, <obj>, "bot/.../config.json")` em um diálogo (veja `dialog_entity_generic.py` e `dialogreference.py`).
 
+### Exportar: figura e dado são dois caminhos
+
+`app/classlib/exportar_diagrama.py` tira a **figura** (PDF/PNG/SVG, os três diagramas);
+`app/classlib/exportar_dados.py` tira a **informação** (CSV e GraphML, só o mapa de vínculos).
+Três decisões que não são óbvias: **CSV são dois arquivos** (entidades e vínculos), porque as
+colunas de um não são as do outro — mesma razão das duas abas da List View; a **hiper-aresta vira
+uma linha por par**, já que nem planilha nem GraphML sabem o que é aresta de várias pontas, e
+cada par ganha o id do vínculo com sufixo; e o `grau` do export conta **arestas expandidas**, não
+vínculos — se contasse vínculos, o nó diria "2" num arquivo onde o Gephi vê 3 arestas. A coluna
+*Vínculos* da List View conta outra coisa de propósito (quantos vínculos tocam a caixa), porque no
+mapa o vínculo é **um** objeto. CSV sai em `utf-8-sig`: sem o BOM o Excel abre a acentuação errada.
+
 ### Viewlets e ocultar: as duas coisas que mudam a vista, não o documento
 
 **Viewlets** (`app/classlib/relationship/viewlets.py`, botão **Vista**) são um mecanismo, não uma

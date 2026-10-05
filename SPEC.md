@@ -122,7 +122,7 @@ nenhum deles é candidato a sair.
 | Mapa geográfico | Siren | países com bandeira + transform `nominatim`, sem coordenada | 4 |
 | Alerta ("avise se mudar") | Siren | inexistente | 4 |
 | Auditoria de quem aceitou o quê | — | inexistente | 4 |
-| Importar/exportar CSV, GraphML, STIX 2.1 | Maltego, Siren | só `DialogImport` (1 JSON por entidade) | 5 |
+| Importar/exportar CSV, GraphML, STIX 2.1 | Maltego, Siren | ✅ **exporta** CSV e GraphML; falta importar e o STIX | 5 |
 | Vault Markdown (entra e sai) | Obsidian | inexistente | 5 |
 | Colaboração em tempo real | Siren | trava consultiva por mapa | 5 |
 | Extração de entidades por IA | Maltego (hub), Siren | **parado** — era `rolhama` | **8** |
@@ -490,7 +490,16 @@ Depende da **seleção em massa** (§3.4), por isso vive aqui e não na fase dos
 
 ## 6. Fase 5 — Dados e colaboração
 
-- **Exportar/importar CSV, GraphML e STIX 2.1** (STIX casa com a origem MISP).
+- ✅ **Exportar CSV e GraphML** (feito em 2026-10-05) — `classlib/exportar_dados.py`, menu File →
+  **Exportar dados…**. O `exportar_diagrama.py` tira a figura; este tira a informação, que era o
+  que faltava para levar a investigação a outra ferramenta (Gephi, yEd, Cytoscape, planilha).
+  **CSV são dois arquivos** (entidades e vínculos), pela mesma razão das duas abas da List View.
+  A **hiper-aresta vira uma linha por par**, porque planilha e GraphML não sabem o que é isso, e
+  o `grau` exportado conta **arestas expandidas** — contar vínculos deixaria o nó discordando do
+  próprio arquivo quando aberto no Gephi. As datas e a contagem de referências vão como atributo:
+  mapa sem data e sem fonte perde justamente o que o CML tem de diferente. CSV sai em `utf-8-sig`
+  porque o destino número um é o Excel.
+- **Falta**: importar esses formatos, e **STIX 2.1** (que casa com a origem MISP).
 - **Vault Markdown (Obsidian) nos dois sentidos**: importar um vault (nota → entidade,
   `[[wikilink]]` → vínculo, frontmatter → classificação) e exportar um mapa como vault. É como se
   traz quem já trabalha em Obsidian.

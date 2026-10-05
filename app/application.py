@@ -27,6 +27,7 @@ from view.dialog_document import DialogDocument;
 from view.ui.report_manager import ReportManager;
 from classlib.server import Server;
 from classlib import exportar_diagrama;
+from classlib import exportar_dados;
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -210,6 +211,33 @@ class MainWindow(QMainWindow):
         self._redo_act.setEnabled(pode_refazer);
         self._undo_act.setText("Desfazer" + ((" " + pilha.undoText()) if pode_desfazer else ""));
         self._redo_act.setText("Refazer" + ((" " + pilha.redoText()) if pode_refazer else ""));
+
+    @Slot()
+    def export_data(self):
+        # Exporta o MAPA como dado, nao como figura: e o caminho de levar a investigacao para
+        # outra ferramenta (Gephi, yEd, planilha). So o mapa de relacionamento tem grafo.
+        mapa = self.__mapa_ativo__("MapRelationship");
+        if mapa == None:
+            return;
+        filtros = "CSV, dois arquivos (*.csv);;GraphML (*.graphml)";
+        pasta = QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation);
+        sugestao = os.path.join(pasta, exportar_diagrama.nome_de_arquivo(mapa));
+        caminho, filtro = QFileDialog.getSaveFileName(self, "Exportar dados", sugestao, filtros);
+        if caminho == None or caminho.strip() == "":
+            return;
+        formato = "graphml" if "*.graphml" in filtro else "csv";
+        extensao = os.path.splitext(caminho)[1].lstrip(".").lower();
+        if extensao in exportar_dados.FORMATOS:
+            formato = extensao;
+        try:
+            gravados = exportar_dados.exportar(mapa, caminho, formato=formato);
+        except exportar_dados.ErroExportacao as erro:
+            QMessageBox.warning(self, "Exportar dados", str(erro));
+            return;
+        except Exception as erro:
+            QMessageBox.critical(self, "Exportar dados", "Não foi possível exportar: %s" % erro);
+            return;
+        self.statusBar().showMessage("Gravado: " + ", ".join(os.path.basename(g) for g in gravados), 8000);
 
     @Slot()
     def menu_viewlet(self):
@@ -493,6 +521,11 @@ class MainWindow(QMainWindow):
                                  shortcut=QKeySequence.Save,
                                  statusTip="Save the document to disk", triggered=self.save)
 
+        icon = QIcon.fromTheme(QIcon.ThemeIcon.DocumentSend)
+        self._export_dados_act = QAction(icon, "Exportar dados...", self,
+                                 statusTip="Exportar o mapa como dado (CSV ou GraphML) para outra ferramenta",
+                                 triggered=self.export_data)
+
         icon = QIcon.fromTheme(QIcon.ThemeIcon.DocumentSaveAs)
         self._export_act = QAction(icon, "Exportar diagrama...", self,
                                  statusTip="Exportar o diagrama aberto para PDF, PNG ou SVG",
@@ -627,6 +660,7 @@ class MainWindow(QMainWindow):
         self._file_menu.addAction(self._open_act)
         self._file_menu.addAction(self._save_act)
         self._file_menu.addAction(self._export_act)
+        self._file_menu.addAction(self._export_dados_act)
         #self._file_menu.addAction(self._save_as_act)
         self._file_menu.addSeparator()
         self._file_menu.addAction(self._subtypes_act)
