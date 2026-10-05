@@ -441,6 +441,31 @@ antes de "9"); o índice do element vai no `Qt.UserRole` da primeira célula, po
 ordenada o número da linha não é o índice no modelo**; e o `setSortingEnabled` é desligado
 durante o preenchimento, senão as linhas se embaralham enquanto entram.
 
+### Tema e tela de entrada
+
+`app/view/ui/estilo.py` guarda **as cores num lugar só** e aplica o tema por **paleta**, não por
+folha de estilo gigante — assim tudo o que o Qt desenha sozinho (campo, lista, menu, barra)
+acompanha sem ninguém escrever regra, e a folha fica só para o que a paleta não alcança (borda de
+campo, cabeçalho de tabela, aba). É aplicado em `application.py` **antes** de qualquer janela,
+porque o login é a primeira coisa que aparece e não pode abrir claro com o resto escuro.
+`CML_TEMA=sistema` desliga tudo e devolve o tema do desktop.
+
+**O canvas do mapa continua branco de propósito.** Não é esquecimento: o desenho é exportado em
+PDF, PNG e SVG para imprimir e anexar, e mapa com fundo escuro vira mancha de tinta no papel.
+Quem lê na tela tem zoom; o que sai do app tem de sair como documento.
+
+A tela de entrada (`dialog_connect.py`) tem duas colunas: à esquerda o `PainelMarca`, com o
+emblema **desenhado em código** (`estilo.emblema` — uma constelação de entidades e vínculos, que
+é a própria coisa que o programa faz), e à direita o formulário. O emblema não é arquivo: nasce
+na resolução que a tela pedir, segue a cor do tema e não há binário de enfeite para alguém trocar
+por engano; as posições dos nós são fixas, porque emblema que muda a cada abertura parece defeito.
+
+> Dois detalhes que custaram: num `QDialog` **todo botão nasce `autoDefault`**, e o seletor
+> `QPushButton:default` pintava *dois* botões de azul — a tela ficava com duas ações principais e
+> nenhuma; os secundários levam `setAutoDefault(False)`. E a barra de título da subjanela do MDI
+> **não se estiliza**: a regra que funcionaria faz o Qt desenhar a decoração inteira em modo folha
+> de estilo, e somem os botões de minimizar, maximizar e fechar (ver o comentário no `estilo.py`).
+
 ### Shell da interface
 
 O `application.py` executa o `DialogConnect` **antes** de criar a janela principal e encerra a menos que o `Server.status` esteja setado. A janela principal é um `QMdiArea` cujos filhos são instâncias de `MdiMap`; os menus e toolbars são construídos, mas várias ações estão comentadas. Os diálogos ficam em `app/view/`, como `dialog_*.py`, e os widgets reutilizáveis em `app/view/ui/`.

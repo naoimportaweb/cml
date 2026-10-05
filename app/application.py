@@ -873,6 +873,10 @@ if __name__ == '__main__':
     options = argument_parser.parse_args()
 
     app = QApplication(sys.argv)
+    # Tema antes de qualquer janela: a tela de login e a primeira coisa que aparece, e ela nao
+    # pode abrir clara para o resto do aplicativo abrir escuro.
+    from view.ui import estilo;
+    estilo.aplicar(app);
 
     icon_paths = QIcon.themeSearchPaths()
     QIcon.setThemeSearchPaths(icon_paths + [":/qt-project.org/icons"])
