@@ -32,6 +32,40 @@ class OrganizationChart(ConnectObject):
             self.root.recalc( painter );
             self.root.draw( painter );
 
+    def tamanho(self):
+        """Retangulo que o desenho ocupa. O canvas usa para dimensionar a cena; so vale depois
+        de um draw(), que e quem roda o layout."""
+        if self.root == None:
+            return (0, 0, 1, 1);
+        itens = [i for i in self.root.todos() if i.w != None and i.y != None];
+        if len(itens) == 0:
+            return (0, 0, 1, 1);
+        x1 = min(i.x for i in itens); y1 = min(i.y for i in itens);
+        x2 = max(i.x + i.w for i in itens); y2 = max(i.y + i.h for i in itens);
+        return (x1, y1, max(1, x2 - x1), max(1, y2 - y1));
+
+    def removerItem(self, item):
+        """Tira um item do organograma. Os filhos dele sobem de nivel em vez de sumirem junto.
+
+        Remover a RAIZ so e permitido quando ela nao tem filhos: a estrutura tem uma raiz so, e
+        promover um dos filhos a raiz seria escolher por quem esta removendo."""
+        if item == None or self.root == None:
+            return False;
+        if item is self.root:
+            if len(self.root.elements) > 0:
+                raise Exception("A raiz só pode ser removida depois dos itens abaixo dela.");
+            self.root = None;
+            return True;
+        return self.root.remover(item);
+
+    def paiDe(self, item):
+        if self.root == None or item is self.root:
+            return None;
+        for candidato in self.root.todos():
+            if item in candidato.elements:
+                return candidato;
+        return None;
+
     def getLocked(self):
         return False;    
     

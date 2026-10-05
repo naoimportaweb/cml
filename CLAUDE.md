@@ -425,6 +425,40 @@ hiper-aresta, e a caixa do verbo vai para o meio das pontas *depois* que as caix
 e tudo é normalizado para coordenada **positiva** no fim, porque o modelo e o banco nunca
 trabalharam com `x`/`y` negativo. O orgânico tem **semente fixa**: mesmo mapa, mesmo desenho.
 
+### O organograma, reescrito
+
+Era o diagrama mais pobre dos três e foi refeito inteiro em 2026-10-05. O que havia:
+
+- **altura fixa em 25** e `y = nível * 75` — caixa com três nomes transbordava sobre a linha de
+  baixo, e caixa vazia deixava buraco;
+- **posição sem controle de vizinho** — caixas irmãs encostavam ou se sobrepunham;
+- **`Remove` com corpo vazio**, tanto no menu do canvas quanto no diálogo: dava para pendurar
+  entidade e nunca tirar, e dava para pedir "Remove" num item e nada acontecer;
+- **duplo clique desligado** (`mouseDoubleClickEvent` era só um `return`);
+- uma caixa de descrição cujo `textChanged` era `return` — quem escrevesse nela perdia tudo ao
+  fechar, sem aviso;
+- canvas no `QPixmap` fixo de 5000×3000, sem rolagem nem zoom.
+
+O que existe agora: **layout de árvore arrumada** (`organization_chart_item.py`) — mede cada
+caixa pelo conteúdo, posiciona os filhos primeiro e centra o pai sobre eles; o limite do "não
+encoste no vizinho" é **por nível**, e isso não é detalhe: um limite global empurraria todo mundo
+para a direita a cada caixa, e um limite que não acompanha o nível deixa duas irmãs encostando —
+foi exatamente o defeito que apareceu, com 8px de folga onde o combinado eram 28. Cada nível usa
+a **altura do maior item dele**, então caixa de três nomes não invade a linha de baixo.
+
+Os conectores são **cotovelos** (desce do pai, corre na horizontal, desce em cada filho), não
+linhas tortas de centro a centro: é o que faz o desenho ser lido como hierarquia.
+
+**Remover um item faz os filhos subirem**, não desaparecerem junto — apagar um gerente não apaga
+a equipe, e perder meia árvore por um clique não tem volta depois do save. A raiz só sai quando
+não tem filhos: promover um dos filhos a raiz seria escolher por quem está removendo.
+
+O canvas virou `QGraphicsView` como o do mapa de vínculos (rolagem, zoom, arrastar pelo botão do
+meio), e **a posição não se arrasta de propósito**: num organograma o lugar da caixa é
+consequência da hierarquia, não escolha do analista — e, no código antigo, o arrasto mexia num
+`x` que o próximo `redraw` jogava fora de qualquer jeito. Entidade entra **sempre pela busca**
+(`DialogEntityFind`), nunca digitada, porque entidade é global.
+
 ### A List View — o mapa em tabela
 
 O mapa de vínculos tem **duas vistas na mesma janela**: o desenho e uma **tabela**
