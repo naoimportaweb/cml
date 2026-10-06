@@ -822,6 +822,40 @@ lista de métodos permitidos.
 Provado em produção, as duas metades: sem sessão e com token inventado → erro; com sessão válida
 → `Map.search` devolve os 36 mapas e o `Entity.neighborhood` devolve as cinco chaves esperadas.
 
+### 10.0.1 O visualizador web é **público por decisão do dono** (06/10/2026)
+
+Levantado junto com o buraco acima, e resolvido de modo oposto: **isto não é falta de
+autenticação, é a intenção.** Decisão do dono, nesta data, com estas palavras: *"sim, os
+documentos na internet são publicos"*.
+
+Fica registrado para ninguém "consertar" depois — e com o alcance medido, para a decisão ser
+sobre o que ela de fato libera. O `server/webpage/` **não tem sessão nem login**, e por HTTPS, sem
+credencial nenhuma, entrega:
+
+| Rota | O que sai |
+|---|---|
+| `service/relationship_list.php` | todos os mapas: `id`, `name`, `keyword`, **`username` do autor**, datas, contagens |
+| `service/relationship_load.php` | o mapa inteiro: entidades, vínculos, referências, posições e rostos |
+| `service/organizationchart_load.php` | idem, organogramas |
+| `service/timeline_load.php` | idem, timelines |
+| `service/document_list.php` / `document_download.php` | os PDFs de report — **confirmado: HTTP 200, `application/pdf`, 344 KB** |
+| `view/…` | as abas Mapa · Relações · Regional · Documentos · Referências |
+
+Hoje isso são 36 mapas e 7 PDFs no `cyberwarfare`, 10 mapas e nenhum PDF no `corrupcao`.
+
+**O que NÃO é público, e continua fechado:**
+
+- O `data/config.json` (senha do MySQL) — `403`, pelo `.htaccess` do `data/`. Conferido.
+- A **API JSON-RPC** (`services/execute.php`), desde a correção §10.0: o desktop **exige login**.
+  A assimetria é proposital — ler é público, **escrever não**. O web é só leitura por construção
+  (não tem endpoint de gravação), então a porteira do RPC é o que protege o acervo.
+- O `person`/`person_sesion` não é exposto por rota nenhuma do web; o que sai é o `username` como
+  autoria do mapa.
+
+**Consequência para quem escreve mapa:** o `EDITORIAL.md` já manda fonte em referência e descrição
+= quem a entidade é. Com o viewer público, essa regra deixa de ser só estilo — **o que entra num
+mapa é legível por qualquer um com o link**. Nota de pesquisa que não deva sair não deve entrar.
+
 ### 10.1 A senha guardada **era** a credencial ✅ corrigido no código (falta deploy)
 
 `server/services/classlib/session.php` valida com

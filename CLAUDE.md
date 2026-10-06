@@ -310,6 +310,16 @@ ao redor da caixa de origem; persistir é o save do mapa, como sempre. Contrato 
 > timeline **não compara pixel de propósito**: métrica de fonte do Qt e do canvas não batem, e
 > exigir isso seria um teste que falha por motivo errado.
 
+> ⚠️ **O app web é PÚBLICO por decisão do dono (06/10/2026) — não tem login, e isso é
+> intencional.** Não "conserte" adicionando autenticação. Sem credencial nenhuma ele entrega a
+> lista de mapas (com nome, keyword e autor), o conteúdo inteiro de mapa/organograma/timeline e
+> o **download dos PDFs** de report. O que segue fechado: o `data/config.json` (403 pelo
+> `.htaccess`) e a **API JSON-RPC**, que exige sessão desde a correção de 06/10/2026 — ler é
+> público, **gravar não**. O web é só leitura por construção: não tem endpoint de escrita.
+> Alcance medido e tabelado em `SPEC.md` §10.0.1. Consequência prática: o que entra num mapa é
+> legível por qualquer um com o link, então a regra do `EDITORIAL.md` (fonte na referência,
+> descrição = quem a entidade é) deixa de ser estilo e passa a ser contenção.
+
 `server/webpage/` é um app PHP MVC próprio (não JSON-RPC) para **visualizar** mapas e baixar documentos pelo navegador. Entra por `server/webpage/index.php`, que escolhe o domain (reusa `Mysql::domains()` do `data/config.json`) e redireciona para a lista. É servido no caminho `.../cml/webpage/`. Estrutura clássica `controller/`/`model/`/`view/`/`service/`, com os assets em `public/`.
 
 O canvas JS do mapa (`view/relationship/relationship.php`) **desenha os rostos** quando o mapa está com `show_face`: o rosto próprio (`entity_face`) substitui a caixa e o rosto default do subtipo (`sub_etype.face_default`) vira badge (o próprio tem preferência). O modelo (`model/relationship/`) só carrega os base64 quando `show_face` está ligado. As imagens vão como data URI que auto-detecta JPEG/PNG. As **"Relações"** (lista textual) ficam em **aba própria**, separadas do mapa. Abas: Mapa ·
