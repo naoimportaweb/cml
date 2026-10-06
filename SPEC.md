@@ -769,9 +769,20 @@ do próprio `index.php`** (com `node`), e compara caixa a caixa. Ele já se pago
 acusou que o Python trunca (`int()`) e o JS arredondava (`Math.round`), com 1–2px de diferença —
 pouco na tela, e exatamente assim que a duplicação começa a andar para lados diferentes.
 
-**Feito:** lista com os três tipos, organograma (modelo, controller, service, view com o layout
-reimplementado) e o teste comparador. **Falta:** a timeline, e o canvas do mapa alcançar o
-desktop (espessura por referências e data da ponta).
+**Feito:** lista com os três tipos, **organograma** e **timeline** (modelo, controller, service e
+view com o layout reimplementado), mais **dois testes comparadores**:
+
+- `app/test/web_organograma.py` compara o *layout* — mesma árvore, posição caixa a caixa.
+- `app/test/web_timeline.py` compara a *projeção* — quais eventos existem depois da limpeza de
+  data suja, da normalização de período invertido, do dedup por prioridade e da ordenação. Não
+  compara pixel de propósito: a métrica de fonte do Qt e a do canvas nunca vão bater, e exigir
+  isso seria um teste que falha por motivo errado.
+
+Para serem testáveis, a normalização e o dedup do PHP ficaram **públicos e estáticos**: lógica que
+não dá para chamar de fora não dá para vigiar.
+
+**Falta:** o canvas do mapa de vínculos alcançar o desktop (espessura por referências e data da
+ponta na linha, que saíram em 2026-10-05 e ainda não foram espelhadas).
 
 ## 12. Fora de escopo
 
