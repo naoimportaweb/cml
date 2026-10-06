@@ -26,12 +26,21 @@ sys.path.append(os.path.dirname(os.path.dirname(CURRENTDIR)));
 SUBTIPOS_PAIS = ("country", "pais", "país", "countries", "nacao", "nação");
 
 
+def eh_pais_entidade(entidade):
+    """Reconhece um pais a partir da ENTIDADE solta -- a que vem da busca ou do
+    Entity.neighborhood, antes de existir caixa no mapa."""
+    if entidade == None:
+        return False;
+    if entidade.etype == "link":
+        return False;
+    return str(entidade.sub_etype_name or "").strip().lower() in SUBTIPOS_PAIS;
+
+
 def eh_pais(elemento):
-    if elemento == None or elemento.entity == None:
+    """Idem, a partir da CAIXA do mapa."""
+    if elemento == None:
         return False;
-    if elemento.entity.etype == "link":
-        return False;
-    return str(elemento.entity.sub_etype_name or "").strip().lower() in SUBTIPOS_PAIS;
+    return eh_pais_entidade( elemento.entity );
 
 
 def __vinculos__(mapa):

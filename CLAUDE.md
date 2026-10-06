@@ -58,6 +58,20 @@ python3 mcp/teste_cml_transforms.py
 
 Fonte pública oscila: no `testes_osint.py`, falha de rede é **AVISO** e falha de contrato é **ERRO** — só o segundo é defeito nosso.
 
+As suítes de `app/test/` rodam **sem servidor e sem banco** (mapa em memória, Qt fora da tela) e
+imprimem `TODOS OS TESTES PASSARAM` no fim; o código de saída é 1 quando algo falha. Para rodar
+todas (`user.py` é script antigo, fica de fora):
+
+```bash
+for t in app/test/*.py; do [ "$(basename $t)" = user.py ] && continue; \
+  QT_QPA_PLATFORM=offscreen python3 "$t" >/dev/null || echo "FALHOU $t"; done
+```
+
+Duas delas comparam **linguagens**: `web_organograma.py` roda o JS do site com `node` contra o
+Python, e `web_timeline.py` roda o PHP do site contra o Python — é o que impede o site público de
+divergir do desktop em silêncio. O `sql_schema.py` confere as consultas do servidor contra o
+`create.sql`, porque nada do lado PHP roda em teste e tabela errada só se revelaria em produção.
+
 `app/test/user.py` e `app/bot/brazil/wikipedia/test.py` são scripts pontuais do código antigo. Atenção: `app/bot/brazil/wikipedia/test.py` tem um caminho `/home/well/...` fixo no código, que precisa ser editado antes de rodar.
 
 ## Arquitetura
@@ -423,7 +437,7 @@ clonar entidade inteira a cada clique.
 ### Layouts automáticos
 
 `app/classlib/relationship/layouts.py`, os cinco do Maltego (orgânico, hierárquico, circular,
-bloco, ortogonal) mais o **Espalhar**, sem biblioteca externa.
+bloco, ortogonal) mais o **Espalhar**, a **Estrela** e o **Regional**, sem biblioteca externa.
 
 O **Espalhar** é o único com promessa forte: **zero colisão** (contando as caixinhas de verbo) e
 **aresta apontando para baixo**. Como mapa é grafo e grafo tem ciclo, uma busca em profundidade
@@ -462,6 +476,65 @@ botão seria destrutivo, porque joga fora posicionamento manual); o **vínculo n
 hiper-aresta, e a caixa do verbo vai para o meio das pontas *depois* que as caixas acharam lugar;
 e tudo é normalizado para coordenada **positiva** no fim, porque o modelo e o banco nunca
 trabalharam com `x`/`y` negativo. O orgânico tem **semente fixa**: mesmo mapa, mesmo desenho.
+
+O `aplicar` **mede o que falta antes de posicionar** (`layouts.medir`): um mapa montado pelo New a
+partir do banco **nunca foi desenhado**, e todas as caixas têm `w`/`h` em `None`. Como o layout
+calcula raio, folga e colisão pela largura, com a largura de reserva o desenho sai certo na
+primeira olhada e encavalado na segunda — quando a primeira pintura mede os nomes de verdade. A
+medição abre um painter fora da tela e o fecha num `finally` (painter aberto numa exceção derruba
+o processo em segfault e leva o erro de verdade junto).
+
+O **Regional** agrupa por país: a entidade-país no meio e quem se liga **só a ela** em volta, um
+grupo por país numa grade quase quadrada. Quem toca **mais de um** país não entra em grupo nenhum
+— vai para uma faixa embaixo, porque enfiá-la num dos grupos esconderia justamente o que ela tem
+de interessante num mapa regional: ela é a **ponte** entre dois países, não moradora de um. País é
+reconhecido pelo **sub-tipo** (`regional.eh_pais`), não por adivinhação sobre o nome; mapa sem país
+nenhum cai no Espalhar, em vez de fingir grupos.
+
+### Estrela e Regional: documentos que nascem povoados pelo banco
+
+Os três documentos antigos (mapa, organograma, timeline) nascem **vazios**. Estes dois não: o
+**New** oferece *Estrela* e *Regional*, o analista escolhe entidade(s) na **busca**
+(`DialogEntityFind`) e o servidor devolve o que se liga a elas. Painéis em
+`app/view/dialog_diagram_choice.py`.
+
+O resultado é um **`MapRelationship` comum** — salva, reabre, exporta, desfaz, entra na mesma
+lista do Open. **Não houve tabela nova nem migração**: o que muda é de onde vêm as caixas, não o
+que elas são. Um quarto e um quinto tipo de documento custariam duas tabelas, dois `load`, dois
+`save` e dois lugares no `Map.search` para entregar o que o mapa de vínculos já entrega.
+
+- **Estrela** — 1 entidade, `níveis` (1–4) e `teto por nível`; layout `estrela` com ela no centro.
+- **Regional** — N países (lista, com Adicionar/Remover), uma chamada **por país**, respostas
+  juntadas por `entity_id` (dois países trazem a mesma pessoa: é **uma** caixa, não duas) e
+  vínculo repetido deduplicado por `(de, para, verbo)`. Pede os rostos e nasce com `show_face`
+  ligado, porque a **bandeira é o desenho** dele. Entidade sem o sub-tipo `country` é **aviso**,
+  não recusa — mas sem o sub-tipo a vista com bandeiras não a agrupa, e isso é dito na tela.
+
+A fonte é `Entity.neighborhood` (`server/.../Entity/001.php`): busca em largura sobre **duas**
+origens — vínculo desenhado em **qualquer** mapa (`diagram_relationship_link`, `ltype` 1 = de,
+2 = para, as duas pontas no mesmo element de vínculo) e associação global do MISP
+(`entity_simple_association`). Níveis 1–4 e teto 1–300, os dois limitados **no servidor**; traz
+`sub_etype_name` por join (o `SELECT *` de `entity` só tem o `sub_etype_id`, e é pelo nome que o
+Regional reconhece país) e o `entity_face` só quando `rosto=1` — base64 grande é opt-in. **Vínculo
+cuja ponta ficou fora do teto não volta**: meia aresta no cliente viraria ponta solta no mapa.
+Associação do MISP vem **sem verbo** e o cliente escreve `associado a` (em branco pareceria
+cadastro malfeito). As caixas reaproveitam o `entity_id` devolvido — o diagrama **não cria
+entidade**, como manda o `EDITORIAL.md`.
+
+⚠️ **`Entity.neighborhood` é método novo: os dois só funcionam depois do deploy.** Sem ele o painel
+diz "O servidor não respondeu a Entity.neighborhood (falta o deploy?)" em vez de devolver diagrama
+vazio, que pareceria entidade isolada.
+
+Duas armadilhas que este caminho revelou, e que valem para qualquer código novo:
+
+- **`DialogEntityFind.entity` é um objeto `Entity`** (`fromJson` da linha da busca), **não** o
+  dicionário da consulta. Ler `.get("text_label")` dele estoura. Teste que alimenta o campo à mão
+  não pega — o `app/test/diagramas_novos.py` passa pela busca com um `DialogEntityFind` trocado
+  que devolve o mesmo **tipo** que o de verdade devolve.
+- **`Entity.fromJson` montava só os campos de texto.** Datas, rosto, `subtype_face` e sub-tipo
+  eram descartados, contra a regra de que toda ponta de data sobrevive ao load. Agora vêm com
+  `.get()` — nenhuma resposta de servidor traz todos os campos, e o `load` do mapa continua
+  preenchendo o que preenchia.
 
 ### O organograma, reescrito
 

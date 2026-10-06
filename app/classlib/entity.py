@@ -165,6 +165,33 @@ class Entity(ConnectObject):
         return False;
 
     @staticmethod
+    def neighborhood(entity_id, niveis=1, limite=60, rosto=False):
+        """Vizinhanca de uma entidade no banco inteiro, em N niveis.
+
+        E o que alimenta o diagrama de estrela: o analista escolhe uma pessoa/organizacao e o
+        servidor traz o que se liga a ela -- vinculo desenhado em qualquer mapa e associacao
+        global do MISP --, sem depender de nenhum mapa ja existir.
+
+        `rosto=True` pede tambem o entity_face de cada um -- base64 grande, por isso opt-in.
+        Quem pede e o mapa regional, onde a bandeira do pais e o desenho; a estrela nao precisa,
+        porque o load do mapa ja traz os rostos quando show_face esta ligado.
+
+        Devolve (entidades, vinculos, cortados) ou (None, None, mensagem de erro).
+        """
+        obj = ConnectObject();
+        js = obj.__execute__("Entity", "neighborhood",
+                             {"id": entity_id, "niveis": int(niveis), "limite": int(limite),
+                              "rosto": 1 if rosto else 0});
+        if not js.get("status") or js.get("return") == None:
+            # O metodo e novo: servidor sem deploy responde erro, e dizer isso e melhor do que
+            # devolver "nenhum vizinho", que parece entidade isolada.
+            return (None, None, js.get("error") or
+                    "O servidor não respondeu a Entity.neighborhood (falta o deploy?).");
+        retorno = js["return"];
+        return (retorno.get("entidades") or [], retorno.get("vinculos") or [],
+                int(retorno.get("cortados") or 0));
+
+    @staticmethod
     def search(etype, text_label, proxy=False):
         filt = None;
         if etype == "":
@@ -203,6 +230,21 @@ class Entity(ConnectObject):
         buffer.data_extra = js["data_extra"];
         buffer.wikipedia = js["wikipedia"];
         buffer.small_label = js["small_label"];
+        # Datas, rosto e subtipo: com .get(), porque nem toda resposta do servidor os traz (a
+        # busca de entidade manda ent.*, o neighborhood manda tudo). Antes eles eram perdidos
+        # aqui, e quem montasse caixa por este caminho ficava com entidade sem data -- a regra
+        # do CLAUDE.md e que toda ponta de data sobreviva ao load -- e sem subtipo, que e como
+        # o mapa regional reconhece um pais.
+        buffer.start_date = js.get("start_date");
+        buffer.end_date = js.get("end_date");
+        if js.get("format_date") != None:
+            buffer.format_date = js.get("format_date");
+        face = js.get("face");
+        buffer.face = face if (face != None and face != "") else None;
+        subtipo_face = js.get("subtype_face");
+        buffer.subtype_face = subtipo_face if (subtipo_face != None and subtipo_face != "") else None;
+        buffer.sub_etype_id = js.get("sub_etype_id");
+        buffer.sub_etype_name = js.get("sub_etype_name");
         if js.get("references") != None:
             for reference in js["references"]:
                 buffer.addReference(reference["title"], reference["link1"], reference["link2"], reference["link3"], id_=reference["id"], descricao=reference["descricao"],

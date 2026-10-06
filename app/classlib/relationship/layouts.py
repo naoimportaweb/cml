@@ -18,6 +18,7 @@ from classlib.relationship.comandos import Operacao;
 
 LAYOUTS = [("estrela",     "Estrela (um no centro, os demais em anéis)"),
            ("espalhar",    "Espalhar (sem colisão, de cima para baixo)"),
+           ("regional",    "Regional (um grupo por país)"),
            ("organico",    "Orgânico"),
            ("hierarquico", "Hierárquico"),
            ("circular",    "Circular"),
@@ -37,6 +38,7 @@ RAIO_ESTRELA = 260; # distancia do centro ate o primeiro anel
 # que foi o que o dono viu no mapa real.
 ESPACO_RAMO = 180;  # folga horizontal entre caixas vizinhas da mesma camada
 ESPACO_VERBO = 170;  # folga entre camadas no "espalhar": tem de caber a caixinha do verbo
+GRUPO_FOLGA = 220; # respiro entre dois grupos de pais no layout regional
 SEMENTE = 20261005; # posicao inicial do organico e sorteada: semente fixa = resultado repetivel
 GRAVIDADE = 6.0;    # divisor da gravidade do organico (ver comentario em __organico__)
 
@@ -633,7 +635,113 @@ def __prateleira__(correnteza, soltas):
             x = base_x; y = y + altura_linha + 30; na_linha = 0; altura_linha = 0;
 
 
-ALGORITMOS = {"estrela": __estrela__, "espalhar": __espalhar__, "organico": __organico__, "hierarquico": __hierarquico__, "circular": __circular__,
+def __raio_do_grupo__(pais, membros):
+    """Raio do anel de um pais. Cresce ate caber o perimetro de quem esta nele: com raio fixo,
+    um pais muito citado vira uma fileira de caixas encavaladas -- a circunferencia nao
+    acompanha a quantidade de vizinhos sozinha (mesma razao do anel da estrela)."""
+    minimo = (pais.w or 100) / 2.0 + 140;
+    if len(membros) == 0:
+        return minimo;
+    perimetro = sum((c.w or 100) + ESPACO_X for c in membros);
+    return max(minimo, perimetro / (2 * math.pi));
+
+
+def __faixa__(fila, base_x, base_y, largura_util):
+    """Poe `fila` em linhas da esquerda para a direita dentro de `largura_util` e devolve o y
+    de baixo. Usado para as caixas que nao couberam num grupo de pais."""
+    x, y, alta, maior_y = base_x, base_y, 0, base_y;
+    for caixa in fila:
+        if x > base_x and x + (caixa.w or 100) > base_x + largura_util:
+            x = base_x; y = y + alta + 60; alta = 0;
+        caixa.setX(int(x)); caixa.setY(int(y));
+        x = x + (caixa.w or 100) + ESPACO_RAMO;
+        alta = max(alta, caixa.h or 20);
+        maior_y = max(maior_y, y + (caixa.h or 20));
+    return maior_y;
+
+
+def __regional__(mapa, lista):
+    """Um grupo por pais: a entidade-pais no meio e quem se liga SO a ela em volta.
+
+    E o layout do Mapa Regional (SPEC.md §5). NAO e projecao geografica -- o banco nao guarda
+    coordenada nenhuma, e o motivo esta por extenso em classlib/relationship/regional.py. O que
+    ele responde e "que paises esta investigacao toca, e com quem em cada um", agrupando o que
+    existe em vez de inventar onde no globo cada coisa fica.
+
+    Quem toca MAIS DE UM pais nao vai para grupo nenhum: vai para uma faixa propria embaixo.
+    Enfia-la num dos grupos esconderia justamente o que ela tem de mais interessante num mapa
+    regional -- ela e a ponte entre dois paises, e nao moradora de um."""
+    from classlib.relationship import regional as paises_;
+    paises = [c for c in lista if paises_.eh_pais(c)];
+    if len(paises) == 0:
+        # Mapa sem pais nenhum: nao ha o que agrupar. Espalhar e dizer a verdade -- fingir
+        # grupos daria um desenho com cara de regional e sem nenhuma regiao dentro.
+        __espalhar__(mapa, lista);
+        return;
+
+    toca = {};
+    for a, b in arestas(mapa):
+        for um, outro in ((a, b), (b, a)):
+            if paises_.eh_pais(outro) and not paises_.eh_pais(um):
+                toca.setdefault(um, set()).add(outro);
+
+    exclusivas = {p: [] for p in paises};
+    pontes, soltas = [], [];
+    for caixa in lista:
+        if paises_.eh_pais(caixa):
+            continue;
+        grupo = toca.get(caixa, set());
+        if len(grupo) == 1:
+            exclusivas[list(grupo)[0]].append(caixa);
+        elif len(grupo) > 1:
+            pontes.append(caixa);
+        else:
+            soltas.append(caixa);
+
+    # Pais mais tocado primeiro, da esquerda para a direita -- a mesma ordem da tabela do
+    # resumo, para os dois jeitos de ver o mesmo mapa nao discordarem.
+    paises.sort(key=lambda p: (-len(exclusivas[p]), (p.entity.text or "").lower()));
+    for p in paises:
+        exclusivas[p].sort(key=lambda c: (-grau(mapa, c), (c.entity.text or "").lower()));
+
+    # Grade quase quadrada: uma fileira unica de dez paises daria um desenho de vinte mil px
+    # de largura e nenhuma altura.
+    por_linha = max(1, int(math.sqrt(len(paises)) + 0.5));
+    medidas = [];
+    for pais in paises:
+        membros = exclusivas[pais];
+        raio = __raio_do_grupo__(pais, membros);
+        meia_w = max([(c.w or 100) / 2.0 for c in membros] + [(pais.w or 100) / 2.0]);
+        meia_h = max([(c.h or 20) / 2.0 for c in membros] + [(pais.h or 20) / 2.0]);
+        medidas.append((pais, membros, raio, 2 * (raio + meia_w), 2 * (raio + meia_h)));
+
+    x, y, na_linha, altura_linha, direita = 0.0, 0.0, 0, 0.0, 0.0;
+    for pais, membros, raio, largura, altura in medidas:
+        if na_linha >= por_linha:
+            x = 0.0; y = y + altura_linha + GRUPO_FOLGA; na_linha = 0; altura_linha = 0.0;
+        cx, cy = x + largura / 2.0, y + altura / 2.0;
+        pais.setX(int(cx - (pais.w or 0) / 2.0));
+        pais.setY(int(cy - (pais.h or 0) / 2.0));
+        for i in range(len(membros)):
+            angulo = -math.pi / 2 + (2 * math.pi * i) / len(membros);
+            caixa = membros[i];
+            caixa.setX(int(cx + math.cos(angulo) * raio - (caixa.w or 0) / 2.0));
+            caixa.setY(int(cy + math.sin(angulo) * raio - (caixa.h or 0) / 2.0));
+        x = x + largura + GRUPO_FOLGA;
+        direita = max(direita, x - GRUPO_FOLGA);
+        altura_linha = max(altura_linha, altura);
+        na_linha = na_linha + 1;
+
+    fundo = y + altura_linha;
+    largura_util = max(direita, 600.0);
+    if len(pontes) > 0:
+        pontes.sort(key=lambda c: (-len(toca.get(c, set())), -grau(mapa, c), (c.entity.text or "").lower()));
+        fundo = __faixa__(pontes, 0.0, fundo + GRUPO_FOLGA, largura_util);
+    if len(soltas) > 0:
+        __faixa__(soltas, 0.0, fundo + GRUPO_FOLGA, largura_util);
+
+
+ALGORITMOS = {"estrela": __estrela__, "espalhar": __espalhar__, "regional": __regional__, "organico": __organico__, "hierarquico": __hierarquico__, "circular": __circular__,
               "bloco": __bloco__, "ortogonal": __ortogonal__};
 
 
@@ -642,6 +750,33 @@ def rotulo(nome):
         if chave == nome:
             return texto;
     return nome;
+
+
+def medir(mapa):
+    """Mede w/h de cada caixa num painter fora da tela, e devolve quantas mediu.
+
+    Existe porque o layout calcula raio, folga e colisao pela LARGURA das caixas, e um mapa
+    recem-montado (o que a Estrela e o Regional criam a partir do banco) nunca foi desenhado --
+    todas as caixas tem w/h em None, e o algoritmo usa o 100 de reserva para todas. O desenho
+    sai certo na primeira olhada e encavalado na segunda, quando a primeira pintura mede os
+    nomes de verdade. Mapa que ja foi desenhado nao e remedido.
+
+    O painter e fechado num `finally`: erro de medicao com painter aberto derruba o processo em
+    segfault, e a mensagem de verdade se perde junto."""
+    from PySide6.QtGui import QPainter, QPixmap;
+    pendentes = [e for e in mapa.elements if not e.w or not e.h];
+    if len(pendentes) == 0:
+        return 0;
+    pixmap = QPixmap(1, 1);
+    painter = QPainter();
+    if not painter.begin(pixmap):
+        return 0;
+    try:
+        for elemento in pendentes:
+            elemento.recalc(painter);
+    finally:
+        painter.end();
+    return len(pendentes);
 
 
 def aplicar(mapa, nome, centro=None, niveis=None):
@@ -657,6 +792,7 @@ def aplicar(mapa, nome, centro=None, niveis=None):
     lista = caixas(mapa);
     if len(lista) == 0:
         return 0;
+    medir(mapa);   # mapa nunca desenhado tem w/h em None, e o layout mede folga pela largura
     with Operacao(mapa, "Layout " + rotulo(nome)):
         if nome == "estrela":
             __estrela__(mapa, lista, centro=centro, niveis=niveis);
@@ -664,7 +800,7 @@ def aplicar(mapa, nome, centro=None, niveis=None):
             ALGORITMOS[nome](mapa, lista);
         __normalizar__(lista);
         __centralizar_vinculos__(mapa);
-        if nome in ("espalhar", "estrela"):
+        if nome in ("espalhar", "estrela", "regional"):
             # Os dois prometem ausencia de colisao. Faz sentido justamente neles porque nenhum
             # dos dois DECIDE onde o verbo fica -- o espalhar posiciona por camada e a estrela
             # por anel, e a caixa do verbo e consequencia. Nos outros layouts, mexer no verbo

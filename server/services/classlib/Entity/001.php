@@ -131,6 +131,124 @@ class Entity
         return $elements;
     }
 
+    // Vizinhanca de uma entidade no banco INTEIRO, em N niveis. E o que alimenta o diagrama
+    // de estrela: o analista escolhe uma pessoa/organizacao e o servidor traz o que se liga a
+    // ela, sem depender de nenhum mapa ja existir.
+    //
+    // DUAS origens de ligacao, e so duas: o vinculo desenhado em qualquer mapa e a associacao
+    // global (entity_simple_association, que vem do MISP). Co-ocorrencia de classificacao ou
+    // de referencia NAO entra -- "duas pessoas sao diretoras" nao e uma ligacao entre elas, e
+    // despejaria centenas de entidades sem relacao nenhuma.
+    //
+    // TETO OBRIGATORIO por nivel. Sem ele, o nivel 2 de uma entidade movimentada traz meio
+    // banco e o cliente monta um mapa que ninguem le -- e a consulta ainda demora. Quando o
+    // teto corta, o retorno diz quanto ficou de fora, para a tela poder avisar em vez de
+    // mentir por omissao.
+    public function neighborhood( $ip, $user, $post_data, $domain ) {
+        $mysql = new Mysql( $domain );
+        $id      = isset($post_data["parameters"]["id"]) ? $post_data["parameters"]["id"] : "";
+        $niveis  = intval( isset($post_data["parameters"]["niveis"]) ? $post_data["parameters"]["niveis"] : 1 );
+        $limite  = intval( isset($post_data["parameters"]["limite"]) ? $post_data["parameters"]["limite"] : 60 );
+        // Rosto e opt-in: sao base64 grandes, e quem monta estrela nao precisa deles (o load do
+        // mapa ja os traz quando show_face esta ligado). O mapa regional pede, porque a
+        // bandeira do pais E o desenho dele.
+        $rosto   = isset($post_data["parameters"]["rosto"]) && $post_data["parameters"]["rosto"];
+        if( $id === "" ){
+            throw new Exception("Informe a entidade de origem.");
+        }
+        if( $niveis < 1 ){ $niveis = 1; }
+        if( $niveis > 4 ){ $niveis = 4; }    // acima disso o grafo vira o banco inteiro
+        if( $limite < 1 ){ $limite = 1; }
+        if( $limite > 300 ){ $limite = 300; }
+
+        $vistos   = array( $id => 0 );       // entity_id => nivel
+        $fronteira = array( $id );
+        $vinculos = [];
+        $cortados = 0;
+
+        for( $nivel = 1; $nivel <= $niveis && count($fronteira) > 0; $nivel++ ){
+            $marcadores = implode(",", array_fill(0, count($fronteira), "?"));
+
+            // 1) vinculo desenhado em mapa. A ponta "de" tem ltype 1 e a "para" ltype 2, as
+            //    duas penduradas no MESMO element de vinculo
+            //    (diagram_relationship_element_id_reference). O rotulo e o texto desse element.
+            $sql = "SELECT DISTINCT de.entity_id AS de_id, para.entity_id AS para_id,
+                           ent_link.text_label  AS verbo
+                      FROM diagram_relationship_link AS l1
+                      INNER JOIN diagram_relationship_element AS de   ON de.id   = l1.diagram_relationship_element_id
+                      INNER JOIN diagram_relationship_link    AS l2
+                              ON l2.diagram_relationship_element_id_reference = l1.diagram_relationship_element_id_reference
+                             AND l2.ltype = 2
+                      INNER JOIN diagram_relationship_element AS para ON para.id = l2.diagram_relationship_element_id
+                      INNER JOIN diagram_relationship_element AS elink
+                              ON elink.id = l1.diagram_relationship_element_id_reference
+                      LEFT  JOIN entity AS ent_link ON ent_link.id = elink.entity_id
+                     WHERE l1.ltype = 1
+                       AND ( de.entity_id IN ($marcadores) OR para.entity_id IN ($marcadores) )
+                     LIMIT " . ($limite * 4);
+            $achados = $mysql->DataTable( $sql, array_merge($fronteira, $fronteira) );
+
+            // 2) associacao global (MISP), que nao passa por mapa nenhum
+            $sql2 = "SELECT DISTINCT a.entity_from_id AS de_id, a.entity_to_id AS para_id,
+                            '' AS verbo
+                       FROM entity_simple_association AS a
+                      WHERE a.entity_from_id IN ($marcadores) OR a.entity_to_id IN ($marcadores)
+                      LIMIT " . ($limite * 4);
+            $achados = array_merge( $achados, $mysql->DataTable( $sql2, array_merge($fronteira, $fronteira) ) );
+
+            $proxima = [];
+            foreach( $achados as $linha ){
+                if( $linha["de_id"] === null || $linha["para_id"] === null ){ continue; }
+                if( $linha["de_id"] === $linha["para_id"] ){ continue; }
+                array_push( $vinculos, array( "de" => $linha["de_id"], "para" => $linha["para_id"],
+                                              "verbo" => (string)$linha["verbo"] ) );
+                foreach( array($linha["de_id"], $linha["para_id"]) as $vizinho ){
+                    if( isset($vistos[$vizinho]) ){ continue; }
+                    if( count($proxima) >= $limite ){ $cortados = $cortados + 1; continue; }
+                    $vistos[$vizinho] = $nivel;
+                    array_push( $proxima, $vizinho );
+                }
+            }
+            $fronteira = $proxima;
+        }
+
+        // As entidades, de uma vez: uma consulta por entidade seria o N+1 de sempre.
+        $ids = array_keys( $vistos );
+        $marcadores = implode(",", array_fill(0, count($ids), "?"));
+        // O nome do subtipo vem junto: e por ele que o mapa regional reconhece um pais, e
+        // SELECT * em entity traz so o sub_etype_id.
+        $entidades = $mysql->DataTable(
+            "SELECT ent.*, subt.name AS sub_etype_name, subt.face_default AS subtype_face
+               FROM entity AS ent
+               LEFT JOIN sub_etype AS subt ON subt.id = ent.sub_etype_id
+              WHERE ent.id IN ($marcadores)", $ids);
+        $rostos = [];
+        if( $rosto ){
+            // Uma consulta para todos, nao uma por entidade: o N+1 aqui seria em cima de
+            // LONGTEXT.
+            $linhas = $mysql->DataTable("SELECT entity_id, png_base64 FROM entity_face WHERE entity_id IN ($marcadores)", $ids);
+            foreach( $linhas as $linha ){
+                $rostos[ $linha["entity_id"] ] = $linha["png_base64"];
+            }
+        }
+        for( $i = 0; $i < count($entidades); $i++ ){
+            $entidades[$i] = Entity::appendData( $entidades[$i], $domain );
+            $entidades[$i]["nivel"] = $vistos[ $entidades[$i]["id"] ];
+            $entidades[$i]["face"]  = isset($rostos[ $entidades[$i]["id"] ]) ? $rostos[ $entidades[$i]["id"] ] : null;
+        }
+
+        // Vinculo cuja ponta ficou de fora do teto nao volta: meia aresta no cliente viraria
+        // ponta solta no mapa.
+        $completos = [];
+        foreach( $vinculos as $v ){
+            if( isset($vistos[$v["de"]]) && isset($vistos[$v["para"]]) ){
+                array_push( $completos, $v );
+            }
+        }
+        return array( "centro" => $id, "niveis" => $niveis, "cortados" => $cortados,
+                      "entidades" => $entidades, "vinculos" => $completos );
+    }
+
     public function duplicate( $ip, $user, $post_data, $domain ) {
         $mysql = new Mysql( $domain );
         $sql = "SELECT ent.* from entity as ent WHERE ent.etype = ? and ent.id <> ? and ent.text_label = ?  ";

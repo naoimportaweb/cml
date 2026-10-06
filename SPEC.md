@@ -326,7 +326,8 @@ divergem calados.
   entra como **um** passo de desfazer: a posição manual do analista é dado, não enfeite, e sem
   isso o botão seria destrutivo. Mora no modelo, como o layout da timeline. O **vínculo não
   participa**: a caixa do verbo vai para o meio das pontas depois que as caixas acharam lugar.
-- ✅ **Estrela** (feito em 2026-10-06, pedido do dono): um nó no centro e os demais em **anéis**
+- ✅ **Estrela** (feito em 2026-10-06, pedido do dono; virou também **documento do New** no
+  mesmo dia — §4.8): um nó no centro e os demais em **anéis**
   por distância em saltos, com o número de anéis escolhido na hora. O centro é a caixa
   selecionada, ou a de maior grau quando não há seleção — a estrela existe para responder "o que
   gira em volta *disto*", e com o centro errado o desenho não diz nada. Três decisões que a
@@ -453,17 +454,21 @@ vínculo de todo mapa, mais classificações e referências compartilhadas — e
 tela que o mostre**. Esta fase é a de maior retorno por linha escrita, é toda em base própria
 (sem rede, sem IA, **sem rolhama**) e é o que o usuário de Obsidian reconhece na hora.
 
-### 4.1 `Entity.neighborhood` no servidor
+### 4.1 `Entity.neighborhood` no servidor ✅ implementado em 2026-10-06 (falta deploy)
 
-Método novo: vizinhança de profundidade N de uma entidade, de **quatro origens**, cada aresta
-dizendo de qual veio:
+Vizinhança de profundidade N de uma entidade. **Implementado com duas das quatro origens** — as
+duas que são vínculo de fato. "Mesma classificação" e "mesma referência" ficaram de fora de
+propósito: elas são *semelhança*, não ligação, e num banco semeado com 7.900 entidades do MISP
+qualquer entidade compartilha classificação com centenas de outras — a vizinhança viraria ruído e
+o teto cortaria justamente as arestas que importam. Entram quando houver como dizer na aresta de
+qual origem ela veio e filtrar por isso (§4.2).
 
-| Origem | De onde |
-|---|---|
-| Associação global | `entity_simple_association` (hoje sem UI) |
-| Vínculo em mapa | `diagram_relationship_link` + elements de qualquer mapa |
-| Mesma classificação | `entity_classification_item` |
-| Mesma referência | `diagram_relationship_element_reference` |
+| Origem | De onde | |
+|---|---|---|
+| Associação global | `entity_simple_association` (hoje sem UI) | ✅ |
+| Vínculo em mapa | `diagram_relationship_link` + elements de qualquer mapa | ✅ |
+| Mesma classificação | `entity_classification_item` | adiada |
+| Mesma referência | `diagram_relationship_element_reference` | adiada |
 
 **Com teto, sempre** (lição do Siren): `limite_por_nivel` e `limite_total`, e quando corta,
 devolve os **top-N por grau** mais o aviso de quantos ficaram de fora. Expansão sem teto num
@@ -523,14 +528,79 @@ Depende da **seleção em massa** (§3.4), por isso vive aqui e não na fase dos
 - **Machines**: sequência de transforms em JSON, com profundidade e limite por passo. Sem limite,
   uma machine explode o mapa — o teto é parte do contrato, não opção.
 
+### 4.8 Estrela e Regional saem do **New** (feito em 2026-10-06, pedido do dono)
+
+Os dois nasceram como *layout* e *vista* de um mapa que já existia. O dono pediu o contrário:
+**"new e criar"** — *"eu vou colocar 1 pessoa/organização (vou procurar no search), e ele vai no
+banco de dados e vai fazer em 1 nível (x regulável) ligados a ele."* É o primeiro caminho do
+sistema em que um documento **nasce povoado pelo banco**, e não vazio.
+
+Os dois painéis estão em `view/dialog_diagram_choice.py`, ao lado dos três que já havia:
+
+| | Escolhe | Traz | Desenha com |
+|---|---|---|---|
+| **Estrela** | 1 entidade (busca) | `Entity.neighborhood(id, níveis, teto)` | layout `estrela`, centro = a escolhida |
+| **Regional** | N países (busca) | uma chamada por país, `rosto=True` | layout `regional`, um grupo por país |
+
+**O resultado é um `MapRelationship` comum** — salva, reabre, exporta, desfaz e se edita como
+qualquer mapa, e aparece na mesma lista do Open. **Não houve tabela nova nem migração**: o que
+muda é de onde vêm as caixas, não o que elas são. Um quarto e um quinto tipo de documento
+custariam duas tabelas, dois `load`, dois `save` e dois lugares no `Map.search` para entregar o
+que o mapa de vínculos já entrega.
+
+Decisões que o caminho impôs:
+
+- **Entidade existente, id existente.** As caixas reaproveitam o `entity_id` que o servidor
+  devolveu (regra de ouro do `EDITORIAL.md`: buscar antes de criar). O diagrama não cria entidade.
+- **Vínculo com ponta cortada pelo teto não entra.** Meia aresta no cliente viraria ponta solta
+  no mapa; quem foi cortado vira o aviso "o teto cortou N entidade(s)".
+- **Associação global (MISP) vem sem verbo** e recebe `associado a`. Deixar em branco faria o
+  vínculo parecer cadastro malfeito; inventar verbo seria pior.
+- **No Regional, o mesmo id é uma caixa só.** Dois países trazem a mesma pessoa, e a resposta é
+  juntada por `entity_id` — duas caixas iguais seriam duas pessoas. O vínculo repetido entre as
+  duas respostas também é deduplicado por `(de, para, verbo)`.
+- **Quem toca mais de um país não entra em grupo nenhum**: vai para uma faixa própria embaixo.
+  Enfiá-la num dos grupos esconderia justamente o que ela tem de interessante num mapa regional —
+  ela é a ponte entre dois países, não moradora de um.
+- **O rosto é opt-in no servidor** (`rosto` em `Entity.neighborhood`): são base64 grandes. A
+  Estrela não pede (o load do mapa já traz rosto quando `show_face` está ligado); o Regional
+  pede, porque a bandeira **é** o desenho dele — e por isso o mapa regional nasce com `show_face`
+  ligado.
+- **Medir antes de posicionar** (`layouts.medir`): mapa recém-montado **nunca foi desenhado**, e
+  todas as caixas têm `w`/`h` em `None`. O layout calcula raio, folga e colisão pela largura, e
+  com a largura de reserva o desenho sai certo na primeira olhada e encavalado na segunda, quando
+  a primeira pintura mede os nomes de verdade. O `aplicar` agora mede o que falta antes de
+  posicionar — vale para todos os layouts, não só para estes dois.
+- **Entidade sem o sub-tipo `country` é aviso, não recusa.** Quem cadastrou à mão antes do
+  `country_seed.py` pode ter usado outra grafia, e o dono sabe o que tem no banco dele. Mas sem o
+  sub-tipo a vista com bandeiras não a agrupa, e isso tem de ser dito na tela.
+
+**Dois defeitos que este caminho revelou**, nenhum dos dois do código novo:
+
+1. `DialogEntityFind.entity` é um **objeto `Entity`** (`fromJson` da linha), não o dicionário da
+   consulta — e o painel da Estrela lia `.get("text_label")` dele. Teste que alimentava o campo à
+   mão passava; o `app/test/diagramas_novos.py` agora **passa pela busca**, com um
+   `DialogEntityFind` trocado que devolve o mesmo tipo que o de verdade devolve.
+2. `Entity.fromJson` deixava cair **datas, rosto e sub-tipo** — ele só montava os campos de
+   texto. Quem montasse caixa por aquele caminho ficava com entidade sem data (contra a regra de
+   que toda ponta de data sobrevive ao load) e sem sub-tipo, que é como o Regional reconhece um
+   país. Corrigido no único lugar que monta entidade a partir de JSON, com `.get()` — nenhuma
+   resposta de servidor traz todos os campos, e o `load` do mapa continua preenchendo o que
+   preenchia.
+
+⚠️ **Os dois dependem de deploy**: `Entity.neighborhood` é método novo. Sem ele o painel diz
+*"O servidor não respondeu a Entity.neighborhood (falta o deploy?)"* em vez de devolver um
+diagrama vazio, que pareceria entidade isolada.
+
 ## 5. Fase 4 — Painel do investigador (o que se tira do Siren)
 
 1. **Dashboard junto do grafo** (não em outra tela): contagem por `etype`, por classificação, por
    década, top entidades por grau, referências agrupadas por domínio de origem. Clicar na barra
    **seleciona no mapa**.
 2. ✅ **Mapa regional** (feito em 2026-10-06, pedido do dono) — `classlib/relationship/regional.py`
-   + `view/ui/mapa_regional.py`, botão **Regional**. Terceira vista do mesmo documento, ao lado
-   do desenho e da List View: agrupa pelas entidades-país presentes no mapa, conta quantas caixas
+   + `view/ui/mapa_regional.py`, botão **Regional**, mais o layout `regional` (um grupo por país)
+   e o painel do **New** que monta o mapa a partir dos países escolhidos (§4.8). Como vista, é a
+   terceira do mesmo documento, ao lado do desenho e da List View: agrupa pelas entidades-país presentes no mapa, conta quantas caixas
    **distintas** tocam cada uma (não quantos vínculos — duas pessoas ligadas por três vínculos
    cada são duas, não seis) e desenha com a **bandeira** que o `country_seed.py` grava em
    `entity_face`.
