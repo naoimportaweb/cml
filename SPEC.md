@@ -669,7 +669,54 @@ aplicar em círculo com dedup, gerente em thread, cache/log locais, transforms `
 8. `scraping.links_externos` de ponta a ponta com o `craudiowebot --servir`.
 9. Fases 4 e 5 (§5, §6).
 
-## 10. Fora de escopo
+## 10. Segurança: o que está em aberto (achado em 2026-10-05)
+
+Levantado ao conferir o que o repositório **público** `naoimportaweb/cml` expõe. Não há dado de
+investigação no repo (os mapas vivem no MySQL), nem `.env`, chave privada ou certificado em
+commit algum, e o `server/data/config.json` versionado traz só placeholder. O que há:
+
+### 10.1 A senha guardada **é** a credencial ⚠️ prioritário
+
+`server/services/classlib/session.php` valida com
+`select * from person where username=? and password=?` — o valor recebido é comparado **direto
+com a coluna**, sem hash no servidor. Logo quem conhece o conteúdo da coluna entra, sem precisar
+quebrar nada. E `server/data/create.sql` **publica** esse valor para o usuário semeado, com salt
+`1111`.
+
+Conferido: a sessão de produção do domain `corrupcao` envia um valor diferente do semeado, então
+lá a senha já foi trocada. Mas **cada domain é um banco próprio** — qualquer instalação feita a
+partir do `create.sql` que não tenha trocado a senha tem a entrada publicada.
+
+**O conserto de raiz, sem o cliente mudar nada:** o servidor passa a guardar `password_hash()` do
+que recebe e a validar com `password_verify()`. A migração é **calculável a partir da própria
+coluna** — como o guardado é exatamente o que o cliente envia, basta reescrever cada linha com o
+bcrypt dela mesma, uma vez. Nenhum cliente precisa ser atualizado e nenhuma senha precisa ser
+redefinida; o hash do `create.sql` deixa de ser aceito como entrada. Exige **deploy** e **bloco de
+migração** (§3.5).
+
+### 10.2 Não existe tela de alterar senha
+
+Nem no cliente (`user.py` tem só `publickey`, `register`, `login`) nem no servidor (`session.php`
+não tem o método). Hoje a troca só acontece por SQL direto no banco. Falta um
+`User.change_password` com a assinatura de 4 argumentos (o `$user` já vem resolvido pelo token) e
+um diálogo, **exigindo a senha atual** — senão uma sessão sequestrada tranca o dono para fora —,
+aproveitando para girar o salt.
+
+### 10.3 O app imprime o token de sessão no stdout
+
+`application.py` e o caminho RPC imprimem os envelopes inteiros, inclusive o **token de sessão** e
+o valor de senha transmitido. Quem rodar o cliente redirecionando a saída grava isso em disco em
+texto puro. Deve ficar atrás de uma variável de depuração, ou sair.
+
+### 10.4 `EDITORIAL.md` usa nomes reais como exemplo
+
+Figuras e casos públicos, e um exemplo no formato de vínculo que tem cara de ter saído de um mapa
+de verdade. É guia de estilo, não registro de investigação — mas num repositório **público**
+associa o autor a afirmações sobre pessoas nomeadas. Decisão do dono: trocar por nomes fictícios,
+ou tornar o repositório privado (o que também alinharia com a lei "repositório nasce privado" do
+`workspace/CLAUDE.md`).
+
+## 11. Fora de escopo
 
 Hub/loja de transforms de terceiros; execução de transform no servidor (descartada na decisão 3);
 qualquer coleta que contorne autenticação ou termos de uso de uma fonte.
