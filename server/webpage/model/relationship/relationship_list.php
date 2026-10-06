@@ -5,6 +5,8 @@ require_once dirname(dirname(dirname(__DIR__))) . "/api/mysql.php";
 class RelationshipList{
     private $domain = null;
     private $mapas = [];
+    private $organogramas = [];
+    private $timelines = [];
 
     function __construct($domain) {
         $this->domain = $domain;
@@ -35,6 +37,41 @@ class RelationshipList{
                  ORDER BY dr.name";
         // LEFT JOIN e nao INNER: um mapa cujo autor sumiu ainda deve aparecer na lista.
         $this->mapas = $mysql->DataTable( $sql, [] );
+
+        // Organogramas. LEFT JOIN em person e em entity: organograma cujo autor sumiu, ou cuja
+        // organizacao foi apagada, ainda deve aparecer -- some-lo da lista esconderia trabalho
+        // feito. (O Map/001.php do desktop usa INNER e por isso some com eles.)
+        $this->organogramas = $mysql->DataTable(
+            "SELECT oc.id                AS id,
+                    oc.text_label        AS name,
+                    oc.creation_time     AS creation_time,
+                    oc.modification_time AS modification_time,
+                    pe.username          AS username,
+                    ent.text_label       AS organizacao,
+                    ( SELECT COUNT(*) FROM organization_chart_item AS oci
+                       WHERE oci.organization_chart_id = oc.id ) AS itens
+               FROM organization_chart AS oc
+               LEFT JOIN person AS pe  ON pe.id  = oc.person_id
+               LEFT JOIN entity AS ent ON ent.id = oc.organization_id
+              ORDER BY oc.text_label", [] );
+
+        // Timelines. O mapa de origem e OPCIONAL (timeline solta), por isso LEFT JOIN nele.
+        $this->timelines = $mysql->DataTable(
+            "SELECT dt.id                AS id,
+                    dt.text_label        AS name,
+                    dt.keyword           AS keyword,
+                    dt.creation_time     AS creation_time,
+                    dt.modification_time AS modification_time,
+                    pe.username          AS username,
+                    dt.diagram_relationship_id AS diagram_relationship_id,
+                    dr.name              AS mapa_origem,
+                    ( SELECT COUNT(*) FROM diagram_timeline_event AS dte
+                       WHERE dte.diagram_timeline_id = dt.id ) AS eventos
+               FROM diagram_timeline AS dt
+               LEFT JOIN person AS pe ON pe.id = dt.person_id
+               LEFT JOIN diagram_relationship AS dr ON dr.id = dt.diagram_relationship_id
+              ORDER BY dt.text_label", [] );
+
         return count( $this->mapas );
     }
 
@@ -52,7 +89,42 @@ class RelationshipList{
                 "referencias"       => intval( $m["referencias"] )
             ) );
         }
-        return array( "mapas" => $saida, "total" => count( $saida ) );
+        $orgs = [];
+        foreach( $this->organogramas as $o ){
+            array_push( $orgs, array(
+                "id"                => $o["id"],
+                "name"              => $o["name"],
+                "organizacao"       => $o["organizacao"],
+                "username"          => $o["username"],
+                "creation_time"     => $o["creation_time"],
+                "modification_time" => $o["modification_time"],
+                "itens"             => intval( $o["itens"] )
+            ) );
+        }
+        $tls = [];
+        foreach( $this->timelines as $t ){
+            array_push( $tls, array(
+                "id"                => $t["id"],
+                "name"              => $t["name"],
+                "keyword"           => $t["keyword"],
+                "mapa_origem"       => $t["mapa_origem"],
+                "diagram_relationship_id" => $t["diagram_relationship_id"],
+                "username"          => $t["username"],
+                "creation_time"     => $t["creation_time"],
+                "modification_time" => $t["modification_time"],
+                "eventos"           => intval( $t["eventos"] )
+            ) );
+        }
+        return array( "mapas" => $saida, "organogramas" => $orgs, "timelines" => $tls,
+                      "total" => count( $saida ) + count( $orgs ) + count( $tls ) );
+    }
+
+    public function getOrganogramas(){
+        return $this->organogramas;
+    }
+
+    public function getTimelines(){
+        return $this->timelines;
     }
 
     public function getMapas(){

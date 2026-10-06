@@ -738,7 +738,42 @@ alinharia com a lei "repositório nasce privado" do `workspace/CLAUDE.md`.
 3. **Trocar a senha** do usuário semeado onde ela ainda for a do `create.sql` antigo.
 4. Decidir sobre tornar o repositório **privado**.
 
-## 11. Fora de escopo
+## 11. Os três diagramas no site público (decisão de 2026-10-06)
+
+O `server/webpage/` mostrava **só o mapa de vínculos**, num canvas JS que reimplementa as regras
+de desenho à mão. O dono pediu os três.
+
+**O que decide o caminho é onde mora o layout de cada diagrama:**
+
+| Diagrama | Geometria |
+|---|---|
+| Mapa de vínculos | `x`/`y` **gravados no banco** — a web já tem |
+| Organograma | calculado no cliente (árvore arrumada); só o `x` é gravado |
+| Timeline | calculada inteira no cliente, a partir das datas |
+
+Ou seja, para a web mostrar os outros dois alguém precisa **recalcular o layout lá**. Três
+caminhos foram postos, e o dono escolheu o **A**:
+
+- **A — reimplementar em JS** (escolhido): dois motores de layout e três conjuntos de regras de
+  desenho passam a existir em duplicata. Consequência aceita conscientemente: **toda mudança de
+  desenho ou de layout no desktop tem de ser espelhada à mão na web**, senão os dois divergem
+  calados.
+- **B — instantâneo de imagem** no save (era a opção 1 de §3.2): zero duplicação, mas a web perde
+  o clique na caixa.
+- **C — gravar as primitivas de desenho** e repeti-las na web: sem duplicar layout nem regra, e
+  mantendo o clique; custava migração de banco e um gravador no desktop.
+
+**A defesa contra a divergência é um teste que compara as duas implementações**:
+`app/test/web_organograma.py` monta a mesma árvore, roda o layout do Python e o **JavaScript lido
+do próprio `index.php`** (com `node`), e compara caixa a caixa. Ele já se pagou no primeiro uso:
+acusou que o Python trunca (`int()`) e o JS arredondava (`Math.round`), com 1–2px de diferença —
+pouco na tela, e exatamente assim que a duplicação começa a andar para lados diferentes.
+
+**Feito:** lista com os três tipos, organograma (modelo, controller, service, view com o layout
+reimplementado) e o teste comparador. **Falta:** a timeline, e o canvas do mapa alcançar o
+desktop (espessura por referências e data da ponta).
+
+## 12. Fora de escopo
 
 Hub/loja de transforms de terceiros; execução de transform no servidor (descartada na decisão 3);
 qualquer coleta que contorne autenticação ou termos de uso de uma fonte.

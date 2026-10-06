@@ -76,6 +76,7 @@ td.num.zero { color: var(--muted); }
   </div>
 
   <div class="tabela" id="tabela"></div>
+  <div id="outros"></div>
 </div>
 
 <script>
@@ -173,6 +174,59 @@ function linha(m){
   return tr;
 }
 
+// Organogramas e timelines: lista propria, abaixo da dos mapas. Nao entram na MESMA tabela
+// porque as colunas sao outras -- organograma conta itens, timeline conta eventos e tem mapa de
+// origem. Juntar daria metade das celulas vazias em cada linha, que e o mesmo motivo das duas
+// abas da List View do desktop.
+var ORGANOGRAMAS = [], TIMELINES = [];
+
+function listaSimples(itens, titulo, vazio, montarLinha){
+  var caixa = $("<section style='margin-top:26px'>");
+  caixa.append($("<h2 style='font-size:15px;margin:0 0 8px'>").text(titulo + " (" + itens.length + ")"));
+  if(itens.length === 0){
+    caixa.append($("<p class='aviso' style='padding:12px 0'>").text(vazio));
+    return caixa;
+  }
+  var tbody = $("<tbody>");
+  itens.forEach(function(i){ tbody.append(montarLinha(i)); });
+  caixa.append($("<table>").append(tbody));
+  return caixa;
+}
+
+function renderOutros(){
+  var destino = $("#outros").empty();
+
+  destino.append(listaSimples(ORGANOGRAMAS, "Organogramas", "Nenhum organograma neste domain.",
+    function(o){
+      var tr = $("<tr>");
+      var td = $("<td class='nome'>");
+      td.append($("<a>").attr("href", "../organizationchart/index.php?id=" + encodeURIComponent(o.id)
+                + "&domain=" + encodeURIComponent(DOMAIN)).text(o.name || "(organograma sem nome)"));
+      if(o.organizacao){ td.append($("<div class='kw'>").append($("<span>").text(o.organizacao))); }
+      tr.append(td);
+      tr.append($("<td class='autor'>").text(o.username || "—"));
+      tr.append($("<td class='num'>").addClass(o.itens ? "" : "zero").text(o.itens));
+      tr.append($("<td class='data'>").text(dataCurta(o.modification_time || o.creation_time)));
+      return tr;
+    }));
+
+  destino.append(listaSimples(TIMELINES, "Linhas do tempo", "Nenhuma linha do tempo neste domain.",
+    function(t){
+      var tr = $("<tr>");
+      var td = $("<td class='nome'>");
+      td.append($("<a>").attr("href", "../timeline/index.php?id=" + encodeURIComponent(t.id)
+                + "&domain=" + encodeURIComponent(DOMAIN)).text(t.name || "(linha do tempo sem nome)"));
+      // Timeline SOLTA e legitima (sem mapa de origem): dizer isso evita parecer defeito.
+      td.append($("<div class='kw'>").append($("<span>").text(
+          t.mapa_origem ? ("projeta: " + t.mapa_origem) : "sem mapa de origem")));
+      tr.append(td);
+      tr.append($("<td class='autor'>").text(t.username || "—"));
+      tr.append($("<td class='num'>").addClass(t.eventos ? "" : "zero").text(t.eventos));
+      tr.append($("<td class='data'>").text(dataCurta(t.modification_time || t.creation_time)));
+      return tr;
+    }));
+}
+
 function render(){
   var termo = String($("#busca").val() || "").trim().toLowerCase();
   var lista = ordenar(filtrar(termo));
@@ -208,8 +262,11 @@ $.ajax({
   success : function(result){
     var js = (typeof result === "string") ? JSON.parse(result) : result;
     MAPAS = js.mapas || [];
+    ORGANOGRAMAS = js.organogramas || [];
+    TIMELINES = js.timelines || [];
     $("#cab").append($("<span class='chip'>").text("domain: " + DOMAIN));
     render();
+    renderOutros();
   },
   error : function(xhr){
     var motivo = "HTTP " + xhr.status;
