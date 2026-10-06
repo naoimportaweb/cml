@@ -239,7 +239,7 @@ class MainWindow(QMainWindow):
         if mapa == None:
             return;
         janela = self.active_mdi_child();
-        filtros = "CSV (*.csv);;GraphML (*.graphml)";
+        filtros = "CSV (*.csv);;GraphML (*.graphml);;STIX 2.1 (*.json)";
         pasta = QStandardPaths.writableLocation(QStandardPaths.DocumentsLocation);
         caminho, _ = QFileDialog.getOpenFileName(self, "Importar dados", pasta, filtros);
         if caminho == None or caminho.strip() == "":

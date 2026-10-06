@@ -35,6 +35,19 @@ def confere(condicao, descricao):
         FALHAS.append(descricao);
 
 
+def _json_stix():
+    """Bundle de outra ferramenta: nomes sem aliases, um objeto que nao vira entidade
+    (marking-definition) e uma aresta apontando para objeto que nao esta no bundle."""
+    return ('{"type":"bundle","id":"bundle--1","objects":['
+            '{"type":"threat-actor","id":"threat-actor--a","name":"Grupo Alfa","description":"x"},'
+            '{"type":"identity","id":"identity--b","name":"Empresa Beta","identity_class":"organization"},'
+            '{"type":"marking-definition","id":"marking-definition--c","name":"TLP"},'
+            '{"type":"relationship","id":"relationship--d","source_ref":"threat-actor--a",'
+            '"target_ref":"identity--b","relationship_type":"targets"},'
+            '{"type":"relationship","id":"relationship--e","source_ref":"threat-actor--a",'
+            '"target_ref":"identity--FANTASMA","relationship_type":"targets"}]}');
+
+
 def gravar(nome, conteudo):
     caminho = os.path.join(TEMP, nome);
     with open(caminho, "w", encoding="utf-8") as arquivo:
@@ -154,6 +167,46 @@ def main():
             "a data de início sobreviveu (%s)" % r.vinculos[0]["start_date"]);
     confere(r.vinculos[0]["end_date"] == "2021-02-03",
             "e a de fim também (%s)" % r.vinculos[0]["end_date"]);
+
+    print("\nSTIX: ida e volta pelo nosso próprio export");
+    mapa4 = MapRelationship();
+    mapa4.name = "CTI";
+    ator = mapa4.addEntity("other", 0, 0, text="APT-Exemplo");
+    ator.entity.sub_etype_name = "threat actor";
+    praga = mapa4.addEntity("other", 200, 0, text="MalwareX");
+    praga.entity.sub_etype_name = "ransomware";
+    pessoa = mapa4.addEntity("person", 0, 200, text="Fulano de Tal");
+    elo = mapa4.addEntity("link", 100, 100, text="usa o");
+    elo.addFrom(ator, start_date="2020-01-01", end_date="2021-06-30"); elo.addTo(praga);
+    bundle = ed.exportar(mapa4, os.path.join(TEMP, "cti"), formato="stix")[0];
+    r = imp.importar(bundle);
+    nomes = sorted(e["text_label"] for e in r.entidades);
+    confere(nomes == ["APT-Exemplo", "Fulano de Tal", "MalwareX"], "os três voltaram: %s" % nomes);
+    por_nome = {e["text_label"]: e for e in r.entidades};
+    confere(por_nome["APT-Exemplo"]["sub_etype"] == "threat actor", "threat-actor voltou com o sub-tipo");
+    confere(por_nome["MalwareX"]["sub_etype"] == "malware", "o ransomware voltou como malware");
+    confere(por_nome["Fulano de Tal"]["etype"] == "person", "identity/individual voltou como pessoa");
+    confere(len(r.vinculos) == 1, "um relacionamento");
+    confere(r.vinculos[0]["verbo"] == "usa o", "o verbo voltou legível (sem hífen): %s" % r.vinculos[0]["verbo"]);
+    confere(r.vinculos[0]["start_date"] == "2020-01-01", "e o timestamp virou data");
+    confere(len(r.avisos) > 0, "avisa para conferir o tipo");
+
+    print("\nSTIX de fora e casos torto");
+    de_fora = gravar("fora.json", _json_stix());
+    r = imp.importar(de_fora);
+    confere(len(r.entidades) == 2, "leu o bundle de outra ferramenta (%d)" % len(r.entidades));
+    confere(len(r.vinculos) == 1, "aresta para objeto ausente foi ignorada (%d)" % len(r.vinculos));
+    for nome, conteudo, trecho in [
+        ("vazio.json", "{}", "bundle"),
+        ("quebrado.json", "{nao json", "JSON"),
+        ("so_relacao.json", '{"type":"bundle","objects":[{"type":"relationship","id":"relationship--1",'
+                            '"source_ref":"a","target_ref":"b","relationship_type":"uses"}]}', "entidade"),
+    ]:
+        try:
+            imp.importar(gravar(nome, conteudo), formato="stix");
+            confere(False, "deveria recusar " + nome);
+        except imp.ErroImportacao as erro:
+            confere(trecho.lower() in str(erro).lower(), "%s: %s" % (nome, str(erro)[:60]));
 
     print("\n" + ("TODOS OS TESTES PASSARAM" if len(FALHAS) == 0 else "FALHAS: %d" % len(FALHAS)));
     return 1 if len(FALHAS) > 0 else 0;

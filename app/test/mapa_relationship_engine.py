@@ -237,6 +237,20 @@ def main():
     confere(len(engine.selecionados()) == 2, "as duas continuam selecionadas (%d)" % len(engine.selecionados()));
     confere(engine.selected_element == None, "e nada entrou em modo de arrasto");
 
+    print("\npeso do vínculo é DERIVADO das referências");
+    mapa, pessoa, org, vinculo = montar();
+    confere(vinculo.peso() == 0, "sem referência, peso 0");
+    fino = vinculo._Link__espessura__() if hasattr(vinculo, "_Link__espessura__") else vinculo.__espessura__();
+    for i in range(3):
+        vinculo.addReference("Fonte %d" % i, "https://exemplo.test/%d" % i);
+    confere(vinculo.peso() == 3, "três referências, peso 3 (%d)" % vinculo.peso());
+    grosso = vinculo.__espessura__();
+    confere(grosso > fino, "e a linha engrossou (%d -> %d)" % (fino, grosso));
+    for i in range(20):
+        vinculo.addReference("Mais %d" % i, "https://exemplo.test/m%d" % i);
+    confere(vinculo.__espessura__() <= 4, "com teto: acima de 4 a linha vira mancha (%d)" % vinculo.__espessura__());
+    confere(len(mapa.elements) == 3, "e nada disso criou element novo (é derivado, não guardado)");
+
     print("\n" + ("TODOS OS TESTES PASSARAM" if len(FALHAS) == 0 else "FALHAS: %d" % len(FALHAS)));
     return 1 if len(FALHAS) > 0 else 0;
 

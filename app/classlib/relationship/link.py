@@ -86,22 +86,70 @@ class Link(MapRelationshipBox):
         painter.drawPolygon(QPolygonF([QPointF(bx, by), p1, p2]));
         painter.setBrush(Qt.NoBrush);
 
+    def peso(self):
+        """Peso DERIVADO: quantas referencias sustentam este vinculo.
+
+        E o eixo da procedencia (SPEC §1.3) virando desenho -- vinculo com tres fontes aparece
+        mais grosso que o de uma. Nao ha coluna no banco: o peso e contado do que ja existe, e
+        por isso esta pronto sem migracao. Peso MANUAL, se um dia for preciso, e que exigiria
+        coluna nova em diagram_relationship_link."""
+        return len(self.entity.references or []);
+
+    def __espessura__(self):
+        # Teto de 4: acima disso a linha vira mancha e para de comunicar diferenca.
+        return min(4, 1 + self.peso());
+
+    def __data_da_ponta__(self, painter, ox, oy, ponta, cor):
+        """Escreve o periodo da ponta ao longo da propria linha.
+
+        A data fica a 72% do caminho (perto da caixa de destino, longe do verbo que esta no
+        meio): e a ponta que tem data, nao o vinculo -- as duas podem ter periodos diferentes."""
+        inicio = str(getattr(ponta, "start_date", None) or "").strip();
+        fim = str(getattr(ponta, "end_date", None) or "").strip();
+        if inicio in ("", "0000-00-00"):
+            inicio = "";
+        if fim in ("", "0000-00-00"):
+            fim = "";
+        if inicio == "" and fim == "":
+            return;
+        texto = (inicio + " → " + fim) if (inicio != "" and fim != "") else (inicio + " →" if inicio != "" else "← " + fim);
+        alvo = ponta.entity;
+        if alvo == None or alvo.w == None:
+            return;
+        destino_x = alvo.x + (alvo.w or 0) / 2.0;
+        destino_y = alvo.y + (alvo.h or 0) / 2.0;
+        x = ox + (destino_x - ox) * 0.72;
+        y = oy + (destino_y - oy) * 0.72;
+        painter.save();
+        try:
+            fonte = QFont(painter.font());
+            fonte.setPointSize(max(6, fonte.pointSize() - 2));
+            painter.setFont(fonte);
+            painter.setPen(QPen(cor));
+            painter.drawText(QPointF(x + 4, y - 3), texto);
+        finally:
+            painter.restore();
+
     def draw(self, painter):
         penRectangle = QPen(Qt.black)
         penRectangle.setWidth(1)
         painter.setPen(penRectangle)
         ox = self.x + int( self.w / 2 );
         oy = self.y + int( self.h / 2 );
-        painter.setPen(QPen(Qt.red, 1, Qt.DashDotLine, Qt.RoundCap));
+        espessura = self.__espessura__();
+        painter.setPen(QPen(Qt.red, espessura, Qt.DashDotLine, Qt.RoundCap));
         for buffer_entity in self.to_entity:
             element = buffer_entity.entity;
             painter.drawLine( ox, oy, element.x + int( element.w / 2), element.y + int( element.h / 2 ) );
         for buffer_entity in self.to_entity:
             self._seta( painter, ox, oy, buffer_entity.entity, Qt.red );
-        painter.setPen(QPen(Qt.blue, 1, Qt.DashDotLine, Qt.RoundCap));
+            self.__data_da_ponta__( painter, ox, oy, buffer_entity, Qt.darkRed );
+        painter.setPen(QPen(Qt.blue, espessura, Qt.DashDotLine, Qt.RoundCap));
         for buffer_entity in self.from_entity:
             element = buffer_entity.entity;
             painter.drawLine( ox, oy, element.x + int( element.w / 2), element.y + int( element.h / 2 ) );
+        for buffer_entity in self.from_entity:
+            self.__data_da_ponta__( painter, ox, oy, buffer_entity, Qt.darkBlue );
         painter.setPen(QPen(Qt.blue, 1, Qt.DashDotLine, Qt.RoundCap));
         painter.fillRect(self.x, self.y, self.w, self.h, QBrush(Qt.white));
         painter.drawText(QRectF(self.x , self.y, self.w, self.h), Qt.AlignCenter | Qt.AlignTop, self.entity.text);

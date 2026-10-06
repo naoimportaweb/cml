@@ -340,13 +340,16 @@ divergem calados.
   "o mais próximo possível" nunca virar sobreposição. Caixa **sem vínculo** vai para uma
   prateleira embaixo: ela não desce de lugar nenhum, e na primeira camada abria um vão enorme. É o único layout que também **afasta as
   caixinhas de verbo**, e só o verbo se mexe.
-- **Espessura do vínculo pelo peso**, com valor editável **e** valor **derivado do número de
-  referências** que o sustentam: vínculo com três fontes desenha mais grosso que o de uma. É o
-  eixo 1 (§1.3) virando desenho. ⚠️ **Exige migração de banco** (coluna nova em
-  `diagram_relationship_link`) — ver a regra abaixo.
+- ✅ **Espessura do vínculo pelo peso derivado** (feito em 2026-10-05): o peso é o **número de
+  referências** que sustentam o vínculo, contado do que já existe — por isso saiu **sem migração
+  de banco**. Vínculo com três fontes desenha mais grosso que o de uma; é o eixo 1 (§1.3) virando
+  desenho, com teto de 4 porque acima disso a linha vira mancha e para de comunicar diferença.
+  **Falta** o peso *manual*, e só ele exige coluna nova em `diagram_relationship_link`.
 - **Tamanho da caixa por centralidade** (grau), calculado no cliente, sem lib externa — como um
   viewlet, ver abaixo.
-- **Roteamento que não atravessa caixa** e **data da ponta desenhada na linha**.
+- ✅ **Data da ponta desenhada na linha** (feito em 2026-10-05), a 72% do caminho — perto da
+  caixa, longe do verbo que fica no meio: é a **ponta** que tem data, e as duas podem ter
+  períodos diferentes. **Falta** o roteamento que não atravessa caixa.
 - ✅ **Colapsar grupo** (feito em 2026-10-05) — a *collection* do Maltego, para o mapa de 200
   caixas deixar de ser ilegível. É **vista**, como o ocultar: o documento não sabe que existe
   grupo, nada entra no desfazer e nada é salvo. A caixa do grupo **redesenha os vínculos que
@@ -550,7 +553,11 @@ Depende da **seleção em massa** (§3.4), por isso vive aqui e não na fase dos
   por linha, e 300 linhas virariam 300 duplicatas para o `merge_to` limpar. As colunas são
   reconhecidas por **nome** (várias grafias, pt e en), o delimitador é detectado, e planilha só de
   vínculos cria também as pontas. O `aplicar` passou a aceitar **origem `None`** para isso.
-- **Falta**: importar STIX.
+- ✅ **Importar STIX 2.1** (feito em 2026-10-05): `identity` volta como pessoa ou organização
+  conforme o `identity_class`, e `threat-actor`/`malware`/`tool`/`location` voltam como Other com
+  o sub-tipo correspondente — o inverso do mapa do export. Aresta que cita objeto ausente do
+  bundle é ignorada, e o `relationship_type` vira verbo legível (sem hífen). Lê o nosso próprio
+  bundle e o de fora (MISP, OpenCTI).
 - **Vault Markdown (Obsidian) nos dois sentidos**: importar um vault (nota → entidade,
   `[[wikilink]]` → vínculo, frontmatter → classificação) e exportar um mapa como vault. É como se
   traz quem já trabalha em Obsidian.
