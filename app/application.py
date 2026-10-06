@@ -378,21 +378,37 @@ class MainWindow(QMainWindow):
         mapa = self.__mapa_ativo__("MapRelationship");
         if mapa == None:
             return;
+        janela = self.active_mdi_child();
+        selecionadas = [e for e in janela.painter_widget.selecionados() if e.entity.etype != "link"] \
+                       if janela != None else [];
         menu = QMenu(self);
         escolhido = [None];
         for nome, texto in layouts.LAYOUTS:
-            acao = menu.addAction(texto);
+            rotulo_item = texto;
+            if nome == "estrela":
+                # Dizer QUEM vai ao centro antes de clicar: a estrela com o centro errado e um
+                # desenho que nao significa nada, e descobrir isso depois custa um Ctrl+Z.
+                rotulo_item = texto + (" — centro: " + str(selecionadas[0].entity.text)
+                                       if len(selecionadas) == 1 else " — centro: o mais ligado");
+            acao = menu.addAction(rotulo_item);
             acao.triggered.connect(lambda _=False, n=nome: escolhido.__setitem__(0, n));
         posicao = self._map_tool_bar.mapToGlobal(self._map_tool_bar.rect().bottomLeft());
         menu.exec(posicao);
         if escolhido[0] == None:
             return;
+        centro, niveis = None, None;
+        if escolhido[0] == "estrela":
+            from PySide6.QtWidgets import QInputDialog;
+            centro = selecionadas[0] if len(selecionadas) == 1 else None;
+            niveis, ok = QInputDialog.getInt(self, "Estrela", "Quantos anéis em volta do centro:",
+                                             layouts.NIVEIS_ESTRELA, 1, 8);
+            if not ok:
+                return;
         try:
-            quantas = layouts.aplicar(mapa, escolhido[0]);
+            quantas = layouts.aplicar(mapa, escolhido[0], centro=centro, niveis=niveis);
         except Exception as erro:
             QMessageBox.warning(self, "Layout", str(erro));
             return;
-        janela = self.active_mdi_child();
         if janela != None:
             janela.redesenhar();
         self.statusBar().showMessage("Layout %s aplicado a %d caixas (Ctrl+Z desfaz)"

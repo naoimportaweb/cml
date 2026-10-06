@@ -226,6 +226,90 @@ def main():
     confere(all((a.x, a.y) == (b.x, b.y) for a, b in zip(m1.elements, m2.elements)),
             "mesmo mapa, mesmo desenho");
 
+    print("\nestrela: um no centro, os demais em anéis");
+    def rede_estrela():
+        # Centro com 4 vizinhos diretos; dois deles com filhos (nível 2); um nível 3; e uma solta.
+        mapa = MapRelationship();
+        mapa.name = "Estrela";
+        centro = mapa.addEntity("organization", 0, 0, text="Construtora X"); centro.w = 120; centro.h = 20;
+        nivel1 = [];
+        for nome in ("Zeca", "Ana", "Bruno", "Carla"):
+            caixa = mapa.addEntity("person", 0, 0, text=nome); caixa.w = 90; caixa.h = 20;
+            elo = mapa.addEntity("link", 0, 0, text="dirige"); elo.w = 60; elo.h = 20;
+            elo.addFrom(caixa); elo.addTo(centro);
+            nivel1.append(caixa);
+        nivel2 = [];
+        for i in range(3):
+            caixa = mapa.addEntity("other", 0, 0, text="Contrato %d" % i); caixa.w = 110; caixa.h = 20;
+            elo = mapa.addEntity("link", 0, 0, text="assina"); elo.w = 60; elo.h = 20;
+            elo.addFrom(nivel1[i % 2]); elo.addTo(caixa);
+            nivel2.append(caixa);
+        longe = mapa.addEntity("other", 0, 0, text="Longe"); longe.w = 90; longe.h = 20;
+        elo = mapa.addEntity("link", 0, 0, text="cita"); elo.w = 50; elo.h = 20;
+        elo.addFrom(nivel2[0]); elo.addTo(longe);
+        solta = mapa.addEntity("other", 0, 0, text="Avulsa"); solta.w = 90; solta.h = 20;
+        mapa.desfazer.clear();
+        return mapa, centro, nivel1, nivel2, longe, solta;
+
+    mapa, centro, nivel1, nivel2, longe, solta = rede_estrela();
+    layouts.aplicar(mapa, "estrela", centro=centro, niveis=3);
+
+    def distancia(caixa, alvo):
+        dx = (caixa.x + caixa.w / 2.0) - (alvo.x + alvo.w / 2.0);
+        dy = (caixa.y + caixa.h / 2.0) - (alvo.y + alvo.h / 2.0);
+        return (dx * dx + dy * dy) ** 0.5;
+
+    confere(all(abs(distancia(c, centro) - distancia(nivel1[0], centro)) < 2 for c in nivel1),
+            "os 4 vizinhos diretos ficam todos à mesma distância do centro");
+    r1 = distancia(nivel1[0], centro);
+    r2 = distancia(nivel2[0], centro);
+    r3 = distancia(longe, centro);
+    confere(r1 < r2 < r3, "cada anel mais longe que o anterior (%d < %d < %d)" % (r1, r2, r3));
+    confere(colisoes(mapa) == 0, "nenhuma caixa sobreposta (%d)" % colisoes(mapa));
+    confere(solta.x >= 0 and solta.y >= 0, "a caixa sem vínculo foi posicionada");
+    confere(distancia(solta, centro) > r1, "e ficou fora dos anéis, na prateleira");
+    confere(mapa.desfazer.count() == 1, "um passo de desfazer");
+
+    print("\nfilho pousa perto do pai, não num ângulo qualquer");
+    # É a diferença entre a estrela ser legível e ser um novelo: com o filho em ângulo
+    # independente, a linha até o pai atravessa o desenho inteiro.
+    import math as _math;
+    def angulo(caixa, alvo):
+        return _math.atan2((caixa.y + caixa.h / 2.0) - (alvo.y + alvo.h / 2.0),
+                           (caixa.x + caixa.w / 2.0) - (alvo.x + alvo.w / 2.0));
+    mapa, centro, nivel1, nivel2, longe, solta = rede_estrela();
+    layouts.aplicar(mapa, "estrela", centro=centro, niveis=3);
+    pais = {nivel2[0]: nivel1[0], nivel2[1]: nivel1[1], nivel2[2]: nivel1[0]};
+    piores = [];
+    for filho, pai in pais.items():
+        dif = abs(angulo(filho, centro) - angulo(pai, centro));
+        dif = min(dif, 2 * _math.pi - dif);
+        if dif > _math.pi / 3:
+            piores.append("%s está a %d° do pai" % (filho.entity.text, dif * 180 / _math.pi));
+    confere(len(piores) == 0,
+            "cada filho a menos de 60° do seu pai" if len(piores) == 0 else "; ".join(piores));
+
+    print("\nestrela com menos anéis que o mapa tem");
+    mapa, centro, nivel1, nivel2, longe, solta = rede_estrela();
+    layouts.aplicar(mapa, "estrela", centro=centro, niveis=1);
+    caixas_mapa = layouts.caixas(mapa);
+    confere(len(caixas_mapa) == 10, "nenhuma caixa sumiu: quem passa do limite vai para o anel de fora");
+    r_longe = distancia(longe, centro);
+    r_um = distancia(nivel1[0], centro);
+    confere(abs(r_longe - r_um) < 2, "o nível 3 foi dobrado para o último anel pedido");
+    confere(colisoes(mapa) == 0, "e continua sem colisão");
+
+    print("\nestrela sem centro escolhido");
+    mapa, centro, nivel1, nivel2, longe, solta = rede_estrela();
+    layouts.aplicar(mapa, "estrela");
+    # Perguntar a função, e não adivinhar pela posição: depois do __normalizar__ o canto do
+    # desenho vai para a margem, e "mais perto da origem" deixa de significar "no centro".
+    escolhido = layouts.escolher_centro(mapa, layouts.caixas(mapa));
+    confere(escolhido is centro, "escolheu sozinho o mais ligado (%s)" % escolhido.entity.text);
+    r_vizinho = distancia(nivel1[0], centro);
+    confere(all(distancia(c, centro) <= r_vizinho + 2 or c is solta for c in nivel1),
+            "e os vizinhos diretos ficaram no primeiro anel");
+
     print("\nortogonal cai na grade");
     mapa, centro, folhas, solta = montar();
     layouts.aplicar(mapa, "ortogonal");

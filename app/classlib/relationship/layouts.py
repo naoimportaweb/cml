@@ -16,7 +16,8 @@ import math, random;
 
 from classlib.relationship.comandos import Operacao;
 
-LAYOUTS = [("espalhar",    "Espalhar (sem colisão, de cima para baixo)"),
+LAYOUTS = [("estrela",     "Estrela (um no centro, os demais em anéis)"),
+           ("espalhar",    "Espalhar (sem colisão, de cima para baixo)"),
            ("organico",    "Orgânico"),
            ("hierarquico", "Hierárquico"),
            ("circular",    "Circular"),
@@ -28,6 +29,8 @@ ESPACO_X = 60;      # respiro horizontal entre caixas
 ESPACO_Y = 110;     # altura de uma camada
 GRADE = 20;         # passo da grade do layout ortogonal
 ANEIS_VERBO = 8;    # quantos aneis o afastar_vinculos procura antes de desistir
+NIVEIS_ESTRELA = 3; # aneis do layout estrela, quando ninguem diz quantos
+RAIO_ESTRELA = 260; # distancia do centro ate o primeiro anel
 # Folgas do espalhar. Sao generosas de proposito: o objetivo dele nao e caber na tela, e ser
 # LIDO por uma pessoa -- e para caber na tela existem o zoom, o ajustar-a-janela e o minimapa.
 # Com folga pequena as diagonais entre camadas passam rente as caixas e os rotulos se espremem,
@@ -460,6 +463,133 @@ def afastar_vinculos(mapa):
             ocupadas.append(atual);
 
 
+def escolher_centro(mapa, lista):
+    """Quem fica no meio da estrela quando ninguem escolheu: a caixa de maior grau.
+
+    Nao e capricho -- a estrela existe para responder "o que gira em volta DISTO", e o no mais
+    ligado e a resposta mais provavel. O chamador passa a caixa selecionada quando ha uma."""
+    if len(lista) == 0:
+        return None;
+    return sorted(lista, key=lambda c: (-grau(mapa, c), (c.entity.text or "").lower()))[0];
+
+
+def __niveis_a_partir_de__(mapa, lista, centro):
+    """Distancia em saltos de cada caixa ate o centro (busca em largura). Quem nao se liga ao
+    centro fica como None: vai para a prateleira, nao para um anel -- pendurar desconectado num
+    anel diria que ha ligacao onde nao ha."""
+    vizinhos = {c: set() for c in lista};
+    for a, b in arestas(mapa):
+        if a in vizinhos and b in vizinhos:
+            vizinhos[a].add(b);
+            vizinhos[b].add(a);
+    nivel = {centro: 0};
+    fila = [centro];
+    while len(fila) > 0:
+        atual = fila.pop(0);
+        for vizinho in vizinhos.get(atual, ()):
+            if vizinho not in nivel:
+                nivel[vizinho] = nivel[atual] + 1;
+                fila.append(vizinho);
+    return nivel;
+
+
+def __estrela__(mapa, lista, centro=None, niveis=None):
+    """Um no no centro e os demais em aneis ao redor, por distancia em saltos.
+
+    O raio de cada anel NAO e um multiplo fixo: ele cresce ate caber o perimetro de quem esta
+    nele. Com raio fixo, o anel 2 de um mapa grande vira uma fileira de caixas encavaladas --
+    a circunferencia nao acompanha a quantidade de vizinhos sozinha.
+
+    Quem esta alem do ultimo anel pedido vai para o anel de fora, em vez de sumir: o layout
+    arruma o mapa, nao decide o que o analista pode ver."""
+    if centro == None:
+        centro = escolher_centro(mapa, lista);
+    if centro == None:
+        return;
+    if centro not in lista:
+        centro = escolher_centro(mapa, lista);
+    limite = int(niveis or NIVEIS_ESTRELA);
+    if limite < 1:
+        limite = 1;
+
+    nivel = __niveis_a_partir_de__(mapa, lista, centro);
+    soltas = [c for c in lista if c not in nivel];
+    por_anel = {};
+    for caixa in lista:
+        if caixa not in nivel or caixa is centro:
+            continue;
+        # Alem do limite, todo mundo no ultimo anel: some-los seria esconder dado.
+        por_anel.setdefault(min(nivel[caixa], limite), []).append(caixa);
+
+    # O centro da CAIXA no centro do anel, nao o canto dela: com setX(0)/setY(0) o meio da
+    # caixa fica em (w/2, h/2) e todo o anel sai deslocado em relacao a ela.
+    centro.setX(int(-(centro.w or 0) / 2));
+    centro.setY(int(-(centro.h or 0) / 2));
+
+    # De quem cada caixa desce: serve para o anel de fora nascer PERTO do seu pai. Sem isso o
+    # filho cai num angulo qualquer e a linha ate o pai atravessa o desenho inteiro -- a
+    # estrela fica certa na geometria e ilegivel no papel.
+    vizinhos = {c: set() for c in lista};
+    for a, b in arestas(mapa):
+        if a in vizinhos and b in vizinhos:
+            vizinhos[a].add(b);
+            vizinhos[b].add(a);
+    angulo_de = {centro: -math.pi / 2};
+
+    raio_anterior = 0;
+    for anel in sorted(por_anel.keys()):
+        def __angulo_do_pai__(caixa):
+            pais = [v for v in vizinhos.get(caixa, ()) if v in angulo_de];
+            if len(pais) == 0:
+                return 999.0;   # sem pai colocado ainda: vai para o fim, sem atrapalhar
+            return min(angulo_de[p] for p in pais);
+        no_anel = sorted(por_anel[anel],
+                         key=lambda c: (__angulo_do_pai__(c), -grau(mapa, c), (c.entity.text or "").lower()));
+        # Perimetro necessario: a soma das larguras mais a folga entre vizinhos. O raio sai
+        # dai, e nunca encolhe em relacao ao anel de dentro.
+        perimetro = sum((c.w or 100) + ESPACO_RAMO for c in no_anel);
+        raio = max(RAIO_ESTRELA * anel, perimetro / (2 * math.pi), raio_anterior + ESPACO_VERBO + 60);
+
+        desejados = [__angulo_do_pai__(c) for c in no_anel];
+        iguais = len(set(round(d, 4) for d in desejados if d < 900)) <= 1;
+        if iguais:
+            # Todos filhos do mesmo no (e o caso do primeiro anel, que desce do centro):
+            # distribuir por igual. Comeca em -90 graus para o desenho nascer com um no "em
+            # cima", que le melhor do que comecar pela direita.
+            angulos = [-math.pi / 2 + (2 * math.pi * i) / len(no_anel) for i in range(len(no_anel))];
+        else:
+            # Cada filho POUSA perto do pai, e nao num angulo qualquer da volta: o que
+            # importa num anel de fora e a linha ate o pai ser curta. Ordenar por angulo do
+            # pai deixa a ordem certa mas a posicao ainda errada -- e preciso partir do
+            # angulo dele e so afastar o necessario para nao encostar no vizinho.
+            angulos = [];
+            anterior = None;
+            for i in range(len(no_anel)):
+                largura = (no_anel[i].w or 100) + ESPACO_RAMO;
+                separacao = largura / max(1.0, raio);     # arco -> angulo
+                alvo = desejados[i] if desejados[i] < 900 else (anterior or -math.pi / 2) + separacao;
+                if anterior != None and alvo < anterior + separacao:
+                    alvo = anterior + separacao;
+                angulos.append(alvo);
+                anterior = alvo;
+            # Se a soma passou da volta inteira, o anel esta cheio: distribuir por igual, que
+            # e o melhor possivel, em vez de deixar o ultimo girar por cima do primeiro.
+            if angulos[-1] - angulos[0] > 2 * math.pi:
+                angulos = [angulos[0] + (2 * math.pi * i) / len(no_anel) for i in range(len(no_anel))];
+
+        for i in range(len(no_anel)):
+            caixa = no_anel[i];
+            angulo_de[caixa] = angulos[i];
+            caixa.setX(int(math.cos(angulos[i]) * raio - (caixa.w or 0) / 2.0));
+            caixa.setY(int(math.sin(angulos[i]) * raio - (caixa.h or 0) / 2.0));
+        raio_anterior = raio;
+
+    # As soltas vao para a prateleira, como no espalhar, e nao para um anel.
+    if len(soltas) > 0:
+        ligadas = [c for c in lista if c not in soltas];
+        __prateleira__(ligadas, soltas);
+
+
 def __espalhar__(mapa, lista):
     pares = arestas(mapa);
     ligadas = set();
@@ -503,7 +633,7 @@ def __prateleira__(correnteza, soltas):
             x = base_x; y = y + altura_linha + 30; na_linha = 0; altura_linha = 0;
 
 
-ALGORITMOS = {"espalhar": __espalhar__, "organico": __organico__, "hierarquico": __hierarquico__, "circular": __circular__,
+ALGORITMOS = {"estrela": __estrela__, "espalhar": __espalhar__, "organico": __organico__, "hierarquico": __hierarquico__, "circular": __circular__,
               "bloco": __bloco__, "ortogonal": __ortogonal__};
 
 
@@ -514,9 +644,12 @@ def rotulo(nome):
     return nome;
 
 
-def aplicar(mapa, nome):
+def aplicar(mapa, nome, centro=None, niveis=None):
     """Posiciona as caixas do mapa e devolve quantas foram movidas. Entra como UM passo de
-    desfazer. Mapa travado nao e mexido."""
+    desfazer. Mapa travado nao e mexido.
+
+    `centro` e `niveis` so valem para o layout estrela; os outros os ignoram, em vez de
+    recusarem -- quem chama nao deveria precisar saber qual layout aceita o que."""
     if nome not in ALGORITMOS:
         raise ValueError("Layout desconhecido: %s" % nome);
     if mapa.getLocked():
@@ -525,12 +658,17 @@ def aplicar(mapa, nome):
     if len(lista) == 0:
         return 0;
     with Operacao(mapa, "Layout " + rotulo(nome)):
-        ALGORITMOS[nome](mapa, lista);
+        if nome == "estrela":
+            __estrela__(mapa, lista, centro=centro, niveis=niveis);
+        else:
+            ALGORITMOS[nome](mapa, lista);
         __normalizar__(lista);
         __centralizar_vinculos__(mapa);
-        if nome == "espalhar":
-            # So o "espalhar" promete ausencia de colisao; nos outros, mexer no verbo depois
-            # mudaria um desenho que ja esta como o algoritmo quis.
+        if nome in ("espalhar", "estrela"):
+            # Os dois prometem ausencia de colisao. Faz sentido justamente neles porque nenhum
+            # dos dois DECIDE onde o verbo fica -- o espalhar posiciona por camada e a estrela
+            # por anel, e a caixa do verbo e consequencia. Nos outros layouts, mexer no verbo
+            # depois mudaria um desenho que ja esta como o algoritmo quis.
             afastar_vinculos(mapa);
             __normalizar__(mapa.elements);
     return len(lista);

@@ -326,6 +326,17 @@ divergem calados.
   entra como **um** passo de desfazer: a posição manual do analista é dado, não enfeite, e sem
   isso o botão seria destrutivo. Mora no modelo, como o layout da timeline. O **vínculo não
   participa**: a caixa do verbo vai para o meio das pontas depois que as caixas acharam lugar.
+- ✅ **Estrela** (feito em 2026-10-06, pedido do dono): um nó no centro e os demais em **anéis**
+  por distância em saltos, com o número de anéis escolhido na hora. O centro é a caixa
+  selecionada, ou a de maior grau quando não há seleção — a estrela existe para responder "o que
+  gira em volta *disto*", e com o centro errado o desenho não diz nada. Três decisões que a
+  fizeram ficar legível: o raio de cada anel **cresce até caber o perímetro** de quem está nele
+  (com raio fixo, o anel 2 de um mapa grande vira uma fileira encavalada); quem está **além do
+  último anel vai para o anel de fora**, em vez de sumir — o layout arruma o mapa, não decide o
+  que o analista pode ver; e cada filho **pousa perto do pai** em vez de num ângulo qualquer da
+  volta, senão a linha até ele atravessa o desenho inteiro. Caixa sem vínculo vai para a
+  prateleira, como no Espalhar, e não para um anel: pendurá-la num anel diria que há ligação
+  onde não há.
 - ✅ **Espalhar** (feito em 2026-10-05, pedido do dono; **não existe no Maltego**) — arruma **sem
   colisão nenhuma**, o mais compacto possível, com **quem está em cima apontando para quem está
   embaixo**. Difere do hierárquico, que usa distância em largura e ignora a direção do vínculo.
