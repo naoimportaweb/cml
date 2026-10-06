@@ -338,11 +338,16 @@ function desenhar(){
     ctx.setTransform(dpr * vista.escala, 0, 0, dpr * vista.escala, dpr * vista.dx, dpr * vista.dy);
 
     // vinculos primeiro: as linhas ficam atras das caixas
+    // (dataDaPonta esta definida abaixo; ver o comentario dela sobre os 72%)
     ctx.strokeStyle = PALETA.muted;
     ctx.fillStyle   = PALETA.muted;
     ctx.lineWidth   = 1.5;
     MAPA.elements.forEach(function(e){
         if(e.etype !== "link"){ return; }
+        // Espessura pelo PESO DERIVADO: quantas referencias sustentam o vinculo. Mesma regra
+        // do desktop (classlib/relationship/link.py), com o mesmo teto de 4 -- acima disso a
+        // linha vira mancha e para de comunicar diferenca.
+        ctx.lineWidth = Math.min(4, 1 + ((e.references || []).length));
         // Direcao por seta, nao por cor: origem -> vinculo -> destino.
         (e.from || []).forEach(function(p){
             if(p._cx == null){ return; }
@@ -350,6 +355,7 @@ function desenhar(){
             var chegada = naBorda(e, p._cx, p._cy);   // chega na borda do vinculo
             ctx.beginPath(); ctx.moveTo(origem[0], origem[1]); ctx.lineTo(chegada[0], chegada[1]); ctx.stroke();
             seta(ctx, origem[0], origem[1], chegada[0], chegada[1]);
+            dataDaPonta(ctx, e._cx, e._cy, p);
         });
         (e.to || []).forEach(function(p){
             if(p._cx == null){ return; }
@@ -357,10 +363,33 @@ function desenhar(){
             var chegada = naBorda(p, e._cx, e._cy);   // chega na borda da entidade
             ctx.beginPath(); ctx.moveTo(origem[0], origem[1]); ctx.lineTo(chegada[0], chegada[1]); ctx.stroke();
             seta(ctx, origem[0], origem[1], chegada[0], chegada[1]);
+            dataDaPonta(ctx, e._cx, e._cy, p);
         });
+        ctx.lineWidth = 1.5;
     });
     MAPA.elements.forEach(function(e){ if(e.etype === "link"){ desenharNo(ctx, e, false); } });
     MAPA.elements.forEach(function(e){ if(e.etype !== "link"){ desenharNo(ctx, e, e._hover); } });
+}
+
+function dataDaPonta(ctx, ox, oy, ponta){
+    // Periodo da PONTA escrito ao longo da propria linha, a 72% do caminho: perto da caixa e
+    // longe do verbo, que fica no meio. E a ponta que tem data -- as duas de um vinculo podem
+    // ter periodos diferentes. Mesma regra do link.py do desktop.
+    var ini = String(ponta.start_date || "").trim();
+    var fim = String(ponta.end_date   || "").trim();
+    if(ini === "" || ini.indexOf("0000") === 0){ ini = ""; }
+    if(fim === "" || fim.indexOf("0000") === 0){ fim = ""; }
+    if(ini === "" && fim === ""){ return; }
+    var texto = (ini !== "" && fim !== "") ? (ini + " → " + fim)
+              : (ini !== "" ? (ini + " →") : ("← " + fim));
+    var x = ox + (ponta._cx - ox) * 0.72;
+    var y = oy + (ponta._cy - oy) * 0.72;
+    ctx.save();
+    ctx.font = "10px 'DejaVu Sans', sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillStyle = PALETA.muted;
+    ctx.fillText(texto, x + 4, y - 3);
+    ctx.restore();
 }
 
 function dimensionar(){

@@ -82,10 +82,10 @@ class EntityBox{
 
         if( $this->etype == "link") {
             foreach( $this->to_entity as $_to ) {
-                array_push($buffer["to"], $_to->toJsonShallow() );
+                array_push($buffer["to"], $_to["ponta"]->toJsonShallow( $_to["start_date"], $_to["end_date"] ) );
             }
             foreach( $this->from_entity as $_from ) {
-                array_push($buffer["from"], $_from->toJsonShallow() );
+                array_push($buffer["from"], $_from["ponta"]->toJsonShallow( $_from["start_date"], $_from["end_date"] ) );
             }
         }
         return $buffer;
@@ -93,8 +93,10 @@ class EntityBox{
 
     // Dentro de to/from o desenho só precisa do centro da caixa apontada. Serializar o
     // objeto inteiro repetiria as referências dela dentro de cada link.
-    public function toJsonShallow(){
-        return array("id" => $this->id, "etype" => $this->etype, "text_label" => $this->text_label, "center_x" => $this->center_x, "center_y" => $this->center_y);
+    public function toJsonShallow($start_date = null, $end_date = null){
+        return array("id" => $this->id, "etype" => $this->etype, "text_label" => $this->text_label,
+                     "center_x" => $this->center_x, "center_y" => $this->center_y,
+                     "start_date" => $start_date, "end_date" => $end_date);
     }
 
     public function setReferences($references){
@@ -109,12 +111,15 @@ class EntityBox{
         $this->subtype_face = $face;
     }
 
-    public function addTo($element){
-        array_push( $this->to_entity, $element );
+    // As datas viajam ao lado da ponta, e nao dentro dela: a MESMA caixa pode ser ponta de
+    // varios vinculos com periodos diferentes, entao guardar a data no element seria a data de
+    // qual vinculo?
+    public function addTo($element, $start_date = null, $end_date = null){
+        array_push( $this->to_entity, array("ponta" => $element, "start_date" => $start_date, "end_date" => $end_date) );
     }
 
-    public function addFrom($element){
-        array_push( $this->from_entity, $element );
+    public function addFrom($element, $start_date = null, $end_date = null){
+        array_push( $this->from_entity, array("ponta" => $element, "start_date" => $start_date, "end_date" => $end_date) );
     }
 
     public function getId(){

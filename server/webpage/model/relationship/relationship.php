@@ -132,7 +132,10 @@ class Relationship{
     }
 
     private function loadLinksAll($mysql){
-        $buffer = $mysql->DataTable("SELECT drl.diagram_relationship_element_id as element_id, drl.diagram_relationship_element_id_reference as link_id, drl.ltype as ltype FROM diagram_relationship_link AS drl INNER JOIN diagram_relationship_element AS dre ON dre.id = drl.diagram_relationship_element_id_reference WHERE dre.diagram_relationship_id = ?", [ $this->id ]);
+        // start_date/end_date vem junto: e a PONTA que tem data (as duas podem ter periodos
+        // diferentes), e o desktop desenha isso na linha desde 2026-10-05. Sem trazer aqui, a
+        // web desenharia um vinculo sem tempo nenhum.
+        $buffer = $mysql->DataTable("SELECT drl.diagram_relationship_element_id as element_id, drl.diagram_relationship_element_id_reference as link_id, drl.ltype as ltype, drl.start_date as start_date, drl.end_date as end_date FROM diagram_relationship_link AS drl INNER JOIN diagram_relationship_element AS dre ON dre.id = drl.diagram_relationship_element_id_reference WHERE dre.diagram_relationship_id = ?", [ $this->id ]);
         foreach( $buffer as $linha ){
             $caixa_link  = $this->getElementById( $linha["link_id"] );
             $caixa_ponta = $this->getElementById( $linha["element_id"] );
@@ -140,9 +143,9 @@ class Relationship{
                 continue;
             }
             if( $linha["ltype"] == 1 ){
-                $caixa_link->addFrom( $caixa_ponta );
+                $caixa_link->addFrom( $caixa_ponta, $linha["start_date"], $linha["end_date"] );
             } else if( $linha["ltype"] == 2 ){
-                $caixa_link->addTo( $caixa_ponta );
+                $caixa_link->addTo( $caixa_ponta, $linha["start_date"], $linha["end_date"] );
             }
         }
     }

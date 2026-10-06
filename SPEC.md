@@ -781,8 +781,14 @@ view com o layout reimplementado), mais **dois testes comparadores**:
 Para serem testáveis, a normalização e o dedup do PHP ficaram **públicos e estáticos**: lógica que
 não dá para chamar de fora não dá para vigiar.
 
-**Falta:** o canvas do mapa de vínculos alcançar o desktop (espessura por referências e data da
-ponta na linha, que saíram em 2026-10-05 e ainda não foram espelhadas).
+O canvas do mapa de vínculos também **alcançou o desktop**: espessura pelo peso derivado (mesmo
+teto de 4) e o período de cada ponta escrito na linha, a 72% do caminho. Para isso o modelo
+passou a trazer `start_date`/`end_date` de cada ponta — elas viajam **ao lado** da ponta e não
+dentro dela, porque a mesma caixa pode ser ponta de vários vínculos com períodos diferentes.
+
+**Falta espelhar na web** (saiu no desktop, ainda não aqui): layouts automáticos, viewlets,
+ocultar/colapsar, minimapa, régua do tempo. Nada disso é obrigatório num site de leitura — mas é
+a lista do que já diverge, e ela só cresce.
 
 ## 12. Fora de escopo
 

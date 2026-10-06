@@ -270,6 +270,20 @@ ao redor da caixa de origem; persistir é o save do mapa, como sempre. Contrato 
 
 ### App web (somente leitura)
 
+> ⚠️ **A web reimplementa os três diagramas** (decisão do dono, 2026-10-06, caminho A do
+> `SPEC.md` §11). O mapa de vínculos tem `x`/`y` no banco, mas o **organograma** calcula a árvore
+> no cliente e a **timeline** calcula tudo a partir das datas — não há geometria para reusar, e
+> mostrá-los aqui exigiu reescrever o layout em JS. **Mudou o desenho ou o layout no desktop?
+> Tem de mudar aqui também.** As duas alternativas recusadas (instantâneo de imagem; gravar as
+> primitivas de desenho) estão no SPEC.
+>
+> A defesa contra a divergência são dois testes que rodam as **duas** implementações e comparam:
+> `app/test/web_organograma.py` (layout, caixa a caixa, executando o JS do próprio `index.php`
+> com `node`) e `app/test/web_timeline.py` (projeção: quais eventos existem, executando o PHP do
+> próprio modelo). O primeiro já se pagou — acusou `int()` contra `Math.round`, 1–2px. O da
+> timeline **não compara pixel de propósito**: métrica de fonte do Qt e do canvas não batem, e
+> exigir isso seria um teste que falha por motivo errado.
+
 `server/webpage/` é um app PHP MVC próprio (não JSON-RPC) para **visualizar** mapas e baixar documentos pelo navegador. Entra por `server/webpage/index.php`, que escolhe o domain (reusa `Mysql::domains()` do `data/config.json`) e redireciona para a lista. É servido no caminho `.../cml/webpage/`. Estrutura clássica `controller/`/`model/`/`view/`/`service/`, com os assets em `public/`.
 
 O canvas JS do mapa (`view/relationship/relationship.php`) **desenha os rostos** quando o mapa está com `show_face`: o rosto próprio (`entity_face`) substitui a caixa e o rosto default do subtipo (`sub_etype.face_default`) vira badge (o próprio tem preferência). O modelo (`model/relationship/`) só carrega os base64 quando `show_face` está ligado. As imagens vão como data URI que auto-detecta JPEG/PNG. As **"Relações"** (lista textual) ficam em **aba própria**, separadas do mapa. Abas: Mapa · Relações · Documentos · Referências.
