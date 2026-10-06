@@ -586,8 +586,9 @@ ALTER TABLE diagram_relationship_element_reference ADD COLUMN format_date VARCHA
 -- (UUID com hifens) somado a ter bandeira em entity_face -- que e o que o seeder grava e
 -- quase nada mais tem. Confira a lista ANTES de marcar:
 --
---   SELECT e.id, e.text_label FROM entity e
+--   SELECT e.id, e.text_label, se.name AS sub_tipo_hoje FROM entity e
 --     INNER JOIN entity_face f ON f.entity_id = e.id
+--     LEFT  JOIN sub_etype se ON se.id = e.sub_etype_id
 --    WHERE e.etype = 'other' AND e.id LIKE '%-%-%-%-%';
 --
 -- Se a lista estiver certa:
@@ -597,7 +598,28 @@ ALTER TABLE diagram_relationship_element_reference ADD COLUMN format_date VARCHA
 --
 --   UPDATE entity e INNER JOIN entity_face f ON f.entity_id = e.id
 --      SET e.sub_etype_id = MD5('country')
---    WHERE e.etype = 'other' AND e.id LIKE '%-%-%-%-%';
+--    WHERE e.etype = 'other' AND e.id LIKE '%-%-%-%-%'
+--      AND e.sub_etype_id IS NULL;
+--
+-- A guarda `sub_etype_id IS NULL` nao e detalhe: sem ela a migracao SOBRESCREVE classificacao
+-- boa. No banco do dono ela pegaria a entidade "Cuba", que e a familia de RANSOMWARE Cuba com
+-- sub-tipo `malware` -- o country_seed casa por nome (ele "enriquece" em vez de duplicar) e
+-- pendurou a bandeira de Cuba no ransomware. Rodada com a guarda, a Cuba segue `malware`; sem
+-- ela, viraria `country` e apareceria como pais no mapa regional. Rodado em 06/10/2026 no
+-- CYBERWARFARE: 236 marcadas, 1 preservada.
+--
+-- Para desfazer (todas as marcadas tinham sub_etype_id NULL antes):
+--
+--   UPDATE entity e INNER JOIN entity_face f ON f.entity_id = e.id
+--      SET e.sub_etype_id = NULL
+--    WHERE e.etype = 'other' AND e.id LIKE '%-%-%-%-%'
+--      AND e.sub_etype_id = MD5('country');
+--
+-- O que a migracao NAO alcanca, e e decisao de quem cuida do acervo: pais cadastrado como
+-- `organization` (no banco do dono: Canada, China, France, Hong Kong, Indonesia, Pakistan,
+-- Philippines, Taiwan, Turkey, United Arab Emirates e mais) e pais de id nativo (Israel). O
+-- `etype = 'other'` esta no WHERE de proposito -- e ele que mantem o APT29, que tambem ganhou
+-- bandeira do seeder, fora da lista.
 --
 -- Rodar de novo e inofensivo. Sem esta migracao nada quebra: o mapa regional apenas nao acha
 -- pais nenhum, e diz isso na tela.

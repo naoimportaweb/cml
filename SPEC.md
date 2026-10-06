@@ -996,6 +996,46 @@ duplicação que diverge calada — o oposto do que esta seção existe para evi
 ordem alfabética de verdade, o caminho é normalizar NFD e tirar os combinantes **nos dois lados**,
 com o comparador vigiando.
 
+### 11.2 A migração dos países (rodada em 2026-10-06) e a colisão Cuba
+
+A aba Regional e a vista do desktop nasceram sem nada para mostrar: **nenhuma entidade tinha o
+sub-tipo `country`** nas duas instalações, embora o `cyberwarfare` tivesse **251 entidades com
+bandeira**. O `country_seed.py` havia rodado *antes* de aprender a gravar o sub-tipo — é
+exatamente a migração que o `create.sql` já traz comentada.
+
+Rodada com uma guarda que **não estava** no bloco documentado, e que o ensaio provou necessária:
+
+```sql
+AND e.sub_etype_id IS NULL
+```
+
+Sem ela, a migração **sobrescreveria classificação boa**. O caso concreto: a entidade **Cuba** do
+banco é a família de *ransomware* Cuba, sub-tipo `malware`, descrição "Ransomware." — o seeder
+casa **por nome** (ele enriquece em vez de duplicar, que é o comportamento desejado) e pendurou a
+**bandeira de Cuba** no ransomware. Marcá-la como `country` faria um ransomware aparecer como país
+no mapa regional.
+
+Resultado no `CYBERWARFARE`: **236 marcadas, 1 preservada**. No `CORRUPCAO`, 0 — o seeder nunca
+rodou lá (nenhuma linha em `entity_face`), então ele não tem país nem bandeira nenhuma.
+
+Conferido de ponta a ponta depois: o mapa *"Russian Intelligence Hacks IP Cameras…"* passou a
+reconhecer **Russia** como país, e a aba Regional aparece nele. A bandeira não desenha porque
+aquele mapa está com `show_face` desligado — e o aviso da aba diz isso em vez de mostrar um
+buraco, que é o caminho que eu havia escrito no escuro e que o dado real acabou exercitando.
+
+**Três coisas ficaram fora, e são decisão de quem cuida do acervo:**
+
+1. **A Cuba segue com bandeira nacional num ransomware.** Tirar a bandeira é um `DELETE` em
+   `entity_face`; criar o país Cuba de verdade exige id novo, porque o `uuid5(ISO)` dele já está
+   ocupado pelo ransomware. Hoje **não existe entidade-país Cuba**.
+2. **12 países estão cadastrados como `organization`** (Canada, China, France, Hong Kong,
+   Indonesia, Pakistan, Philippines, Taiwan, Turkey, United Arab Emirates e mais) e **Israel** tem
+   id nativo. Nenhum é reconhecido pelo Regional. Re-tipá-los é escolha nominal, uma a uma — o
+   `etype = 'other'` do WHERE existe justamente para não arrastar o **APT29**, que também ganhou
+   bandeira do seeder e não é país.
+3. **Só 15 das entidades com bandeira estão em algum mapa.** O Regional é vista de mapa, não do
+   banco: país que ninguém colocou num mapa não aparece em lugar nenhum.
+
 ## 12. Fora de escopo
 
 Hub/loja de transforms de terceiros; execução de transform no servidor (descartada na decisão 3);
