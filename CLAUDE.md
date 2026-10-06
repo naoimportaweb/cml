@@ -104,7 +104,7 @@ Um servidor CML pode consultar *outros* servidores CML. O `federation_proxy.php`
 > entrava, e o `create.sql` o **publicava** para o usuário semeado, num repositório público.
 > Agora o servidor guarda `password_hash()` e confere com `password_verify()`. **O cliente não
 > mudou** — segue mandando `sha256(senha + salt)`. Linha no formato antigo é aceita **uma vez** e
-> reescrita no formato novo no próprio login; `server/data/migrar_senhas.php <domain>` converte
+> reescrita no formato novo no próprio login; `server/ferramentas/migrar_senhas.php <domain>` converte
 > tudo de uma vez, e a conversão é calculável a partir da própria coluna. Há `User.change_password`
 > + `DialogSenha` (File → Alterar senha…), que exige a senha atual, gira o salt e derruba as
 > outras sessões. **Nada disso vale até o deploy.**

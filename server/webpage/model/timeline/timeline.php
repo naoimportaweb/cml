@@ -187,18 +187,24 @@ class Timeline{
         // 6) Vinculo: UM EVENTO POR PONTA DATADA. As duas pontas podem ter periodos
         //    diferentes (A entrou em 1998, B saiu em 2003) e achatar isso perderia dado.
         //    O rotulo e "origens → destinos", montado depois para nao fazer N+1 aqui.
+        // ATENCAO ao sentido das duas colunas, que e contraintuitivo e ja me pegou:
+        //   diagram_relationship_element_id_reference = a caixa do VINCULO
+        //   diagram_relationship_element_id           = a caixa da PONTA (a entidade)
+        // E ltype: 1 = ponta "de", 2 = ponta "para". E a convencao do MapRelationship/001.php
+        // e do relationship.php desta mesma pasta; inverter isso faz o rotulo sair vazio de um
+        // lado e com tudo do outro, sem erro nenhum aparecer.
         $pontas = $mysql->DataTable(
-            "SELECT drl.diagram_relationship_element_id AS link_element_id,
+            "SELECT dre_link.id                         AS link_element_id,
                     ent_link.text_label                 AS verbo,
                     ent_ponta.text_label                AS ponta,
                     drl.ltype                           AS ltype,
                     drl.start_date, drl.end_date
                FROM diagram_relationship_link AS drl
                INNER JOIN diagram_relationship_element AS dre_link
-                       ON dre_link.id = drl.diagram_relationship_element_id
+                       ON dre_link.id = drl.diagram_relationship_element_id_reference
                LEFT  JOIN entity AS ent_link  ON ent_link.id  = dre_link.entity_id
                INNER JOIN diagram_relationship_element AS dre_ponta
-                       ON dre_ponta.id = drl.diagram_relationship_element_id_reference
+                       ON dre_ponta.id = drl.diagram_relationship_element_id
                LEFT  JOIN entity AS ent_ponta ON ent_ponta.id = dre_ponta.entity_id
               WHERE dre_link.diagram_relationship_id = ?", [ $mapa ] );
 
@@ -209,7 +215,7 @@ class Timeline{
             if( ! isset($por_link[$chave]) ){
                 $por_link[$chave] = array("verbo" => $p["verbo"], "a" => [], "b" => [], "linhas" => []);
             }
-            $lado = ( intval($p["ltype"]) == 0 ) ? "a" : "b";
+            $lado = ( intval($p["ltype"]) == 1 ) ? "a" : "b";   // 1 = de, 2 = para
             array_push( $por_link[$chave][$lado], (string)$p["ponta"] );
             array_push( $por_link[$chave]["linhas"], $p );
         }

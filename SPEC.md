@@ -697,7 +697,7 @@ partir do `create.sql` que não tenha trocado a senha tem a entrada publicada.
 **Feito em 2026-10-05:** o `session.php` passou a guardar `password_hash()` e a validar com
 `password_verify()`. O cliente **não mudou**. A linha no formato antigo ainda é aceita **uma
 vez** e é reescrita no formato novo no próprio login — a migração acontece sozinha, conta a
-conta. Para fechar de imediato há o `server/data/migrar_senhas.php <domain>`, que reescreve tudo
+conta. Para fechar de imediato há o `server/ferramentas/migrar_senhas.php <domain>`, que reescreve tudo
 de uma vez (calculável a partir da própria coluna, sem saber a senha de ninguém). O `create.sql`
 deixou de publicar a credencial: o usuário semeado nasce **sem senha utilizável** e não entra até
 alguém definir uma.
@@ -734,7 +734,7 @@ alinharia com a lei "repositório nasce privado" do `workspace/CLAUDE.md`.
 ### 10.5 O que depende de você
 
 1. **Deploy** (flag-portão do `DEPLOY.md`) — sem ele, §10.1 e §10.2 não valem em produção.
-2. **`php server/data/migrar_senhas.php <domain>`** logo depois, para cada domain.
+2. **`php server/ferramentas/migrar_senhas.php <domain>`** logo depois, para cada domain.
 3. **Trocar a senha** do usuário semeado onde ela ainda for a do `create.sql` antigo.
 4. Decidir sobre tornar o repositório **privado**.
 

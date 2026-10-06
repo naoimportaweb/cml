@@ -563,7 +563,7 @@ ALTER TABLE diagram_relationship_element_reference ADD COLUMN format_date VARCHA
 -- valor dela continua valendo como credencial), rode o conversor de uma vez. Ele e PHP porque
 -- password_hash nao existe em SQL:
 --
---     php server/data/migrar_senhas.php <domain>
+--     php server/ferramentas/migrar_senhas.php <domain>
 --
 -- O conversor le cada linha, pula as que ja estao em bcrypt e reescreve o resto com o hash
 -- dela mesma -- calculavel a partir da propria coluna, sem saber a senha de ninguem.

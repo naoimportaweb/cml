@@ -317,6 +317,51 @@ que funcionou foi uma **instalação irmã**: `public_html/corrupcao/cml/` ao la
 O `Session.publickey` é o teste mais barato de ponta a ponta: toca banco (lê `person`) e
 exercita o `crypto.path` (gera o `cml.pem`).
 
+## Deploy pendente de 2026-10-05/06 — roteiro, em ordem
+
+Tudo abaixo está **no repositório e não no servidor**. A ordem importa: o passo 2 é o que
+fecha o buraco de senha, e enquanto ele não roda o valor antigo da coluna ainda vale como
+credencial.
+
+**O que vai junto neste deploy:** o `session.php` com `password_hash`, o `User.change_password`,
+o `server/ferramentas/` (novo) e o `server/webpage/` com os três diagramas. Nenhuma alteração de
+schema é obrigatória — os diagramas na web e a senha não pedem coluna nova.
+
+1. **Enviar.** `deploy` do MCP `cml-remoto` (ele já confere a flag-portão, exclui `data/` e não
+   usa `--delete`). As pastas novas — `server/ferramentas/`, `server/webpage/model/timeline/`,
+   `.../model/organizationchart/`, `.../view/timeline/`, `.../view/organizationchart/`,
+   `.../controller/...` — vão junto, porque o `deploy.sh` copia `../server/*` inteiro.
+
+2. **Migrar as senhas, logo em seguida, para cada domain:**
+   ```
+   php server/ferramentas/migrar_senhas.php cyberwar
+   php server/ferramentas/migrar_senhas.php corrupcao
+   ```
+   A ferramenta é **só CLI** (recusa por HTTP — ela fica sob a raiz web e o deploy remove o
+   `.htaccess`). Roda quantas vezes quiser: linha já convertida é pulada.
+
+   Sem este passo o login continua funcionando — o `session.php` aceita o formato antigo **uma
+   vez** e converte sozinho — mas cada conta que não entrar fica com o valor antigo valendo.
+
+3. **Conferir o que falta converter:**
+   ```sql
+   SELECT count(*) FROM person WHERE password <> '' AND password NOT LIKE '$2y$%';
+   ```
+   Pela ferramenta `sql` do MCP. Zero = fechado.
+
+4. **Trocar a senha** de qualquer conta que ainda use a do `create.sql` antigo — agora dá pelo
+   próprio app: File → Alterar senha.
+
+5. **Conferir os três diagramas na web**: abrir `.../cml/webpage/`, e a lista deve trazer as
+   seções *Organogramas* e *Linhas do tempo* além dos mapas.
+
+**Conferência antes de enviar** (roda local, sem servidor):
+```
+python3 app/test/sql_schema.py            # toda a SQL contra o create.sql
+QT_QPA_PLATFORM=offscreen python3 app/test/web_organograma.py
+QT_QPA_PLATFORM=offscreen python3 app/test/web_timeline.py
+```
+
 ## Lacunas / a confirmar
 
 - O `~/.env` descreve um esquema multi-projeto (`CML_PROJECTS`, `<PROJETO>_DB_*`,

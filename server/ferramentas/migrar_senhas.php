@@ -10,11 +10,20 @@
 //
 // Roda quantas vezes quiser: linha ja em bcrypt e pulada.
 
+// SO PELA LINHA DE COMANDO. Isto fica sob a raiz web do servidor, e o deploy REMOVE o
+// .htaccess -- sem esta guarda, qualquer um que acertasse a URL dispararia uma reescrita da
+// coluna de senha de todo mundo, sem autenticacao nenhuma.
+if( php_sapi_name() !== "cli" ){
+    http_response_code(403);
+    echo "Esta ferramenta roda só pela linha de comando.\n";
+    exit(1);
+}
+
 require_once __DIR__ . "/../api/mysql.php";
 
 $domain = isset($argv[1]) ? $argv[1] : null;
 if ($domain === null) {
-    fwrite(STDERR, "uso: php migrar_senhas.php <domain>\n");
+    fwrite(STDERR, "uso: php server/ferramentas/migrar_senhas.php <domain>\n");
     exit(1);
 }
 
