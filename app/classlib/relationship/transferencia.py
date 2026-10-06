@@ -16,6 +16,12 @@
 import json;
 
 CABECALHO = "CML-MAPA-1";
+# Tipos que o mapa aceita. Nao e redundante com o cabecalho: o addEntity do modelo tem quatro
+# elif e NENHUM else -- tipo desconhecido escapa dos quatro e a funcao devolve
+# `self.elements[-1]`, que e uma caixa JA EXISTENTE; os dados colados eram escritos por cima
+# dela (ou estourava IndexError num mapa vazio). Texto da area de transferencia e dado de fora,
+# mesmo tendo o nosso cabecalho.
+ETYPES = ("person", "organization", "other");
 DESLOCAMENTO = 30;   # colar no mesmo lugar esconderia a copia debaixo do original
 
 
@@ -84,11 +90,21 @@ def colar(mapa, texto, deslocamento=DESLOCAMENTO):
     if not pode_colar(texto):
         raise ErroTransferencia("A área de transferência não tem um pedaço de mapa do CML.");
     dados = json.loads(texto);
+    caixas_json = [c for c in dados.get("caixas", []) if (c.get("etype") or "other") != "link"];
+    # Confere TUDO antes de criar qualquer coisa: colagem pela metade num mapa e pior que
+    # colagem recusada.
+    for item in caixas_json:
+        if (item.get("etype") or "other") not in ETYPES:
+            raise ErroTransferencia("A área de transferência tem um tipo de caixa desconhecido: %s."
+                                    % item.get("etype"));
+    for vinculo_json in dados.get("vinculos", []):
+        for ponta in list(vinculo_json.get("de", [])) + list(vinculo_json.get("para", [])):
+            indice = ponta.get("caixa");
+            if not isinstance(indice, int) or indice < 0 or indice >= len(caixas_json):
+                raise ErroTransferencia("A área de transferência tem um vínculo com ponta inválida.");
     criadas = [];
-    for item in dados.get("caixas", []):
+    for item in caixas_json:
         etype = item.get("etype") or "other";
-        if etype == "link":
-            continue;   # vinculo nao entra pela lista de caixas
         caixa = mapa.addEntity(etype, int(item.get("x") or 0) + deslocamento,
                                int(item.get("y") or 0) + deslocamento,
                                text=item.get("text"),
@@ -108,8 +124,8 @@ def colar(mapa, texto, deslocamento=DESLOCAMENTO):
     vinculos = 0;
     novos = list(criadas);
     for item in dados.get("vinculos", []):
-        pontas_de = [p for p in item.get("de", []) if p.get("caixa") < len(criadas)];
-        pontas_para = [p for p in item.get("para", []) if p.get("caixa") < len(criadas)];
+        pontas_de = list(item.get("de", []));
+        pontas_para = list(item.get("para", []));
         if len(pontas_de) == 0 or len(pontas_para) == 0:
             continue;
         meio_x = sum(criadas[p["caixa"]].x for p in pontas_de + pontas_para) / float(len(pontas_de) + len(pontas_para));

@@ -140,6 +140,21 @@ def main():
     except imp.ErroImportacao as erro:
         confere("não encontrado" in str(erro), "arquivo inexistente");
 
+    print("\nida e volta pelo CSV preserva as datas do vínculo");
+    mapa3 = MapRelationship();
+    mapa3.name = "Datas";
+    pa = mapa3.addEntity("person", 0, 0, text="Pessoa A");
+    pb = mapa3.addEntity("organization", 200, 0, text="Org B");
+    elo = mapa3.addEntity("link", 100, 50, text="dirige");
+    elo.addFrom(pa, start_date="2020-01-01", end_date="2021-02-03"); elo.addTo(pb);
+    arquivos = ed.exportar(mapa3, os.path.join(TEMP, "idavolta"), formato="csv");
+    r = imp.importar(arquivos[1]);   # o CSV de vínculos
+    confere(len(r.vinculos) == 1, "um vínculo");
+    confere(r.vinculos[0]["start_date"] == "2020-01-01",
+            "a data de início sobreviveu (%s)" % r.vinculos[0]["start_date"]);
+    confere(r.vinculos[0]["end_date"] == "2021-02-03",
+            "e a de fim também (%s)" % r.vinculos[0]["end_date"]);
+
     print("\n" + ("TODOS OS TESTES PASSARAM" if len(FALHAS) == 0 else "FALHAS: %d" % len(FALHAS)));
     return 1 if len(FALHAS) > 0 else 0;
 

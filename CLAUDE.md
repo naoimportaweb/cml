@@ -374,6 +374,15 @@ objetos seguem os mesmos, então diálogo aberto e referência guardada por aí 
 para lixo depois de um desfazer, e `mapa.elements` continua sendo **a mesma lista** (a reposição
 é por fatia, `elements[:] = ...`).
 
+> ⚠️ **Cada ponta vai guardada como par `(ponta, para_onde_apontava)`, não como lista.** O
+> `incorporate` não troca a lista — ele **muta o `LinkEntity` no lugar** (`lentity.entity =
+> destino`). Como a cópia da lista guarda os mesmos objetos, desfazer devolvia a caixa ao mapa e
+> deixava o vínculo apontando para o destino: a caixa voltava **órfã** e o save gravava o grafo
+> errado. O teste que deveria pegar isso era **tautológico** — guardava `list(from_entity)` e
+> depois comparava `[p.entity for p in from_entity]` com `[p.entity for p in guardado]`, os dois
+> lados lendo os mesmos objetos. Ao asseverar sobre mutação, guarde o **valor**, nunca o
+> continente.
+
 Quem mexe no mapa envolve a mutação em `with Operacao(mapa, "Apagar caixa"):` — e só empilha se
 algo mudou de fato, nada se a operação estourar no meio. A pilha é `mapa.desfazer`
 (`QUndoStack`) e mora no **documento**, não na janela: toda rotina que muda o mapa já tem o mapa

@@ -31,8 +31,11 @@ COLUNAS = {
     "sub_tipo":    ("sub_tipo", "subtipo", "sub_type", "subtype"),
     "apelido":     ("apelido", "small_label", "sigla", "alias"),
     "descricao":   ("descricao", "descrição", "description", "obs", "observacao"),
-    "inicio":      ("inicio", "início", "start", "start_date", "data_inicio"),
-    "fim":         ("fim", "end", "end_date", "data_fim"),
+    # inicio_de/fim_de/inicio_para/fim_para sao os nomes que o NOSSO exportar_dados escreve
+    # (e os atributos da aresta no GraphML). Sem eles, exportar e reimportar perdia as datas do
+    # vinculo em silencio -- justamente a ida e volta para a qual o modulo foi escrito.
+    "inicio":      ("inicio", "início", "start", "start_date", "data_inicio", "inicio_de", "inicio_para"),
+    "fim":         ("fim", "end", "end_date", "data_fim", "fim_de", "fim_para"),
     "de":          ("de", "source", "from", "origem"),
     "para":        ("para", "target", "to", "destino"),
     "verbo":       ("verbo", "label", "relacao", "relação", "tipo_vinculo"),

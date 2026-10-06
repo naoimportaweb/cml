@@ -185,6 +185,19 @@ def main():
     confere(so_raiz.root == None, "o organograma fica vazio");
     confere(so_raiz.tamanho() == (0, 0, 1, 1), "tamanho de organograma vazio não quebra");
 
+    print("\no exportador mede a MESMA altura que o item tem");
+    # O exportador somava as linhas das entidades de novo, por cima do h que ja as inclui: 93
+    # reais viravam 138, o "caber na pagina" encolhia demais e o 1:1 criava pagina em branco.
+    alto = OrganizationChart("alt");
+    item = alto.addEntityItem("Diretoria");
+    for nome in ["Ana", "Bruno", "Carla"]:
+        item.addEntity(entidade(nome));
+    desenhar(alto);
+    conteudo, _total = ex.__area__(alto, False);
+    confere(conteudo.height() == item.h,
+            "altura medida = altura do item (%d == %d)" % (conteudo.height(), item.h));
+    confere(conteudo.width() == item.w, "e a largura também");
+
     print("\n" + ("TODOS OS TESTES PASSARAM" if len(FALHAS) == 0 else "FALHAS: %d" % len(FALHAS)));
     return 1 if len(FALHAS) > 0 else 0;
 

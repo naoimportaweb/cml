@@ -97,16 +97,22 @@ def main():
 
     print("\nincorporar (reponta ponta de vinculo)");
     mapa, zeca, ana, org, vinculo = montar();
-    pontas_antes = list(vinculo.from_entity);
+    # A assercao tem de guardar PARA ONDE a ponta apontava, nao a lista de pontas: o
+    # incorporate muta o LinkEntity no lugar, entao guardar a lista (os mesmos objetos) e
+    # comparar depois da sempre igual -- foi assim que este teste passou verde escondendo o
+    # defeito, ate uma revisao perceber.
+    alvos_antes = [p.entity for p in vinculo.from_entity];
+    confere(alvos_antes == [zeca], "antes, a ponta aponta para a origem");
     with Operacao(mapa, "Incorporar"):
         mapa.incorporate(ana, zeca);    # destino=ana, origem=zeca
     confere(zeca not in mapa.elements, "a origem saiu do mapa");
-    aponta_para_ana = any(p.entity is ana for p in vinculo.from_entity);
-    confere(aponta_para_ana, "o vinculo passou a apontar para o destino");
+    confere([p.entity for p in vinculo.from_entity] == [ana], "o vinculo passou a apontar para o destino");
     mapa.desfazer.undo();
     confere(zeca in mapa.elements, "desfazer trouxe a origem de volta");
-    confere([p.entity for p in vinculo.from_entity] == [p.entity for p in pontas_antes],
-            "as pontas do vinculo voltaram ao que eram");
+    confere([p.entity for p in vinculo.from_entity] == [zeca],
+            "e a PONTA voltou a apontar para a origem (não ficou órfã)");
+    mapa.desfazer.redo();
+    confere([p.entity for p in vinculo.from_entity] == [ana], "refazer reaponta para o destino");
 
     print("\nnao empilha o que nao mudou");
     mapa, zeca, ana, org, vinculo = montar();

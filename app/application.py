@@ -566,7 +566,9 @@ class MainWindow(QMainWindow):
             # A marca do botao Lista pertence a JANELA, nao a barra: sem isto ele continuaria
             # marcado ao trocar para outro mapa que esta no desenho.
             self._lista_act.setChecked( getattr(buffer_area, "mostrando_lista", lambda: False)() );
-            self.__atualizar_desfazer__();
+        # FORA do if: ao fechar a ultima janela o sinal chega com None, e sem isto o botao
+        # continuava aceso dizendo "Desfazer Mover caixa" de um mapa que nao esta mais aberto.
+        self.__atualizar_desfazer__();
 
     @Slot()
     def update_window_menu(self):

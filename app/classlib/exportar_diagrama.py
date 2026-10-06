@@ -89,9 +89,10 @@ def __medir__(mapa, painter):
         for item in itens:
             if item.w == None or item.h == None or item.y == None:
                 continue;
-            # A altura efetiva cresce com as linhas de texto extra, como no draw do item.
-            altura = item.h + (15 * len(getattr(item, "buffer_lines_text", [])));
-            caixas.append((item.x, item.y, item.w, altura));
+            # item.h JA inclui as linhas das entidades (o medir() do item as soma). Somar de
+            # novo inflava a altura (93 reais viravam 138): o PDF "caber na pagina" encolhia
+            # mais do que precisava e o 1:1 criava faixa de pagina em branco.
+            caixas.append((item.x, item.y, item.w, item.h));
         return __envolver__(caixas);
 
     # MapRelationship

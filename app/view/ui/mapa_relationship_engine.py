@@ -12,7 +12,7 @@
 # segue igual.
 
 from PySide6.QtWidgets import (QGraphicsItem, QGraphicsScene, QGraphicsView, QMenu);
-from PySide6.QtCore import Qt, QRectF;
+from PySide6.QtCore import Qt, QPointF, QRectF;
 from PySide6.QtGui import (QColor, QMouseEvent, QPainter, QPainterPath, QPen, QPixmap, QTransform);
 
 import os, sys, inspect;
@@ -221,7 +221,16 @@ class MapaRelationshipEngine(QGraphicsView):
     # ---------------------------------------------------------------- modelo
 
     def getElement(self, x, y):
-        # So o que esta na tela recebe clique: caixa oculta nao pode ser pega "no escuro".
+        # Usa a area do ITEM, nao o retangulo cru do modelo: com viewlet de tamanho, a caixa e
+        # desenhada ampliada, e comparar com o retangulo cru fazia a caixa grande so aceitar
+        # clique no tamanho antigo -- o laco de selecao (que usa shape()) e o clique discordavam.
+        ponto = QPointF(x, y);
+        for item in reversed(self.itens):
+            if item.shape().contains(ponto):
+                return item.elemento;
+        if len(self.itens) > 0:
+            return None;
+        # Antes do primeiro redraw nao ha itens: cai no modelo, so o que esta visivel.
         for element in reversed(self.__visiveis__()):
             if element.x < x and element.x + element.w > x and element.y < y and element.y + element.h > y:
                 return element;
@@ -485,6 +494,14 @@ class MapaRelationshipEngine(QGraphicsView):
             self.pan_inicio = event.position().toPoint();
             self.setCursor(Qt.ClosedHandCursor);
             return;
+        if event.button() != Qt.LeftButton:
+            # So o esquerdo mexe na selecao, e o evento NAO sobe para o QGraphicsView: parar
+            # so a nossa logica nao bastava -- a propria cena limpa a selecao no press do botao
+            # direito. Clicar numa caixa para abrir o menu de Transforms desfazia a selecao
+            # multipla antes de o menu aparecer. O menu nao depende deste press: vem pelo
+            # contextMenuEvent, que o Qt entrega por conta propria.
+            event.accept();
+            return;
         self.previous_pos = event.position().toPoint();
         x, y = self.__posicao__(self.previous_pos);
         self.selected_element = self.getElement(x, y);
@@ -638,12 +655,19 @@ class MapaRelationshipEngine(QGraphicsView):
             campos = [entidade.text, entidade.small_label, entidade.sub_etype_name];
             if any(alvo in str(c or "").lower() for c in campos):
                 achados.append(elemento);
-        # Se o achado estiver oculto por filtro, revela: buscar e nao mostrar seria pior que
-        # nao achar -- o analista concluiria que a caixa nao existe.
-        revelar = [e for e in achados if e in self.ocultos];
-        if len(revelar) > 0:
-            for elemento in revelar:
+        # Se o achado estiver escondido, revela: buscar e nao mostrar seria pior que nao achar
+        # -- o analista concluiria que a caixa nao existe. Vale para o filtro E para o grupo
+        # colapsado; sem o grupo, a busca dizia "1 encontrada" e centralizava no vazio.
+        precisa_redraw = False;
+        for elemento in achados:
+            if elemento in self.ocultos:
                 self.ocultos.discard(elemento);
+                precisa_redraw = True;
+        for grupo in list(self.grupos):
+            if any(elemento in grupo["membros"] for elemento in achados):
+                self.grupos.remove(grupo);
+                precisa_redraw = True;
+        if precisa_redraw:
             self.redraw();
         self.selecionar(achados);
         if len(achados) > 0:

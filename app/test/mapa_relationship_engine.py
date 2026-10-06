@@ -195,6 +195,48 @@ def main():
         confere("travado" in str(erro), "recusou: %s" % erro);
     mapa.locked = False;
 
+    print("\nclique acompanha a ampliação do viewlet");
+    # Graus DIFERENTES de propósito: com todos iguais o viewlet não amplia ninguém (e aí o
+    # teste passaria sem testar nada, que foi o erro da primeira versão desta asserção).
+    mapa, pessoa, org, vinculo = montar();
+    outra_folha = mapa.addEntity("person", 50, 500, text="Segunda");
+    elo = mapa.addEntity("link", 300, 400, text="liga"); elo.addFrom(outra_folha); elo.addTo(org);
+    engine = MapaRelationshipEngine(parent=None, mapa=mapa, form=None);
+    engine.resize(900, 700); engine.redraw();
+    engine.aplicar_viewlet("grau");
+    item = [i for i in engine.itens if i.elemento is org][0];
+    confere(item.escala > 1.0, "a caixa está ampliada (%.2f)" % item.escala);
+    borda_x = org.x + org.w + 4;   # fora do retângulo cru, dentro do desenhado
+    confere(item.shape().boundingRect().right() > borda_x, "o ponto está dentro da área desenhada");
+    confere(engine.getElement(borda_x, org.y + org.h / 2) is org,
+            "e o clique nele acha a caixa (antes caía no vazio)");
+    engine.aplicar_viewlet("nenhum");
+
+    print("\nbuscar revela também o que está dentro de grupo colapsado");
+    mapa, pessoa, org, vinculo = montar();
+    engine = MapaRelationshipEngine(parent=None, mapa=mapa, form=None);
+    engine.resize(900, 700); engine.redraw();
+    outra = mapa.addEntity("person", 700, 700, text="Beltrano");
+    engine.redraw();
+    engine.selecionar([pessoa, outra]);
+    engine.colapsar_selecionados("Grupo");
+    confere(len(engine.grupos) == 1, "grupo criado");
+    achou = engine.buscar("Beltrano");
+    confere(achou == 1, "achou dentro do grupo");
+    confere(len(engine.grupos) == 0, "o grupo foi expandido para mostrar");
+    confere(engine.selecionados() == [outra], "e o achado ficou selecionado de verdade");
+
+    print("\nbotão direito não desfaz a seleção");
+    mapa, pessoa, org, vinculo = montar();
+    engine = MapaRelationshipEngine(parent=None, mapa=mapa, form=None);
+    engine.resize(900, 700); engine.redraw();
+    engine.selecionar([pessoa, org]);
+    ponto = QPointF(engine.mapFromScene(QPointF(pessoa.x + 5, pessoa.y + 5)));
+    direito = QMouseEvent(QEvent.MouseButtonPress, ponto, ponto, Qt.RightButton, Qt.RightButton, Qt.NoModifier);
+    engine.mousePressEvent(direito);
+    confere(len(engine.selecionados()) == 2, "as duas continuam selecionadas (%d)" % len(engine.selecionados()));
+    confere(engine.selected_element == None, "e nada entrou em modo de arrasto");
+
     print("\n" + ("TODOS OS TESTES PASSARAM" if len(FALHAS) == 0 else "FALHAS: %d" % len(FALHAS)));
     return 1 if len(FALHAS) > 0 else 0;
 

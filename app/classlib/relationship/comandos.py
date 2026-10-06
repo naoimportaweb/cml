@@ -9,7 +9,13 @@
 # O instantaneo guarda ESTRUTURA e POSICAO, pela IDENTIDADE dos objetos (nada e clonado):
 #   - quais elements estao no mapa, e em que ordem (ordem = quem desenha por cima);
 #   - o x/y de cada um;
-#   - as duas listas de ponta de cada vinculo (e o que o incorporate reponta).
+#   - as duas listas de ponta de cada vinculo E PARA ONDE CADA PONTA APONTA.
+#
+# Esse ultimo detalhe custou um defeito: guardar so as LISTAS nao basta, porque o incorporate
+# nao troca a lista -- ele MUTA o objeto LinkEntity no lugar (`lentity.entity = destino`). Como
+# a copia da lista guarda os mesmos objetos, desfazer devolvia a caixa ao mapa mas deixava o
+# vinculo apontando para o destino: a caixa voltava orfa e o save gravava o grafo errado. Por
+# isso cada ponta vai guardada como PAR (ponta, para_onde_apontava).
 # Os objetos continuam os mesmos, entao dialogo aberto e referencia guardada por ai nao viram
 # ponteiro para lixo depois de um desfazer.
 #
@@ -28,7 +34,8 @@ def tirar_instantaneo(mapa):
     for elemento in mapa.elements:
         pos[elemento] = (elemento.x, elemento.y);
         if elemento.entity.etype == "link":
-            pontas[elemento] = (list(elemento.to_entity), list(elemento.from_entity));
+            pontas[elemento] = ([(p, p.entity) for p in elemento.to_entity],
+                                [(p, p.entity) for p in elemento.from_entity]);
     return {"ordem": list(mapa.elements), "pos": pos, "pontas": pontas};
 
 
@@ -40,8 +47,11 @@ def aplicar_instantaneo(mapa, instantaneo):
         elemento.x = x;
         elemento.y = y;
     for vinculo, (para, de) in instantaneo["pontas"].items():
-        vinculo.to_entity[:] = para;
-        vinculo.from_entity[:] = de;
+        vinculo.to_entity[:] = [ponta for ponta, _ in para];
+        vinculo.from_entity[:] = [ponta for ponta, _ in de];
+        # Repoe tambem PARA ONDE cada ponta aponta: e isso que o incorporate muta no lugar.
+        for ponta, alvo in para + de:
+            ponta.entity = alvo;
 
 
 def mudou(antes, depois):
@@ -54,7 +64,12 @@ def mudou(antes, depois):
         return True;
     for vinculo, (para, de) in antes["pontas"].items():
         atual = depois["pontas"].get(vinculo);
-        if atual == None or atual[0] != para or atual[1] != de:
+        if atual == None:
+            return True;
+        # Compara os PARES: so a lista nao acusaria o incorporate, que muta a ponta no lugar.
+        if [(id(p), id(a)) for p, a in atual[0]] != [(id(p), id(a)) for p, a in para]:
+            return True;
+        if [(id(p), id(a)) for p, a in atual[1]] != [(id(p), id(a)) for p, a in de]:
             return True;
     return False;
 
