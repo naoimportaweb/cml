@@ -649,6 +649,124 @@ function dataCurta(s){
     return p.length === 3 ? (p[2] + "/" + p[1] + "/" + p[0]) : String(s);
 }
 
+// ===================================================================== REGIONAL
+// Espelho de app/classlib/relationship/regional.py. Mesmas regras, de proposito:
+//
+//   - pais e reconhecido pelo SUB-TIPO, nunca por adivinhacao sobre o nome;
+//   - "Entidades" conta caixas DISTINTAS que tocam o pais, nao vinculos -- duas pessoas
+//     ligadas por tres vinculos cada sao duas, nao seis;
+//   - ordem: mais tocado primeiro, desempate por vinculos e depois por nome (estavel);
+//   - bandeira que falta e AVISADA, nao escondida.
+//
+// Roda no navegador a partir do mapa ja carregado, como no desktop (lá o
+// Timeline/MapaRegional tambem trabalha sobre o mapa que o load trouxe) -- nao ha segunda
+// consulta, e nao ha segunda verdade sobre o que conta como pais.
+//
+// ⚠️ NAO E PROJECAO GEOGRAFICA: o banco nao guarda coordenada e o repositorio nao tem
+// geometria de pais. O porque esta por extenso no regional.py.
+//
+// Isto e reimplementacao do desktop: mudou a regra la, muda aqui. A defesa contra divergencia
+// e app/test/web_regional.py, que roda as DUAS e compara.
+var SUBTIPOS_PAIS = ["country", "pais", "país", "countries", "nacao", "nação"];
+
+function ehPais(e){
+    if(!e || e.etype === "link"){ return false; }
+    var s = String(e.sub_etype_name == null ? "" : e.sub_etype_name).trim().toLowerCase();
+    return SUBTIPOS_PAIS.indexOf(s) >= 0;
+}
+
+function agregarRegional(js){
+    var elements = js.elements || [];
+    var porId = {};
+    elements.forEach(function(e){ porId[e.id] = e; });
+    var paises = elements.filter(ehPais);
+    if(paises.length === 0){ return []; }
+
+    var vinculos = elements.filter(function(e){ return e.etype === "link"; });
+    var saida = paises.map(function(pais){
+        var tocam = {}, nVinculos = 0;
+        vinculos.forEach(function(v){
+            var pontas = [];
+            (v.to || []).concat(v.from || []).forEach(function(p){
+                var caixa = porId[p.id];
+                if(caixa){ pontas.push(caixa); }
+            });
+            if(pontas.indexOf(pais) < 0){ return; }
+            nVinculos = nVinculos + 1;
+            pontas.forEach(function(outra){
+                if(outra !== pais && outra.etype !== "link"){ tocam[outra.id] = true; }
+            });
+        });
+        return { caixa: pais,
+                 nome: (String(pais.text_label == null ? "" : pais.text_label).trim() || "(sem nome)"),
+                 bandeira: pais.face,
+                 entidades: Object.keys(tocam).length,
+                 vinculos: nVinculos };
+    });
+    saida.sort(function(a, b){
+        if(a.entidades !== b.entidades){ return b.entidades - a.entidades; }
+        if(a.vinculos !== b.vinculos){ return b.vinculos - a.vinculos; }
+        var x = a.nome.toLowerCase(), y = b.nome.toLowerCase();
+        return x < y ? -1 : (x > y ? 1 : 0);
+    });
+    return saida;
+}
+
+function semBandeira(resumo){
+    return resumo.filter(function(r){ return !r.bandeira; }).length;
+}
+
+function montarRegional(js, destino){
+    var resumo = agregarRegional(js);
+    var bloco = $("<div style='padding:16px'>");
+    bloco.append($("<h2>").text("Mapa regional"));
+
+    if(resumo.length === 0){
+        bloco.append($("<p class='aviso'>").text(
+            "Nenhum país neste mapa. Um país é uma entidade com o sub-tipo “country” — é o que o "
+            + "script/country_seed.py grava, e o que o combo de sub-tipo oferece."));
+        destino.append(bloco);
+        return;
+    }
+
+    var texto = resumo.length + " país(es) neste mapa, do mais tocado ao menos. “Entidades” conta "
+              + "quantas caixas distintas se ligam a ele, não quantos vínculos.";
+    var faltam = semBandeira(resumo);
+    if(faltam > 0){
+        // Avisa em vez de desenhar buraco: bandeira que falta e dado que falta. No web ela
+        // tambem falta quando o mapa esta com "exibir rosto" desligado -- o modelo so carrega
+        // os base64 nesse caso, igual ao desktop.
+        texto = texto + "  " + faltam + " sem bandeira"
+              + (js.show_face ? " (rode o script/country_seed.py)."
+                              : " — este mapa está com “exibir rosto” desligado, então as bandeiras não foram carregadas.");
+    }
+    bloco.append($("<p class='aviso'>").text(texto));
+
+    var thead = $("<thead>").append($("<tr>"));
+    ["", "País", "Entidades", "Vínculos"].forEach(function(c, i){
+        thead.find("tr").append($("<th>").addClass(i >= 2 ? "num" : "").text(c));
+    });
+    var tbody = $("<tbody>");
+    resumo.forEach(function(r){
+        var tr = $("<tr>");
+        var td_flag = $("<td>");
+        if(r.bandeira){
+            // data URI que auto-detecta JPEG/PNG, como no resto do web.
+            td_flag.append($("<img>").attr("src", dataUri(r.bandeira))
+                                     .css({height: "22px", width: "auto", display: "block"}));
+        }
+        tr.append(td_flag);
+        tr.append($("<td>").text(r.nome));
+        tr.append($("<td class='num'>").text(r.entidades));
+        tr.append($("<td class='num'>").text(r.vinculos));
+        // Sem navegar para o mapa ao clicar: nenhuma das outras abas do web faz isso, e o
+        // duplo clique que o desktop tem abre um dialogo de edicao, que aqui nao existe.
+        tbody.append(tr);
+    });
+    bloco.append($("<table>").append(thead).append(tbody));
+    destino.append(bloco);
+}
+
 function montarDocumentos(destino){
     // Somente leitura: o web ve e baixa. O envio e pelo botao "Documentos" do cliente
     // desktop, que passa pelo execute.php e tem sessao — aqui nao ha como saber quem esta
@@ -822,10 +940,16 @@ function callbackMap(js){
     // pelo carregarDocumentos.
     var aba_docs = aba("Documentos", "", "div_documentos", false, "cont_docs");
     var aba_refs = aba("Referências", nRefs, "div_referencias", false);
+    // Regional: so aparece se houver pais no mapa. Aba vazia em todo mapa seria ruido -- a
+    // maioria dos mapas nao tem entidade-pais nenhuma.
+    var resumo_regional = agregarRegional(js);
+    var aba_reg = resumo_regional.length > 0
+                ? aba("Regional", resumo_regional.length, "div_regional", false) : null;
 
     montarDocumentos(aba_docs);
     montarMapa(aba_mapa);
     montarRelacoes(js, aba_rel);
+    if(aba_reg){ montarRegional(js, aba_reg); }
     lerPaleta();
     precarregarFaces(js);
     // medir() antes de dimensionar(): a altura do palco vem de MAPA._h, que so existe

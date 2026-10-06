@@ -930,6 +930,38 @@ dentro dela, porque a mesma caixa pode ser ponta de vários vínculos com perío
 ocultar/colapsar, minimapa, régua do tempo. Nada disso é obrigatório num site de leitura — mas é
 a lista do que já diverge, e ela só cresce.
 
+### 11.1 A aba Regional (feito em 2026-10-06)
+
+Terceira reimplementação desktop→web, pelo mesmo caminho das duas primeiras: regra espelhada +
+teste comparador que roda as duas e compara.
+
+| | Precisou de código no web? |
+|---|---|
+| **Estrela** | **Não.** É mapa de vínculos comum: o layout grava `x`/`y`, o save persiste e o canvas do web desenha desses mesmos `x`/`y` sem calcular layout. Apareceu de graça. |
+| **Regional — o desenho** | **Não**, pela mesma razão. O `show_face` também viaja, então as bandeiras renderizam. |
+| **Regional — a tabela** | **Sim**: `agregarRegional` no `<script>` da view, espelhando `regional.py`, mais `sub_etype_name` no payload do `relationship_load.php`. |
+
+A aba **só aparece quando há país no mapa** — aba vazia em todo mapa seria ruído.
+
+**O teste comparador me pegou duas vezes, e as duas valem registro:**
+
+1. A primeira versão do `web_regional.py` **aprovava uma sabotagem**: inverti a ordem do
+   desempate por nome no JS e o teste passou. O cenário não tinha empate nenhum — três países com
+   contagens distintas —, então a regra de desempate nunca era exercitada. É o mesmo erro do
+   teste tautológico do `incorporate` e do teste de colisão sem `recalc`: **a asserção existia, o
+   caso não**. Corrigido com quatro países que empatam de propósito (Chile×Peru empatam em
+   entidades, Panamá×Peru empatam em tudo menos o nome, e três empatam em zero).
+2. Com o empate no lugar, o teste reprovou — e **o errado era eu**. Esperava `Angola, Áustria,
+   Suíça`; os dois lados produzem `Angola, Suíça, Áustria`, porque a ordem é por **ponto de
+   código** e `á` (0xE1) é maior que qualquer letra ASCII. "Áustria" sai depois de "Zâmbia".
+
+A segunda é uma esquisitice real de produto, e está **deixada como está, de propósito**: os dois
+lados concordam, e é a concordância que o teste protege. Dobrar acento exigiria normalização
+idêntica em Python e em JS (`unicodedata` × `String.normalize`), que é exatamente o tipo de
+duplicação que diverge calada — o oposto do que esta seção existe para evitar. Se o dono quiser a
+ordem alfabética de verdade, o caminho é normalizar NFD e tirar os combinantes **nos dois lados**,
+com o comparador vigiando.
+
 ## 12. Fora de escopo
 
 Hub/loja de transforms de terceiros; execução de transform no servidor (descartada na decisão 3);

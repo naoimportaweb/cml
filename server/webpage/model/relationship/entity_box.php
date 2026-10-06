@@ -30,6 +30,9 @@ class EntityBox{
     private $from_entity = [];
     private $face = null;          // rosto proprio (base64), substitui a caixa
     private $subtype_face = null;  // rosto default do subtipo (badge)
+    // Nome do subtipo. E por ele -- nao por adivinhacao sobre o nome -- que a aba Regional
+    // reconhece uma entidade-pais, igual ao regional.py do desktop.
+    private $sub_etype_name = null;
 
     function __construct($mapa, $domain) {
         $this->domain = $domain;
@@ -73,12 +76,15 @@ class EntityBox{
         $this->data_extra   = $data_table["data_extra"];
         $this->full_description = $data_table["full_description"];
         $this->wikipedia        = $data_table["wikipedia"];
+        // isset porque nao toda consulta que monta EntityBox traz a coluna (a do organograma,
+        // por exemplo, nao faz o join com sub_etype).
+        $this->sub_etype_name = isset( $data_table["sub_etype_name"] ) ? $data_table["sub_etype_name"] : null;
         $this->w            = ( self::tamanhoTexto( $this->text_label ) * self::CHAR_W ) + self::PADDING;
         $this->recalculateCenter();
     }
 
     public function toJson(){
-        $buffer = array("id" => $this->id, "entity_id" => $this->entity_id, "etype" => $this->etype, "x" => $this->x, "y" => $this->y, "h" => $this->h, "w" => $this->w, "text_label" => $this->text_label, "full_description" => $this->full_description, "wikipedia" => $this->wikipedia, "references" => $this->references, "to" => [], "from" => [], "center_x" => $this->center_x, "center_y" => $this->center_y, "face" => $this->face, "subtype_face" => $this->subtype_face);
+        $buffer = array("id" => $this->id, "entity_id" => $this->entity_id, "etype" => $this->etype, "x" => $this->x, "y" => $this->y, "h" => $this->h, "w" => $this->w, "text_label" => $this->text_label, "full_description" => $this->full_description, "wikipedia" => $this->wikipedia, "references" => $this->references, "to" => [], "from" => [], "center_x" => $this->center_x, "center_y" => $this->center_y, "face" => $this->face, "subtype_face" => $this->subtype_face, "sub_etype_name" => $this->sub_etype_name);
 
         if( $this->etype == "link") {
             foreach( $this->to_entity as $_to ) {
@@ -109,6 +115,10 @@ class EntityBox{
 
     public function setSubtypeFace($face){
         $this->subtype_face = $face;
+    }
+
+    public function setSubEtypeName($nome){
+        $this->sub_etype_name = $nome;
     }
 
     // As datas viajam ao lado da ponta, e nao dentro dela: a MESMA caixa pode ser ponta de

@@ -304,14 +304,34 @@ ao redor da caixa de origem; persistir é o save do mapa, como sempre. Contrato 
 >
 > A defesa contra a divergência são dois testes que rodam as **duas** implementações e comparam:
 > `app/test/web_organograma.py` (layout, caixa a caixa, executando o JS do próprio `index.php`
-> com `node`) e `app/test/web_timeline.py` (projeção: quais eventos existem, executando o PHP do
-> próprio modelo). O primeiro já se pagou — acusou `int()` contra `Math.round`, 1–2px. O da
+> com `node`), `app/test/web_timeline.py` (projeção: quais eventos existem, executando o PHP do
+> próprio modelo) e `app/test/web_regional.py` (o resumo por país, executando o JS da própria
+> view). O primeiro já se pagou — acusou `int()` contra `Math.round`, 1–2px. O da
 > timeline **não compara pixel de propósito**: métrica de fonte do Qt e do canvas não batem, e
 > exigir isso seria um teste que falha por motivo errado.
 
 `server/webpage/` é um app PHP MVC próprio (não JSON-RPC) para **visualizar** mapas e baixar documentos pelo navegador. Entra por `server/webpage/index.php`, que escolhe o domain (reusa `Mysql::domains()` do `data/config.json`) e redireciona para a lista. É servido no caminho `.../cml/webpage/`. Estrutura clássica `controller/`/`model/`/`view/`/`service/`, com os assets em `public/`.
 
-O canvas JS do mapa (`view/relationship/relationship.php`) **desenha os rostos** quando o mapa está com `show_face`: o rosto próprio (`entity_face`) substitui a caixa e o rosto default do subtipo (`sub_etype.face_default`) vira badge (o próprio tem preferência). O modelo (`model/relationship/`) só carrega os base64 quando `show_face` está ligado. As imagens vão como data URI que auto-detecta JPEG/PNG. As **"Relações"** (lista textual) ficam em **aba própria**, separadas do mapa. Abas: Mapa · Relações · Documentos · Referências.
+O canvas JS do mapa (`view/relationship/relationship.php`) **desenha os rostos** quando o mapa está com `show_face`: o rosto próprio (`entity_face`) substitui a caixa e o rosto default do subtipo (`sub_etype.face_default`) vira badge (o próprio tem preferência). O modelo (`model/relationship/`) só carrega os base64 quando `show_face` está ligado. As imagens vão como data URI que auto-detecta JPEG/PNG. As **"Relações"** (lista textual) ficam em **aba própria**, separadas do mapa. Abas: Mapa ·
+Relações · **Regional** · Documentos · Referências.
+
+A aba **Regional** é a terceira reimplementação desktop→web (depois do organograma e da
+timeline): `agregarRegional` no `<script>` da view espelha `classlib/relationship/regional.py`
+regra por regra — país pelo **sub-tipo**, "Entidades" contando caixas **distintas** e não
+vínculos, mesma ordem (mais tocado, depois mais vínculos, depois nome) e o mesmo aviso de
+bandeira que falta. Ela **só aparece quando há país no mapa**: aba vazia em todo mapa seria
+ruído, porque a maioria não tem entidade-país nenhuma. Para isso o `relationship_load.php`
+passou a mandar `sub_etype_name` por elemento (antes o `sub_etype` só era consultado para o
+`face_default`) — sem ele o web não tem como reconhecer país.
+
+A **Estrela não exigiu nada**: é mapa de vínculos comum, o layout grava `x`/`y` no modelo, o
+save persiste e o canvas do web desenha desses mesmos `x`/`y`, sem calcular layout. O mesmo vale
+para o **desenho** do Regional; o que precisou de código foi só a tabela.
+
+> ⚠️ A ordem por nome, nas duas pontas, é por **ponto de código** — não alfabética com acento
+> dobrado. "Áustria" sai depois de "Suíça" e depois de "Zâmbia", porque `á` (0xE1) é maior que
+> qualquer letra ASCII. Os dois lados fazem igual e o teste prende essa igualdade; dobrar acento
+> exigiria normalização idêntica em Python e em JS, que é o tipo de coisa que diverge calada.
 
 ### Os bots são plug-ins
 
