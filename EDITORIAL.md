@@ -1,5 +1,11 @@
 # EDITORIAL.md — como preencher um mapa de vínculos
 
+> **Os nomes deste guia são fictícios.** "Zeca Andrade", "Banco Aurora", "PRN", "Caso Aurora" e
+> companhia não existem — servem só para o exemplo ter cara de caso real. O guia mora em
+> repositório público, e exemplo com nome de gente de verdade associa o projeto a afirmações
+> sobre pessoas nomeadas, o que um guia de estilo não precisa fazer para ensinar o que ensina.
+> Instituição pública genérica (STF, Receita) fica, porque é vocabulário, não acusação.
+
 Regras editoriais para quem alimenta o CML (pessoa, script ou bot), extraídas da revisão dos
 sete primeiros mapas do domain `corrupcao` (2026-09-22). O princípio que resume todas: **o mapa
 é lido de relance; o detalhe mora nos diálogos** (aba References, campo Descrição). Quem vai
@@ -8,12 +14,12 @@ arquivo é sobre *conteúdo*, não sobre transporte.
 
 ## 1. Entidade = só o nome
 
-- A **caixinha** mostra o nome e mais nada: "José Dirceu", "Banco Master", "Mensalão". Nada de
-  "José Dirceu · ex-ministro · condenado · R$ 1,1 mi".
-- **Nickname / Acronym** vai no campo próprio (`small_label`): "Lula", "PT", "STF", "Dino".
+- A **caixinha** mostra o nome e mais nada: "Zeca Andrade", "Banco Aurora", "Caso Aurora". Nada de
+  "Zeca Andrade · ex-ministro · condenado · R$ 1,1 mi".
+- **Nickname / Acronym** vai no campo próprio (`small_label`): "Zeca", "PRN", "STF", "Dora".
   Atenção ao desenho: para pessoa e "outro" o apelido **substitui** o nome na caixa; para
   organização aparece como "Nome (SIGLA)". Por isso apelido é apelido — não é lugar de cargo.
-- **Nome completo no `text_label`**: "Luiz Inácio Lula da Silva" (apelido "Lula"), "Partido dos
+- **Nome completo no `text_label`**: "José Carlos de Andrade" (apelido "Zeca"), "Partido dos
   Trabalhadores" (sigla "PT"). O apelido é o que se lê no mapa; o nome é o que identifica.
 - **Descrição da entidade descreve a entidade** — quem ela é, em qualquer contexto: "Político
   brasileiro, ex-metalúrgico e sindicalista do ABC paulista, fundador do PT; presidente da
@@ -35,14 +41,14 @@ arquivo é sobre *conteúdo*, não sobre transporte.
   `start_date`/`end_date`/`format_date`. Use `yyyy` quando só o ano importa (o convite de
   2022), `MM/yyyy` para mês (a nota de março/2026), `yyyy-MM-dd` quando há o dia.
 - **Vínculos do mesmo tipo se juntam** num só com várias pontas: quatro "Financiou R$ …"
-  viram um "Financiou" `PT → Dirceu, Vargas, Cunha, Delúbio`; quatro "Condenado …" viram um
-  "Condenados" `→ Mensalão, Petrolão`. O que se perde na ponta individual (quem foi condenado em
+  viram um "Financiou" `PRN → Andrade, Vargas, Cunha, Teles`; quatro "Condenado …" viram um
+  "Condenados" `→ Caso Aurora, Caso Bandeira`. O que se perde na ponta individual (quem foi condenado em
   qual escândalo) vai para a descrição do vínculo.
 - **A descrição do vínculo é o próprio fato** — ali, sim, o texto pode vir da matéria, com
-  valores, datas e citações: "Dirceu recebeu R$ 1,1 milhão do PT; Cunha R$ 1,1 milhão; Vargas
-  R$ 841 mil; Delúbio R$ 780 mil".
-- Direção importa: `from` é quem age, `to` é quem recebe ("PT → Financiou → candidatos";
-  "Ciro Soares → Intermediou → Vorcaro, Gonet").
+  valores, datas e citações: "Andrade recebeu R$ 1,1 milhão do PRN; Cunha R$ 1,1 milhão; Vargas
+  R$ 841 mil; Teles R$ 780 mil".
+- Direção importa: `from` é quem age, `to` é quem recebe ("PRN → Financiou → candidatos";
+  "Ciro Teles → Intermediou → Aurora, Bandeira").
 
 ## 3. Descrição e fonte
 
@@ -70,7 +76,7 @@ arquivo é sobre *conteúdo*, não sobre transporte.
   mapa poda referências que não forem reenviadas; reaproveitar sem carregar apaga o histórico.
   (Hoje a busca devolve só a linha da entidade, sem referências; script precisa reuni-las dos
   mapas em que ela aparece — ver "Armadilhas".)
-- Nome canônico e estável: "Alexandre de Moraes", não "Moraes"; "Supremo Tribunal Federal",
+- Nome canônico e estável: "Alberto de Matos", não "Matos"; "Supremo Tribunal Federal",
   não "STF". Apelidos e siglas entram no `small_label`, e é por eles que a busca também acha.
 - Em dúvida entre dois candidatos parecidos (mesma pessoa? mesma empresa?), perguntar — e
   registrar a decisão na descrição ("Prime Aviation, referida também como Prime You").

@@ -7,7 +7,7 @@ import os, sys, json, socket, time, inspect;
 CURRENTDIR = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())));
 sys.path.append( os.path.dirname( CURRENTDIR ) );
 
-from transform.nucleo import env, rota_efetiva, backend_llm, ErroTransform;
+from transform.nucleo import env, rota_efetiva, backend_llm, motivo_llm, ErroTransform;
 
 # Firefox corrente (release 157 em 2026-09-29; ciclo de 4 semanas). Regra do dono: todo acesso
 # a site externo sai com UA de Firefox atualizado. CML_TX_USER_AGENT sobrescreve sem editar codigo.
@@ -66,6 +66,10 @@ class LLM:
 
     def gerar(self, prompt, formato=None, idioma_instrucao=None, espera_total=900):
         from classlib.report import MODELO;
+        motivo = motivo_llm();
+        if motivo != None:
+            # Mensagem de gente, nao traceback: o backend nao estar de pe e situacao prevista.
+            raise ErroTransform(motivo);
         if self.backend == "rolhama":
             from classlib.rolhama import Rolhama;
             return Rolhama(projeto=CANAL_LLM).gerar(prompt, model=MODELO, formato=formato,

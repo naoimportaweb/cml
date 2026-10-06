@@ -675,7 +675,7 @@ Levantado ao conferir o que o repositório **público** `naoimportaweb/cml` exp�
 investigação no repo (os mapas vivem no MySQL), nem `.env`, chave privada ou certificado em
 commit algum, e o `server/data/config.json` versionado traz só placeholder. O que há:
 
-### 10.1 A senha guardada **é** a credencial ⚠️ prioritário
+### 10.1 A senha guardada **era** a credencial ✅ corrigido no código (falta deploy)
 
 `server/services/classlib/session.php` valida com
 `select * from person where username=? and password=?` — o valor recebido é comparado **direto
@@ -687,34 +687,49 @@ Conferido: a sessão de produção do domain `corrupcao` envia um valor diferent
 lá a senha já foi trocada. Mas **cada domain é um banco próprio** — qualquer instalação feita a
 partir do `create.sql` que não tenha trocado a senha tem a entrada publicada.
 
-**O conserto de raiz, sem o cliente mudar nada:** o servidor passa a guardar `password_hash()` do
-que recebe e a validar com `password_verify()`. A migração é **calculável a partir da própria
-coluna** — como o guardado é exatamente o que o cliente envia, basta reescrever cada linha com o
-bcrypt dela mesma, uma vez. Nenhum cliente precisa ser atualizado e nenhuma senha precisa ser
-redefinida; o hash do `create.sql` deixa de ser aceito como entrada. Exige **deploy** e **bloco de
-migração** (§3.5).
+**Feito em 2026-10-05:** o `session.php` passou a guardar `password_hash()` e a validar com
+`password_verify()`. O cliente **não mudou**. A linha no formato antigo ainda é aceita **uma
+vez** e é reescrita no formato novo no próprio login — a migração acontece sozinha, conta a
+conta. Para fechar de imediato há o `server/data/migrar_senhas.php <domain>`, que reescreve tudo
+de uma vez (calculável a partir da própria coluna, sem saber a senha de ninguém). O `create.sql`
+deixou de publicar a credencial: o usuário semeado nasce **sem senha utilizável** e não entra até
+alguém definir uma.
 
-### 10.2 Não existe tela de alterar senha
+⚠️ **Falta o deploy** — até ele acontecer, o servidor em produção continua com o comportamento
+antigo. E, enquanto houver linha no formato antigo, o valor dela ainda vale como credencial:
+rodar o `migrar_senhas.php` logo depois do deploy é o que fecha de verdade.
 
-Nem no cliente (`user.py` tem só `publickey`, `register`, `login`) nem no servidor (`session.php`
-não tem o método). Hoje a troca só acontece por SQL direto no banco. Falta um
-`User.change_password` com a assinatura de 4 argumentos (o `$user` já vem resolvido pelo token) e
-um diálogo, **exigindo a senha atual** — senão uma sessão sequestrada tranca o dono para fora —,
-aproveitando para girar o salt.
+### 10.2 Tela de alterar senha ✅ feita (falta deploy)
 
-### 10.3 O app imprime o token de sessão no stdout
+`User.change_password` no servidor (assinatura de 4 argumentos; o `$user` vem resolvido pelo
+token, e por isso **não há** `username` nos parâmetros — ninguém troca a senha de outro por ali)
+e `DialogSenha` no cliente, em File → **Alterar senha…**. Exige a **senha atual** junto: sem
+isso, uma sessão sequestrada trancaria o dono para fora. Gira o salt na troca e **encerra as
+outras sessões** da conta — trocar a senha é o que se faz quando se desconfia de alguém dentro.
+⚠️ **Falta o deploy.**
 
-`application.py` e o caminho RPC imprimem os envelopes inteiros, inclusive o **token de sessão** e
-o valor de senha transmitido. Quem rodar o cliente redirecionando a saída grava isso em disco em
-texto puro. Deve ficar atrás de uma variável de depuração, ou sair.
+### 10.3 O token de sessão no stdout ✅ corrigido
 
-### 10.4 `EDITORIAL.md` usa nomes reais como exemplo
+O `connectobject.py` imprimia o envelope inteiro, com o **token de sessão** e o valor de senha
+transmitido — quem redirecionasse a saída gravava isso em texto puro. Agora só sai com
+`CML_DEBUG_RPC` ligado e **mascarado**: `session`, `token`, `password` e `simetric_key` viram
+`<omitido>`, inclusive **dentro da string `parameters`**, que é onde a senha viaja (mascarar só o
+nível de cima deixava o segredo passar). O resto do envelope continua legível, que é o ponto de
+depurar.
 
-Figuras e casos públicos, e um exemplo no formato de vínculo que tem cara de ter saído de um mapa
-de verdade. É guia de estilo, não registro de investigação — mas num repositório **público**
-associa o autor a afirmações sobre pessoas nomeadas. Decisão do dono: trocar por nomes fictícios,
-ou tornar o repositório privado (o que também alinharia com a lei "repositório nasce privado" do
-`workspace/CLAUDE.md`).
+### 10.4 Nomes reais no `EDITORIAL.md` ✅ corrigido
+
+Trocados por nomes fictícios ("Zeca Andrade", "Banco Aurora", "PRN", "Caso Aurora"), com uma nota
+no topo dizendo que são inventados. Instituição pública genérica (STF, Receita) ficou, porque é
+vocabulário e não acusação. **Continua em aberto** a decisão de tornar o repositório privado, que
+alinharia com a lei "repositório nasce privado" do `workspace/CLAUDE.md`.
+
+### 10.5 O que depende de você
+
+1. **Deploy** (flag-portão do `DEPLOY.md`) — sem ele, §10.1 e §10.2 não valem em produção.
+2. **`php server/data/migrar_senhas.php <domain>`** logo depois, para cada domain.
+3. **Trocar a senha** do usuário semeado onde ela ainda for a do `create.sql` antigo.
+4. Decidir sobre tornar o repositório **privado**.
 
 ## 11. Fora de escopo
 

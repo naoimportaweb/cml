@@ -48,6 +48,30 @@ class User (ConnectObject):
     #        return True;
     #    return False;
 
+    def change_password(self, atual, nova):
+        """Troca a propria senha. Devolve (ok, mensagem).
+
+        Manda sha256(senha + salt) das duas, como no login, e um salt NOVO -- trocar a senha e
+        a hora certa de girar um salt que pode ser fraco. O servidor exige a atual junto: sem
+        isso, uma sessao sequestrada trancaria o dono para fora.
+        """
+        if self.salt == None:
+            # O salt vem do publickey(), que a tela de login ja chamou nesta sessao.
+            if self.publickey() == None:
+                return (False, "Não foi possível falar com o servidor.");
+        atual_hash = hashlib.sha256( (atual + self.salt).encode() ).hexdigest();
+        salt_novo = str(uuid.uuid4());
+        nova_hash = hashlib.sha256( (nova + salt_novo).encode() ).hexdigest();
+        js = self.__execute__("User", "change_password",
+                              {"atual": atual_hash, "nova": nova_hash, "salt": salt_novo});
+        if not js.get("status") or js.get("return") == None:
+            return (False, js.get("error") or "O servidor não respondeu.");
+        retorno = js["return"];
+        if retorno.get("status"):
+            self.salt = salt_novo;
+            return (True, retorno.get("mensage") or "Senha alterada.");
+        return (False, retorno.get("mensage") or "Não foi possível alterar a senha.");
+
     def login(self, password):
         server = Server();
         if self.salt == None:

@@ -79,7 +79,17 @@ class DialogDocument(QDialog):
         self.__estado_report__();
 
     def __estado_report__(self, *args):
+        from transform.nucleo import motivo_llm;
         gerente = ReportManager.instancia();
+        motivo = motivo_llm();
+        if motivo != None and not gerente.ocupado():
+            # Sem LLM o botao fica DESLIGADO e dizendo por que, em vez de aceitar o clique e
+            # devolver uma excecao. Os documentos ja gerados continuam abrindo e baixando.
+            self.btn_gerar.setEnabled(False);
+            self.btn_gerar.setText("Gerar report (indisponível)");
+            self.btn_gerar.setToolTip(motivo[0].upper() + motivo[1:] + ".");
+            self.lbl_report.setText("Geração de report suspensa — " + motivo + ".");
+            return;
         if gerente.ocupado():
             self.btn_gerar.setEnabled(False);
             self.btn_gerar.setText("Gerando report…");
@@ -92,7 +102,7 @@ class DialogDocument(QDialog):
                 self.lbl_report.setText("⏳ " + str(gerente.ultimo));
         else:
             self.btn_gerar.setEnabled(True);
-            self.btn_gerar.setText("Gerar report (rolhama)");
+            self.btn_gerar.setText("Gerar report");
             self.btn_gerar.setToolTip("");
             self.lbl_report.setText("");
 

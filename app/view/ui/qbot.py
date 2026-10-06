@@ -21,6 +21,15 @@ class QBot(QWidget):
         self.btn = QPushButton( self.js["button"] );
         self.btn.setFont( Configuration.instancia().getFont() );
         self.btn.clicked.connect(self.btn_check);
+        # Bot que depende de LLM (hoje o 'entidades') fica desligado com o motivo no lugar de
+        # aceitar o clique e estourar excecao. O config.json do bot declara isso com "llm".
+        if self.js.get("llm"):
+            from transform.nucleo import motivo_llm;
+            motivo = motivo_llm();
+            if motivo != None:
+                self.btn.setEnabled(False);
+                self.btn.setText( self.js["button"] + " (indisponível)" );
+                self.btn.setToolTip( motivo[0].upper() + motivo[1:] + "." );
         self.layout = QVBoxLayout();
         self.layout.addWidget( self.btn );
         self.setLayout( self.layout );

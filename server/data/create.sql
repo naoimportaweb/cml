@@ -322,7 +322,17 @@ ALTER TABLE organization_chart_history ADD FOREIGN KEY (person_id) REFERENCES pe
 
 # --------------------------- LIMPANDO -------------------------
 
-insert into person (id, username, name, password, salt, email) values ('1', 'nao.importa.web', 'nao.importa.web', '7c61be27eec3fa7cef2e0d44d3145ea37648b0842d5574c0163b92c0bed54924', '1111', '');
+-- USUARIO SEMEADO SEM SENHA UTILIZAVEL.
+--
+-- Antes esta linha trazia o valor da coluna `password` preenchido. Isso era uma credencial
+-- publicada: o login comparava o valor recebido DIRETO com a coluna, entao quem lesse este
+-- arquivo entrava, sem precisar quebrar nada. O arquivo esta em repositorio.
+--
+-- Agora a coluna nasce vazia, e o `__confere_senha__` do session.php recusa senha vazia: a
+-- conta existe, mas NAO entra ate alguem definir a senha (pelo Register, ou por um UPDATE com
+-- password_hash feito por quem administra). Conta que nao entra e melhor que conta com a
+-- chave publicada.
+insert into person (id, username, name, password, salt, email) values ('1', 'nao.importa.web', 'nao.importa.web', '', '1111', '');
 
 INSERT INTO classification(id, text_label) values('1', "Posicionamento Político");
 INSERT INTO classification_item(id, classification_id, text_label) values('1', '1', 'Extrema esquerda');
@@ -536,4 +546,31 @@ ALTER TABLE diagram_relationship_element_reference ADD COLUMN format_date VARCHA
 --
 -- Sem a migracao: o load do mapa quebra no SELECT das referencias (coluna inexistente) e a
 -- timeline nao abre.
+-- ==========================================================================================
+
+-- ==========================================================================================
+-- MIGRACAO de 2026-10-05: a senha guardada deixa de ser a propria credencial.
+--
+-- O login comparava o valor recebido direto com a coluna `password`. Como o cliente manda
+-- sha256(senha + salt), o conteudo da coluna ERA o segredo: quem o lesse entrava. Agora o
+-- servidor guarda password_hash() e confere com password_verify().
+--
+-- NAO E PRECISO REDEFINIR SENHA NENHUMA, e nenhum cliente precisa ser atualizado: o
+-- session.php aceita o formato antigo UMA vez e reescreve a linha no formato novo no proprio
+-- login. Em uma base pequena isso basta -- a migracao acontece sozinha, conta a conta.
+--
+-- Para fechar de imediato (recomendado, porque enquanto houver linha no formato antigo o
+-- valor dela continua valendo como credencial), rode o conversor de uma vez. Ele e PHP porque
+-- password_hash nao existe em SQL:
+--
+--     php server/data/migrar_senhas.php <domain>
+--
+-- O conversor le cada linha, pula as que ja estao em bcrypt e reescreve o resto com o hash
+-- dela mesma -- calculavel a partir da propria coluna, sem saber a senha de ninguem.
+--
+-- Depois de migrar, o hash que este arquivo publicava nas versoes anteriores deixa de ser
+-- aceito como entrada.
+--
+-- Conferir o que falta migrar:
+--   SELECT count(*) FROM person WHERE password <> '' AND password NOT LIKE '$2y$%';
 -- ==========================================================================================

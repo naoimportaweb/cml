@@ -98,6 +98,21 @@ Um servidor CML pode consultar *outros* servidores CML. O `federation_proxy.php`
 
 ### Autenticação e sessão
 
+> ⚠️ **Mudou em 2026-10-05 e ainda não foi para produção.** Antes, o `session.php` validava com
+> `where username=? and password=?` — o valor recebido era comparado **direto com a coluna**,
+> sem hash no servidor. Isso fazia do conteúdo da coluna a **própria credencial**: quem o lesse
+> entrava, e o `create.sql` o **publicava** para o usuário semeado, num repositório público.
+> Agora o servidor guarda `password_hash()` e confere com `password_verify()`. **O cliente não
+> mudou** — segue mandando `sha256(senha + salt)`. Linha no formato antigo é aceita **uma vez** e
+> reescrita no formato novo no próprio login; `server/data/migrar_senhas.php <domain>` converte
+> tudo de uma vez, e a conversão é calculável a partir da própria coluna. Há `User.change_password`
+> + `DialogSenha` (File → Alterar senha…), que exige a senha atual, gira o salt e derruba as
+> outras sessões. **Nada disso vale até o deploy.**
+>
+> E o `connectobject.py` não imprime mais o envelope: só com `CML_DEBUG_RPC`, e mascarando
+> `session`/`token`/`password`/`simetric_key` — inclusive **dentro da string `parameters`**, que
+> é onde a senha viaja.
+
 Handshake de três etapas em `app/classlib/user.py` + `server/services/classlib/session.php`: o `publickey()` devolve a chave pública RSA do servidor **e o salt do usuário**; o cliente calcula `sha256(password + salt)` e envia para o `login()`, que retorna um token de sessão. O token fica guardado no singleton `Server` e é anexado a todos os envelopes seguintes; o `execute.php` resolve esse token de volta para um usuário via `person_sesion` antes de despachar.
 
 ### Singletons e configuração do cliente

@@ -80,6 +80,12 @@ class ReportManager(QObject):
         return self.thread != None and self.thread.isRunning();
 
     def iniciar(self, mapa):
+        # O report fala com um LLM; sem backend ele nao comeca. Recusar aqui, com o motivo,
+        # evita a thread subir so para estourar excecao crua la dentro.
+        from transform.nucleo import motivo_llm;
+        motivo = motivo_llm();
+        if motivo != None:
+            raise Exception("O report precisa de um LLM e " + motivo + ".");
         if self.ocupado():
             # Trava local. A do banco (report_job) e a que vale entre maquinas; esta so
             # evita o usuario disparar dois no mesmo cliente.

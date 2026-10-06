@@ -244,19 +244,39 @@ def indisponivel(cfg, mapa_travado=False):
     if chave and not env(chave):
         return "falta " + chave + " no ~/.env";
     if cfg["fonte"] == "ia":
-        b = backend_llm();
-        if b == "ollama" and not env("CML_OLLAMA_URL"):
-            return "backend ollama sem CML_OLLAMA_URL no ~/.env";
-        if b not in ("rolhama", "ollama"):
-            return "CML_LLM_BACKEND inválido: " + str(b);
+        motivo = motivo_llm();
+        if motivo != None:
+            return motivo;
     if cfg.get("rede") and cfg["fonte"] in ("api-aberta",) and rota_efetiva(cfg) not in ("direta", "tor"):
         return "rota inválida (use direta ou tor)";
     return None;
 
 
 def backend_llm(cfg=None):
-    b = (cfg or {}).get("llm") or env("CML_LLM_BACKEND", "rolhama");
-    return str(b).strip().lower();
+    # O padrao era "rolhama". O rolhama saiu do ar em 2026-10-05 e nao volta (custava manter
+    # ligado), e a lei do workspace passou a ser "LLM e local e sob demanda" -- entao o padrao
+    # agora e o Ollama local, e sem CML_OLLAMA_URL simplesmente NAO HA backend. Manter o padrao
+    # antigo fazia o app tentar falar com um servico que nao existe e estourar excecao crua.
+    escolhido = (cfg or {}).get("llm") or env("CML_LLM_BACKEND", "");
+    escolhido = str(escolhido).strip().lower();
+    if escolhido != "":
+        return escolhido;
+    return "ollama" if env("CML_OLLAMA_URL") else "nenhum";
+
+
+def motivo_llm():
+    """Por que o LLM nao esta disponivel agora (None = esta). Um lugar so, para o menu de
+    transform, o botao do bot e o botao de report dizerem a MESMA coisa."""
+    b = backend_llm();
+    if b == "nenhum":
+        return ("sem backend de LLM: o rolhama saiu do ar em 2026-10-05. "
+                "Defina CML_OLLAMA_URL no ~/.env para usar um Ollama local");
+    if b == "ollama":
+        return None if env("CML_OLLAMA_URL") else "backend ollama sem CML_OLLAMA_URL no ~/.env";
+    if b == "rolhama":
+        return ("o rolhama saiu do ar em 2026-10-05 e não volta. "
+                "Use CML_LLM_BACKEND=ollama com CML_OLLAMA_URL no ~/.env");
+    return "CML_LLM_BACKEND inválido: " + str(b);
 
 
 def rota_efetiva(cfg):

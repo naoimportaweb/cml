@@ -36,6 +36,45 @@ unpad = lambda s: s[:-ord(s[len(s) - 1:])]
 #    cipher = AES.new(key.encode(), AES.MODE_CBC, iv);
 #    return base64.b64encode(cipher.encrypt(raw));
 
+DEPURAR = (os.environ.get("CML_DEBUG_RPC") or "").strip() not in ("", "0", "nao", "não", "false");
+__SEGREDOS__ = ("session", "token", "password", "simetric_key");
+
+
+def __mascarar__(valor, chave=None):
+    """Troca o conteudo dos campos sensiveis por um aviso, mantendo a forma do envelope."""
+    if isinstance(valor, dict):
+        return {k: ("<omitido>" if k in __SEGREDOS__ and str(v or "") != "" else __mascarar__(v, k))
+                for k, v in valor.items()};
+    if isinstance(valor, list):
+        return [__mascarar__(v) for v in valor];
+    if chave == "parameters" and isinstance(valor, str) and len(valor) > 8:
+        # 'parameters' e uma STRING com o prefixo de 8 caracteres e um JSON dentro -- e e ai
+        # que a senha viaja. Mascarar so o nivel de cima deixava o segredo passar.
+        prefixo, corpo = valor[:8], valor[8:];
+        try:
+            return prefixo + json.dumps(__mascarar__(json.loads(corpo)), ensure_ascii=False);
+        except Exception:
+            return prefixo + "<ilegível>";
+    return valor;
+
+
+def __registrar__(prefixo, conteudo):
+    """O envelope so vai para a saida com CML_DEBUG_RPC ligado, e ainda assim MASCARADO.
+
+    Antes isto era um print() direto do envelope inteiro: quem rodasse o cliente redirecionando
+    a saida gravava em texto puro o TOKEN DE SESSAO e o valor de senha transmitido -- e, como o
+    servidor compara esse valor direto com a coluna (session.php), ele e a propria credencial.
+    Saida de depuracao nao pode custar a conta de quem depura."""
+    if not DEPURAR:
+        return;
+    if isinstance(conteudo, str):
+        try:
+            conteudo = json.loads(conteudo);
+        except Exception:
+            pass;
+    print(prefixo, __mascarar__(conteudo) if not isinstance(conteudo, str) else conteudo);
+
+
 class ConnectObject:
     def __init__(self):
         self.id = uuid.uuid4().hex + "_" + uuid.uuid4().hex + "_" + uuid.uuid4().hex;
@@ -73,14 +112,14 @@ class ConnectObject:
         #      "https" : "http://127.0.0.1:9051"
         #};
         #r = requests.post(url, data=json.dumps(envelop), headers=headers, proxies=proxies);
-        print(envelop);
+        __registrar__("-> ", envelop);
         # allow_redirects=False: seguir um 301 converte o POST em GET e o envelope se
         # perde. O servidor recebe corpo vazio e responde um erro de banco sem relacao
         # com a causa real (tipicamente http:// contra um host que so fala https).
         r = requests.post(url, data=json.dumps(envelop), headers=headers, allow_redirects=False);
         if r.is_redirect:
             return self.__error__("O servidor redirecionou " + url + " para " + r.headers.get("Location", "?") + ". Corrija a URL do servidor (verifique http/https).");
-        print(r.text.strip());
+        __registrar__("<- ", r.text.strip());
         try:
             retorno_json = json.loads(r.text.strip());
             if retorno_json["status"] == False or type(retorno_json["return"]) == None:

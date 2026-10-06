@@ -399,6 +399,11 @@ class MainWindow(QMainWindow):
                                      % (layouts.rotulo(escolhido[0]), quantas), 5000);
 
     @Slot()
+    def alterar_senha(self):
+        from view.dialog_senha import DialogSenha;
+        DialogSenha(self).exec();
+
+    @Slot()
     def alternar_lista(self):
         # Desenho <-> tabela, na mesma janela. So o mapa de relacionamento tem lista, e o
         # __mapa_ativo__ ja avisa quando a janela em foco e outra coisa.
@@ -707,6 +712,11 @@ class MainWindow(QMainWindow):
                                 statusTip="Ver o mapa em tabela (entidades e vínculos) em vez de desenho",
                                 triggered=self.alternar_lista)
 
+        icon = QIcon.fromTheme(QIcon.ThemeIcon.DialogPassword)
+        self._senha_act = QAction(icon, "Alterar senha...", self,
+                                statusTip="Trocar a senha desta conta (encerra as outras sessões)",
+                                triggered=self.alterar_senha)
+
         icon = QIcon.fromTheme(QIcon.ThemeIcon.AddressBookNew);
         self._subtypes_act = QAction(icon, "Sub-tipos", self,
                                 statusTip="Editar sub-tipos válidos (global) e seus rostos default",
@@ -773,6 +783,8 @@ class MainWindow(QMainWindow):
         #self._file_menu.addAction(self._save_as_act)
         self._file_menu.addSeparator()
         self._file_menu.addAction(self._subtypes_act)
+        self._file_menu.addSeparator()
+        self._file_menu.addAction(self._senha_act)
         action = self._file_menu.addAction("Switch layout direction")
         action.triggered.connect(self.switch_layout_direction)
         self._file_menu.addAction(self._exit_act)

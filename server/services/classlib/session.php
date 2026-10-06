@@ -69,8 +69,10 @@ class Session
             $sqlss   = [];
             $valuess = [];
             
+            // password_hash do que o cliente mandou: a coluna deixa de ser a propria
+            // credencial. Ver o comentario em __confere_senha__.
             $sql1 = "INSERT INTO person(id, name, username, password, salt, email) values( ?, ?, ?, ?, ?, ?);";
-            $valores1 = [ $user_id , $post_data["parameters"]["username"], $post_data["parameters"]["username"],$post_data["parameters"]["password"],$post_data["parameters"]["salt"],$post_data["parameters"]["email"]];
+            $valores1 = [ $user_id , $post_data["parameters"]["username"], $post_data["parameters"]["username"], password_hash( $post_data["parameters"]["password"], PASSWORD_DEFAULT ),$post_data["parameters"]["salt"],$post_data["parameters"]["email"]];
             array_push($sqlss, $sql1);
             array_push($valuess, $valores1);
 
@@ -96,22 +98,53 @@ class Session
         return array( "public" => $this->public_key, "salt" => $salt ) ; 
     }
 
+    // O que o cliente envia e sha256(senha + salt). ANTES isto era comparado DIRETO com a
+    // coluna, no proprio SELECT -- ou seja, o valor guardado ERA a credencial: quem lesse a
+    // coluna (ou o create.sql, que publicava a do usuario semeado) entrava sem quebrar nada.
+    //
+    // Agora a coluna guarda password_hash() desse valor e a conferencia e com password_verify.
+    // O CLIENTE NAO MUDA: ele continua mandando o mesmo sha256. E a migracao e calculavel a
+    // partir da propria coluna -- basta reescrever cada linha com o bcrypt dela mesma, uma vez
+    // (bloco no fim de server/data/create.sql).
+    //
+    // A busca passou a ser so por username: com bcrypt o hash tem sal proprio e muda a cada
+    // gravacao, entao procurar pelo valor no WHERE nunca mais acharia nada.
+    private static function __confere_senha__( $enviado, $guardado ) {
+        if( $guardado === null || $guardado === "" ) {
+            return false;
+        }
+        if( password_verify( $enviado, $guardado ) ) {
+            return true;
+        }
+        // Compatibilidade com instalacao ainda nao migrada: aceita o formato antigo, mas so
+        // ele -- hash_equals em vez de == para nao vazar tempo. Quem cair aqui tem a linha
+        // reescrita logo abaixo, entao a segunda entrada ja e pelo caminho novo.
+        return hash_equals( (string)$guardado, (string)$enviado );
+    }
+
     function login( $username, $password, $simetric_key, $domain){
         $mysql = new Mysql( $domain );
-        $sql = "select * from person where username=? and password=?";
+        $sql = "select * from person where username=?";
 
         // A recusa devolve id/token nulos, e nao array(): o json_encode manda array()
         // vazio como [] — uma lista — e o cliente indexa o retorno por "id".
         $recusado = array( "id" => null, "token" => null );
 
-        $buffer = $mysql->DataTable( $sql, [ $username, $password ]);
+        $buffer = $mysql->DataTable( $sql, [ $username ]);
         if( count( $buffer ) == 0 ) {
             // Sem esta guarda o [0] de um resultado vazio vira null e a comparacao
             // abaixo acessa indice de null.
             return $recusado;
         }
         $user_databse = $buffer[0];
-        if( $user_databse["username"] == $username && $user_databse["password"] == $password ) {
+        if( Session::__confere_senha__( $password, $user_databse["password"] ) ) {
+            // Entrou pelo formato antigo? Reescreve a linha no formato novo agora, sem pedir
+            // nada ao usuario: a migracao acontece sozinha no primeiro login de cada conta.
+            if( !password_verify( $password, (string)$user_databse["password"] ) ) {
+                $mysql->ExecuteNoQuery(
+                    ["UPDATE person SET password=? WHERE id=?"],
+                    [[ password_hash( $password, PASSWORD_DEFAULT ), $user_databse["id"] ]] );
+            }
             //$token = Session::getToken(32 );
             $id    = Session::getToken(128);
 
