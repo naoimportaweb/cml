@@ -77,6 +77,14 @@ def main():
     try:
         multi("INSERT INTO entity (id,text_label,etype,description) VALUES", "(%s,%s,%s,%s)",
               " ON DUPLICATE KEY UPDATE id=id", ent, 4, 300)
+        # Sub-tipo "country": e por ele que o Mapa Regional reconhece um pais
+        # (classlib/relationship/regional.py). O sub_etype e global e tem chave md5(nome); o
+        # INSERT abaixo cria o cadastro uma vez e o UPDATE marca os paises semeados. Sem isto,
+        # pais fica indistinguivel de qualquer outra entidade "other".
+        c.execute("INSERT INTO sub_etype (id,name) VALUES (MD5('country'),'country') "
+                  "ON DUPLICATE KEY UPDATE name=VALUES(name)")
+        c.executemany("UPDATE entity SET sub_etype_id = MD5('country') WHERE id = %s",
+                      [(cid,) for cid, _n, _i in paises])
         multi("INSERT INTO entity_face (entity_id,png_base64) VALUES", "(%s,%s)",
               " ON DUPLICATE KEY UPDATE png_base64=VALUES(png_base64)", faces, 2, 100)
         con.commit()

@@ -528,10 +528,26 @@ Depende da **seleção em massa** (§3.4), por isso vive aqui e não na fase dos
 1. **Dashboard junto do grafo** (não em outra tela): contagem por `etype`, por classificação, por
    década, top entidades por grau, referências agrupadas por domínio de origem. Clicar na barra
    **seleciona no mapa**.
-2. **Mapa geográfico**: já existem países com bandeira (`script/country_seed.py`) e o transform
-   `nominatim`. Falta coordenada na entidade — cabe em `data_extra` (`LONGTEXT` livre) ou em
-   colunas `lat`/`lon` próprias; decidir na hora, preferindo coluna se for filtrar por caixa
-   geográfica.
+2. ✅ **Mapa regional** (feito em 2026-10-06, pedido do dono) — `classlib/relationship/regional.py`
+   + `view/ui/mapa_regional.py`, botão **Regional**. Terceira vista do mesmo documento, ao lado
+   do desenho e da List View: agrupa pelas entidades-país presentes no mapa, conta quantas caixas
+   **distintas** tocam cada uma (não quantos vínculos — duas pessoas ligadas por três vínculos
+   cada são duas, não seis) e desenha com a **bandeira** que o `country_seed.py` grava em
+   `entity_face`.
+
+   ⚠️ **Não é projeção geográfica, e isso é decisão declarada, não limitação escondida.** O banco
+   **não guarda coordenada nenhuma** e o repositório não traz geometria de país. Inventar
+   contorno ou centroide de memória daria um desenho que parece certo e está errado — num
+   produto de investigação, pior que não ter o desenho. Responde "quais países esta investigação
+   toca e com que peso"; não responde "onde no globo".
+
+   **Para virar coroplético** falta só a geometria: um GeoJSON em `app/resources/paises.geojson`.
+   O ponto de junção já existe e é confiável — país semeado tem `id = uuid5(ISO)`, então casa com
+   qualquer base externa pelo **código**, sem depender do nome escrito.
+
+   País é reconhecido pelo **sub-tipo** `country`. O `country_seed.py` passou a gravá-lo; quem
+   semeou antes tem o bloco de migração no fim do `create.sql` (confira a lista antes de marcar).
+   Sem a migração nada quebra: o mapa regional apenas não acha país, e diz isso na tela.
 3. **Alerta local**: "avise quando esta entidade ganhar vínculo ou referência nova". O servidor é
    JSON-RPC sem push, então é **polling do cliente** — e isso se diz na interface, sem fingir
    tempo real.

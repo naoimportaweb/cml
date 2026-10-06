@@ -18,6 +18,7 @@ from view.dialog_entity_person import DialogEntityPerson;
 from view.dialog_entity_other import DialogEntityOther;
 from view.dialogchoice import DialogChoiceEntity;
 from view.ui.lista_diagrama import ListaDiagrama;
+from view.ui.mapa_regional import MapaRegional;
 from classlib.relationship.comandos import Operacao;
 
 class MdiMap(QWidget):
@@ -49,9 +50,12 @@ class MdiMap(QWidget):
         self.pilha = QStackedWidget();
         self.pilha.addWidget( desenho );
         self.lista = None;
+        self.regional = None;
         if mapa.__class__.__name__ == "MapRelationship":
             self.lista = ListaDiagrama( self, mapa );
             self.pilha.addWidget( self.lista );
+            self.regional = MapaRegional( self, mapa );
+            self.pilha.addWidget( self.regional );
         layout.addWidget( self.pilha );
         self.setLayout(layout)
         # A pilha de desfazer e do DOCUMENTO; a janela so escuta para redesenhar. Assim
@@ -152,6 +156,20 @@ class MdiMap(QWidget):
     def mostrando_lista(self):
         return self.lista != None and self.pilha.currentWidget() is self.lista;
 
+    def mostrando_regional(self):
+        return self.regional != None and self.pilha.currentWidget() is self.regional;
+
+    def alternar_regional(self):
+        """Troca entre o desenho e o mapa regional. Devolve True se ficou no regional."""
+        if self.regional == None:
+            return False;
+        if self.mostrando_regional():
+            self.pilha.setCurrentIndex(0);
+            return False;
+        self.regional.atualizar();
+        self.pilha.setCurrentWidget( self.regional );
+        return True;
+
     def alternar_lista(self):
         """Troca entre o desenho e a tabela. Devolve True se ficou na tabela, para a acao da
         barra saber em que estado marcar o botao."""
@@ -175,6 +193,8 @@ class MdiMap(QWidget):
         # mostra o mapa de antes da alteracao.
         if self.lista != None:
             self.lista.atualizar();
+        if self.regional != None:
+            self.regional.atualizar();
         # O rotulo de Desfazer/Refazer na barra mostra QUAL acao sera desfeita, entao precisa
         # acompanhar o que acabou de acontecer na janela, nao so a troca de janela.
         atualizar = getattr(self.form_principal, "__atualizar_desfazer__", None);

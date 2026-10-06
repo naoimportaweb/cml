@@ -415,6 +415,15 @@ class MainWindow(QMainWindow):
                                      % (layouts.rotulo(escolhido[0]), quantas), 5000);
 
     @Slot()
+    def alternar_regional(self):
+        if self.__mapa_ativo__("MapRelationship") == None:
+            self._regional_act.setChecked(False);
+            return;
+        janela = self.active_mdi_child();
+        self._regional_act.setChecked( janela.alternar_regional() );
+        self._lista_act.setChecked( janela.mostrando_lista() );
+
+    @Slot()
     def alterar_senha(self):
         from view.dialog_senha import DialogSenha;
         DialogSenha(self).exec();
@@ -428,6 +437,7 @@ class MainWindow(QMainWindow):
             return;
         janela = self.active_mdi_child();
         self._lista_act.setChecked( janela.alternar_lista() );
+        self._regional_act.setChecked( janela.mostrando_regional() );
 
     @Slot()
     def export_diagram(self):
@@ -587,6 +597,7 @@ class MainWindow(QMainWindow):
             # A marca do botao Lista pertence a JANELA, nao a barra: sem isto ele continuaria
             # marcado ao trocar para outro mapa que esta no desenho.
             self._lista_act.setChecked( getattr(buffer_area, "mostrando_lista", lambda: False)() );
+            self._regional_act.setChecked( getattr(buffer_area, "mostrando_regional", lambda: False)() );
         # FORA do if: ao fechar a ultima janela o sinal chega com None, e sem isto o botao
         # continuava aceso dizendo "Desfazer Mover caixa" de um mapa que nao esta mais aberto.
         self.__atualizar_desfazer__();
@@ -723,6 +734,11 @@ class MainWindow(QMainWindow):
                                 statusTip="Arrumar as caixas automaticamente (um passo de desfazer)",
                                 triggered=self.menu_layout)
 
+        icon = QIcon.fromTheme(QIcon.ThemeIcon.NetworkWired)
+        self._regional_act = QAction(icon, "Regional", self, checkable=True,
+                                statusTip="Que países esta investigação toca, e com que peso",
+                                triggered=self.alternar_regional)
+
         icon = QIcon.fromTheme(QIcon.ThemeIcon.FormatJustifyFill);
         self._lista_act = QAction(icon, "Lista", self, checkable=True,
                                 statusTip="Ver o mapa em tabela (entidades e vínculos) em vez de desenho",
@@ -850,6 +866,7 @@ class MainWindow(QMainWindow):
         self._map_tool_bar.addAction(self._buscar_act);
         self._map_tool_bar.addAction(self._layout_act);
         self._map_tool_bar.addAction(self._lista_act);
+        self._map_tool_bar.addAction(self._regional_act);
         self._map_tool_bar.addAction(self._subtypes_act);
         #self._edit_tool_bar.addAction(self._copy_act)
         #self._edit_tool_bar.addAction(self._paste_act)

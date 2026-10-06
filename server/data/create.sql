@@ -574,3 +574,31 @@ ALTER TABLE diagram_relationship_element_reference ADD COLUMN format_date VARCHA
 -- Conferir o que falta migrar:
 --   SELECT count(*) FROM person WHERE password <> '' AND password NOT LIKE '$2y$%';
 -- ==========================================================================================
+
+-- ==========================================================================================
+-- MIGRACAO de 2026-10-06: marcar os paises ja semeados com o sub-tipo "country".
+--
+-- O Mapa Regional reconhece um pais pelo sub_etype (ver classlib/relationship/regional.py).
+-- O country_seed.py passou a gravar isso, mas quem semeou ANTES tem os paises como "other"
+-- sem sub-tipo, e eles nao aparecem no mapa regional.
+--
+-- Os paises semeados tem id = uuid5 do ISO, entao sao reconheciveis pelo FORMATO do id
+-- (UUID com hifens) somado a ter bandeira em entity_face -- que e o que o seeder grava e
+-- quase nada mais tem. Confira a lista ANTES de marcar:
+--
+--   SELECT e.id, e.text_label FROM entity e
+--     INNER JOIN entity_face f ON f.entity_id = e.id
+--    WHERE e.etype = 'other' AND e.id LIKE '%-%-%-%-%';
+--
+-- Se a lista estiver certa:
+--
+--   INSERT INTO sub_etype (id, name) VALUES (MD5('country'), 'country')
+--     ON DUPLICATE KEY UPDATE name = VALUES(name);
+--
+--   UPDATE entity e INNER JOIN entity_face f ON f.entity_id = e.id
+--      SET e.sub_etype_id = MD5('country')
+--    WHERE e.etype = 'other' AND e.id LIKE '%-%-%-%-%';
+--
+-- Rodar de novo e inofensivo. Sem esta migracao nada quebra: o mapa regional apenas nao acha
+-- pais nenhum, e diz isso na tela.
+-- ==========================================================================================
