@@ -55,7 +55,7 @@ try{
     // TUDO QUE VAI AQUI É CRIPTOGRAFIA SIMÉTRICA...... QUE NAO FIZ AINDA....
     $post_data["parameters"] = substr($post_data["parameters"], 8);
     $post_data["parameters"] = json_decode(  $post_data["parameters"], true );
-    $person_session = $session->getKeyDecrypt($post_data["session"], $post_data["domain"]);
+    $person_session = $session->exigir_sessao($post_data["session"], $post_data["domain"]);
     $user = new User();
     $user->load($person_session["person_id"], $post_data["domain"]); 
     //-------------------------------------------------------------------------

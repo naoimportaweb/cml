@@ -779,6 +779,49 @@ Levantado ao conferir o que o repositório **público** `naoimportaweb/cml` exp�
 investigação no repo (os mapas vivem no MySQL), nem `.env`, chave privada ou certificado em
 commit algum, e o `server/data/config.json` versionado traz só placeholder. O que há:
 
+### 10.0 A API dinâmica respondia **sem login** ✅ corrigido e publicado no `cyberwarfare` (2026-10-06)
+
+Achado durante o deploy, ao conferir por que o `Entity.neighborhood` novo respondia a um `curl`
+sem sessão. É o pior dos buracos desta lista, e é **antigo** — não veio com o código novo.
+
+O `execute.php` e o `federation_proxy.php` resolviam a sessão e **não conferiam o resultado**:
+
+```php
+$person_session = $session->getKeyDecrypt($post_data["session"], $post_data["domain"]);
+$user = new User();
+$user->load($person_session["person_id"], $post_data["domain"]);   // null -> ninguém
+// ... e despachava o método de qualquer jeito
+```
+
+Sem linha em `person_sesion`, o `getKeyDecrypt` devolvia `null`, o `load(null)` não carregava
+ninguém, e **o método era despachado igual**. Toda a API dinâmica atendia anônimo. Medido em
+produção, com `curl` e sessão vazia:
+
+| Instalação | `Map.search` sem sessão |
+|---|---|
+| `cyberwarfare` | devolvia **36 mapas + 1 organograma** (antes da correção) |
+| `corrupcao` | devolve **8 mapas + 1 organograma** — ⚠️ **ainda aberto, falta o deploy** |
+
+E não é só a lista: o nome e a *keyword* de cada mapa vão na resposta, ou seja, **o assunto da
+investigação** — que num produto de análise de vínculos é o que menos pode sair. Qualquer método
+novo nascia aberto junto, incluindo o `Entity.neighborhood`, que serve exatamente para enumerar o
+grafo.
+
+**A correção** é `Session::exigir_sessao()`, chamado pelos dois endpoints: sem linha válida em
+`person_sesion`, lança, e o cliente recebe o envelope de erro de sempre (`status:false` +
+`error`), que o `connectobject.py` já sabe mostrar. Mensagem única para "não mandou", "token
+inventado" e "sessão derrubada" — dizer qual dos três não ajuda quem tem direito e ajuda quem
+está adivinhando.
+
+Os quatro métodos que **podem** vir sem sessão (`Domain.list`, `Session.publickey`, `login`,
+`register`) são tratados em desvios próprios, antes do dinâmico, e não passam pela porteira — foi
+o que permitiu a correção ser de duas linhas sem tocar no fluxo de entrada. O `federation.php`
+segue sem sessão **por contrato**: ele recebe de outro servidor e valida `federation_id` mais a
+lista de métodos permitidos.
+
+Provado em produção, as duas metades: sem sessão e com token inventado → erro; com sessão válida
+→ `Map.search` devolve os 36 mapas e o `Entity.neighborhood` devolve as cinco chaves esperadas.
+
 ### 10.1 A senha guardada **era** a credencial ✅ corrigido no código (falta deploy)
 
 `server/services/classlib/session.php` valida com

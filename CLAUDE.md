@@ -127,6 +127,17 @@ Um servidor CML pode consultar *outros* servidores CML. O `federation_proxy.php`
 > `session`/`token`/`password`/`simetric_key` — inclusive **dentro da string `parameters`**, que
 > é onde a senha viaja.
 
+> ⚠️ **A API dinâmica respondia sem login — corrigido em 2026-10-06, publicado só no
+> `cyberwarfare`.** O `execute.php` e o `federation_proxy.php` resolviam a sessão e **não
+> conferiam o resultado**: sem linha em `person_sesion` o `$user` ficava vazio e o método era
+> despachado igual, então `Map.search` entregava a lista de mapas — com nome e keyword, isto é, o
+> assunto da investigação — a quem acertasse a URL. Agora os dois chamam
+> `Session::exigir_sessao()`, que lança se não houver sessão válida. **Método novo em
+> `services/classlib/` nasce protegido por isso e não precisa conferir sessão por conta própria**;
+> o que *pode* vir sem sessão são os quatro desvios explícitos do `execute.php` (`Domain.list`,
+> `Session.publickey|login|register`) e o `federation.php`, que valida `federation_id` em vez de
+> sessão.
+
 Handshake de três etapas em `app/classlib/user.py` + `server/services/classlib/session.php`: o `publickey()` devolve a chave pública RSA do servidor **e o salt do usuário**; o cliente calcula `sha256(password + salt)` e envia para o `login()`, que retorna um token de sessão. O token fica guardado no singleton `Server` e é anexado a todos os envelopes seguintes; o `execute.php` resolve esse token de volta para um usuário via `person_sesion` antes de despachar.
 
 ### Singletons e configuração do cliente

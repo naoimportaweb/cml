@@ -196,7 +196,33 @@ class Session
 
     public function getKeyDecrypt( $session_id, $domain ) {
         $mysql = new Mysql( $domain );
-        return $mysql->DataTable("select * from person_sesion where id = ? ", [$session_id])[0];
+        $linhas = $mysql->DataTable("select * from person_sesion where id = ? ", [$session_id]);
+        // Sem linha, devolve null em vez de estourar aviso de indice: quem chama e que decide
+        // o que fazer, e quem chama e sempre o exigir_sessao() logo abaixo.
+        return count($linhas) > 0 ? $linhas[0] : null;
+    }
+
+    // A PORTEIRA DOS ENDPOINTS DINAMICOS. Devolve a sessao ou lanca.
+    //
+    // O execute.php e o federation_proxy.php resolviam a sessao e **nao conferiam o
+    // resultado**: sem linha em person_sesion, o $person_session virava null, o
+    // $user->load(null) nao carregava ninguem e o metodo era despachado de qualquer jeito. Na
+    // pratica **toda a API dinamica respondia sem login** -- o Map.search entregava a lista de
+    // mapas da investigacao a quem acertasse a URL, e qualquer metodo novo (como o
+    // Entity.neighborhood) nascia aberto junto.
+    //
+    // Os quatro metodos que PODEM vir sem sessao (Domain.list, Session.publickey, login e
+    // register) sao tratados antes, em desvios proprios do execute.php, e nao passam por aqui.
+    // O federation.php e outro caso e segue sem sessao por contrato: ele recebe de outro
+    // servidor e valida federation_id + lista de metodos permitidos.
+    public function exigir_sessao( $session_id, $domain ) {
+        $sessao = $this->getKeyDecrypt( $session_id, $domain );
+        if( !is_array($sessao) || !isset($sessao["person_id"]) || trim((string)$sessao["person_id"]) === "" ){
+            // Mensagem unica para "nao mandou", "token inventado" e "sessao derrubada": dizer
+            // qual dos tres e nao ajuda quem tem direito e ajuda quem esta tentando adivinhar.
+            throw new Exception("Sessão inválida ou expirada. Faça login novamente.");
+        }
+        return $sessao;
     }
 
     public static function getToken($length)
